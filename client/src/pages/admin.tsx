@@ -205,15 +205,36 @@ export default function Admin() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString();
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      timeZone: 'America/Denver',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      timeZone: 'America/Denver',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }) + ' MT';
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      timeZone: 'America/Denver',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }) + ' MT';
   };
 
   return (
@@ -321,7 +342,7 @@ export default function Admin() {
                             {user.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{formatDate(user.createdAt)}</TableCell>
+                        <TableCell>{formatDateTime(user.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
                             <Button
@@ -397,7 +418,7 @@ export default function Admin() {
                             {match.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>{formatDate(match.createdAt)}</TableCell>
+                        <TableCell>{formatDateTime(match.createdAt)}</TableCell>
                         <TableCell>
                           {match.meeting ? (
                             <Badge variant="default">Scheduled</Badge>
@@ -454,7 +475,7 @@ export default function Admin() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-sm">
-                            {meeting.scheduledAt ? formatDate(meeting.scheduledAt) : 'Not scheduled'}
+                            {meeting.scheduledAt ? formatDateTime(meeting.scheduledAt) : 'Not scheduled'}
                           </td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${

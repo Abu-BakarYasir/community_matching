@@ -106,27 +106,35 @@ class EmailService {
     `;
 
     try {
-      await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.EMAIL_FROM || '"NetworkMatch" <noreply@networkmatch.com>',
-        to: user1.email,
-        subject,
-        html: htmlContent,
-      });
+      const fromEmail = process.env.EMAIL_FROM || 'noreply@daamatchmaking.com';
+      
+      await Promise.all([
+        this.mailService.send({
+          from: fromEmail,
+          to: user1.email,
+          subject,
+          html: htmlContent,
+        }),
+        this.mailService.send({
+          from: fromEmail,
+          to: user2.email,
+          subject,
+          html: htmlContent.replace(user1.firstName, user2.firstName).replace(`${user2.firstName} ${user2.lastName}`, `${user1.firstName} ${user1.lastName}`),
+        })
+      ]);
 
-      await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.EMAIL_FROM || '"NetworkMatch" <noreply@networkmatch.com>',
-        to: user2.email,
-        subject,
-        html: htmlContent.replace(user1.firstName, user2.firstName).replace(`${user2.firstName} ${user2.lastName}`, `${user1.firstName} ${user1.lastName}`),
-      });
-
-      console.log(`Meeting notification emails sent to ${user1.email} and ${user2.email}`);
+      console.log(`✅ Meeting notification emails sent via SendGrid to ${user1.email} and ${user2.email}`);
     } catch (error) {
-      console.error('Failed to send meeting notification:', error);
+      console.error('❌ Failed to send meeting notification via SendGrid:', error);
     }
   }
 
   async sendMeetingReminder(user: User, otherUser: User, meeting: Meeting) {
+    if (!this.isConfigured) {
+      console.log(`📧 [SIMULATED] Meeting reminder email would be sent to ${user.email}`);
+      return;
+    }
+
     const subject = '⏰ Meeting Reminder - Tomorrow!';
     
     const htmlContent = `
