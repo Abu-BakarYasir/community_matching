@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import Dashboard from "@/pages/dashboard";
 import Register from "@/pages/register";
 import Profile from "@/pages/profile";
+import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 // Create a separate Login component that defaults to login mode
