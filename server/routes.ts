@@ -122,6 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email } = req.body;
+      console.log("Login request received:", { email, body: req.body });
       
       if (!email || !email.includes('@')) {
         return res.status(400).json({ message: "Valid email required" });
@@ -145,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         experienceLevel: null
       };
       
-      console.log(`Simple login for ${email}`);
+      console.log(`Simple login successful for ${email}`);
       res.json(user);
     } catch (error) {
       console.error("Login error:", error);
