@@ -29,8 +29,8 @@ class EmailService {
     console.log(`   Match Score: ${matchScore}%`);
 
     const subject = '🎯 New Match Found - DAA Monthly Matching';
-    // Use a verified email address - typically the one you used to register SendGrid
-    const fromEmail = process.env.EMAIL_FROM || 'averyjs@gmail.com';
+    // Use verified sender identity from datacareerjumpstart.com domain
+    const fromEmail = process.env.EMAIL_FROM || 'avery@datacareerjumpstart.com';
     
     const createEmailContent = (recipient: User, partner: User) => ({
       from: fromEmail,
@@ -106,7 +106,7 @@ class EmailService {
     }
 
     const subject = '📅 Meeting Scheduled - DAA Monthly Matching';
-    const fromEmail = process.env.EMAIL_FROM || 'averyjs@gmail.com';
+    const fromEmail = process.env.EMAIL_FROM || 'avery@datacareerjumpstart.com';
     
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-US', {
@@ -171,7 +171,7 @@ class EmailService {
     }
 
     const subject = '⏰ Meeting Reminder - Tomorrow!';
-    const fromEmail = process.env.EMAIL_FROM || 'averyjs@gmail.com';
+    const fromEmail = process.env.EMAIL_FROM || 'avery@datacareerjumpstart.com';
     
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
