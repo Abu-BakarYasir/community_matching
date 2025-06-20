@@ -20,10 +20,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   const [jobTitle, setJobTitle] = useState(user?.jobTitle || "");
   const [company, setCompany] = useState(user?.company || "");
   const [industry, setIndustry] = useState(user?.industry || "");
-  const [experienceLevel, setExperienceLevel] = useState(user?.experienceLevel || "");
   const [networkingGoals, setNetworkingGoals] = useState<string[]>(user?.profileQuestions?.networkingGoals || []);
-  const [availabilityPreferences, setAvailabilityPreferences] = useState<string[]>(user?.profileQuestions?.availabilityPreferences || []);
-  const [interests, setInterests] = useState<string[]>(user?.profileQuestions?.interests || []);
   
   const { toast } = useToast();
 
@@ -33,13 +30,10 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
         jobTitle: data.jobTitle,
         company: data.company,
         industry: data.industry,
-        experienceLevel: data.experienceLevel,
       });
       
       return apiRequest("POST", "/api/user/profile-questions", {
         networkingGoals: data.networkingGoals,
-        availabilityPreferences: data.availabilityPreferences,
-        interests: data.interests,
       });
     },
     onSuccess: () => {
@@ -70,23 +64,14 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
     }
   };
 
-  const handleAvailabilityChange = (availability: string, checked: boolean) => {
-    if (checked) {
-      setAvailabilityPreferences([...availabilityPreferences, availability]);
-    } else {
-      setAvailabilityPreferences(availabilityPreferences.filter(a => a !== availability));
-    }
-  };
+
 
   const handleSave = () => {
     updateProfileMutation.mutate({
       jobTitle,
       company,
       industry,
-      experienceLevel,
       networkingGoals,
-      availabilityPreferences,
-      interests,
     });
   };
 
@@ -149,18 +134,17 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
             </Select>
           </div>
 
-          {/* Networking Goals */}
+          {/* Monthly Focus */}
           <div>
             <Label className="text-sm font-semibold text-slate-900 mb-3 block">
-              What are your networking goals? (Select all that apply)
+              What do you want to focus on this month? (Select all that apply)
             </Label>
             <div className="space-y-2">
               {[
-                { value: "career_advancement", label: "Career advancement" },
-                { value: "knowledge_sharing", label: "Knowledge sharing" },
-                { value: "finding_mentorship", label: "Finding mentorship" },
-                { value: "business_opportunities", label: "Business opportunities" },
-                { value: "building_relationships", label: "Building professional relationships" },
+                { value: "learning-technical-skills", label: "Learning Technical Skills" },
+                { value: "building-data-projects", label: "Building Data Projects" },
+                { value: "job-hunting", label: "Job Hunting" },
+                { value: "networking", label: "Networking" },
               ].map((goal) => (
                 <div key={goal.value} className="flex items-center space-x-2">
                   <Checkbox
@@ -176,53 +160,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
             </div>
           </div>
 
-          {/* Experience Level */}
-          <div>
-            <Label className="text-sm font-semibold text-slate-900 mb-3 block">
-              Years of professional experience
-            </Label>
-            <RadioGroup value={experienceLevel} onValueChange={setExperienceLevel}>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { value: "0-2", label: "0-2 years" },
-                  { value: "3-5", label: "3-5 years" },
-                  { value: "6-10", label: "6-10 years" },
-                  { value: "10+", label: "10+ years" },
-                ].map((exp) => (
-                  <div key={exp.value} className="flex items-center space-x-2 p-3 border border-slate-300 rounded-lg">
-                    <RadioGroupItem value={exp.value} id={exp.value} />
-                    <Label htmlFor={exp.value}>{exp.label}</Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-          </div>
 
-          {/* Availability Preferences */}
-          <div>
-            <Label className="text-sm font-semibold text-slate-900 mb-3 block">
-              When are you typically available for networking meetings?
-            </Label>
-            <div className="space-y-2">
-              {[
-                { value: "weekday_mornings", label: "Weekday mornings (9am-12pm)" },
-                { value: "weekday_afternoons", label: "Weekday afternoons (1pm-5pm)" },
-                { value: "weekday_evenings", label: "Weekday evenings (6pm-8pm)" },
-                { value: "weekend_mornings", label: "Weekend mornings" },
-              ].map((avail) => (
-                <div key={avail.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={avail.value}
-                    checked={availabilityPreferences.includes(avail.value)}
-                    onCheckedChange={(checked) => handleAvailabilityChange(avail.value, checked as boolean)}
-                  />
-                  <Label htmlFor={avail.value} className="text-slate-700">
-                    {avail.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="flex justify-end space-x-3 p-6 border-t">
