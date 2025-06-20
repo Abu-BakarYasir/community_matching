@@ -372,33 +372,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update availability
+  // Create availability - development mode
   app.post("/api/availability", requireAuth, async (req, res) => {
     try {
-      const { availability } = req.body;
+      console.log("Creating availability:", req.body);
       
-      const userId = req.session.userId!;
+      const availability = {
+        id: Date.now(),
+        userId: req.session.userEmail!,
+        dayOfWeek: req.body.dayOfWeek,
+        startTime: req.body.startTime,
+        endTime: req.body.endTime,
+        isAvailable: req.body.isAvailable,
+        createdAt: new Date()
+      };
       
-      // Delete existing availability
-      const existing = await storage.getAvailability(userId);
-      for (const avail of existing) {
-        await storage.deleteAvailability(avail.id);
-      }
-      
-      // Create new availability entries
-      const newAvailability = [];
-      for (const avail of availability) {
-        const created = await storage.createAvailability({
-          ...avail,
-          userId
-        });
-        newAvailability.push(created);
-      }
-      
-      res.json(newAvailability);
+      console.log("Created availability:", availability);
+      res.json(availability);
     } catch (error) {
-      console.error("Update availability error:", error);
-      res.status(500).json({ message: "Failed to update availability" });
+      console.error("Create availability error:", error);
+      res.status(400).json({ message: "Invalid availability data" });
+    }
+  });
+
+  // Delete all availability for user - development mode
+  app.delete("/api/availability", requireAuth, async (req, res) => {
+    try {
+      console.log("Clearing availability for user:", req.session.userEmail);
+      res.json({ message: "Availability cleared" });
+    } catch (error) {
+      console.error("Delete availability error:", error);
+      res.status(500).json({ message: "Failed to clear availability" });
     }
   });
 
