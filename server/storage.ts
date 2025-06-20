@@ -265,7 +265,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteAvailability(id: number): Promise<boolean> {
+    console.log("DatabaseStorage.deleteAvailability ID:", id);
     const result = await db.delete(availability).where(eq(availability.id, id));
+    console.log("DatabaseStorage delete result rowCount:", result.rowCount);
     return result.rowCount > 0;
   }
 

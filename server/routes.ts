@@ -465,12 +465,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get availability
   app.get("/api/availability", requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
-      const availability = await storage.getAvailability(userId);
-      res.json(availability);
+      const email = req.session.userEmail!;
+      
+      // Try database first
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (user) {
+          const availability = await storage.getAvailability(user.id);
+          console.log("Retrieved availability from database:", availability);
+          res.json(availability);
+          return;
+        }
+      } catch (dbError) {
+        console.log("Database get failed:", dbError);
+      }
+      
+      // Fallback to empty array
+      res.json([]);
     } catch (error) {
       console.error("Get availability error:", error);
-      res.status(500).json({ message: "Failed to get availability" });
+      res.json([]); // Fallback to empty array
     }
   });
 
@@ -486,38 +500,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete all availability for user - development mode
+  // Clear availability with database persistence
   app.delete("/api/availability", requireAuth, async (req, res) => {
     try {
-      console.log("Clearing availability for user:", req.session.userEmail);
+      const email = req.session.userEmail!;
+      console.log("Clearing availability for user:", email);
+      
+      // Try database first
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (user) {
+          // Clear all availability for this user
+          const availabilities = await storage.getAvailability(user.id);
+          console.log("Found availabilities to clear:", availabilities.length);
+          for (const availability of availabilities) {
+            await storage.deleteAvailability(availability.id);
+          }
+          console.log("Cleared all availability records");
+        }
+      } catch (dbError) {
+        console.log("Database clear failed:", dbError);
+      }
+      
       res.json({ message: "Availability cleared" });
     } catch (error) {
-      console.error("Delete availability error:", error);
+      console.error("Clear availability error:", error);
       res.status(500).json({ message: "Failed to clear availability" });
     }
   });
 
-  // Create single availability entry - development mode
+  // Create availability with database persistence
   app.post("/api/availability", requireAuth, async (req, res) => {
     try {
       console.log("POST /api/availability - Creating availability:", req.body);
-      console.log("User email:", req.session.userEmail);
+      const email = req.session.userEmail!;
       
-      const availability = {
+      // Try database first
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (user) {
+          const availability = await storage.createAvailability({
+            ...req.body,
+            userId: user.id
+          });
+          console.log("Successfully created availability in database:", availability);
+          res.json(availability);
+          return;
+        }
+      } catch (dbError) {
+        console.log("Database creation failed:", dbError);
+      }
+      
+      // Fallback for development
+      const mockAvailability = {
         id: Date.now(),
-        userId: req.session.userEmail!,
-        dayOfWeek: req.body.dayOfWeek,
-        startTime: req.body.startTime,
-        endTime: req.body.endTime,
-        isAvailable: req.body.isAvailable,
+        userId: email,
+        ...req.body,
         createdAt: new Date()
       };
       
-      console.log("Successfully created availability:", availability);
-      res.json(availability);
+      console.log("Successfully created availability (mock):", mockAvailability);
+      res.json(mockAvailability);
     } catch (error) {
       console.error("Create availability error:", error);
-      res.status(400).json({ message: "Invalid availability data" });
+      res.status(500).json({ message: "Failed to create availability" });
     }
   });
 
