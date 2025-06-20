@@ -99,64 +99,7 @@ export default function Dashboard() {
           <p className="text-slate-600">Here's your networking activity for this month.</p>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-slate-600">Total Matches</p>
-                  <p className="text-2xl font-bold text-slate-900">{stats?.totalMatches || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <Calendar className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-slate-600">Meetings Scheduled</p>
-                  <p className="text-2xl font-bold text-slate-900">{stats?.scheduledMeetings || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-yellow-100 rounded-lg">
-                  <Clock className="h-6 w-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-slate-600">Pending Responses</p>
-                  <p className="text-2xl font-bold text-slate-900">{stats?.pendingResponses || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Handshake className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-slate-600">Connections Made</p>
-                  <p className="text-2xl font-bold text-slate-900">{stats?.connections || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         <div className="space-y-8">
           {/* Next Matching Round - Top Priority */}
