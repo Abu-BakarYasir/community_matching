@@ -1,8 +1,8 @@
-# NetworkMatch - Professional Networking Platform
+# DAA Monthly Matching - Professional Networking Platform
 
 ## Overview
 
-NetworkMatch is a professional networking platform that connects professionals based on compatibility scores derived from their profiles, goals, and preferences. The application facilitates monthly automated matching, meeting scheduling, and ongoing relationship management through a comprehensive web interface.
+DAA Monthly Matching is a professional networking platform that connects professionals based on compatibility scores derived from their profiles, goals, and preferences. The application facilitates monthly automated matching, meeting scheduling, and ongoing relationship management through a comprehensive web interface.
 
 ## System Architecture
 
@@ -102,6 +102,13 @@ The application uses PostgreSQL with Drizzle ORM and five main entities:
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+
+### June 20, 2025 - Enhanced Scheduling & Branding Updates
+- Fixed availability saving functionality with better error handling and logging
+- Updated application name to "DAA Monthly Matching" throughout the interface
+- Integrated default Google Meet link (https://meet.google.com/wnf-cjab-twp) for all video meetings
+- Enhanced scheduling system with comprehensive meeting management features
+- Improved development mode authentication for reliable testing
 
 ### June 20, 2025 - Authentication System Completed
 - Implemented simplified email-based authentication without database dependencies

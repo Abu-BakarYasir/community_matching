@@ -27,7 +27,7 @@ export default function Register() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       toast({
-        title: "Welcome to NetworkMatch!",
+        title: "Welcome to DAA Monthly Matching!",
         description: "Your account has been created successfully.",
       });
       setLocation("/dashboard");
@@ -93,7 +93,7 @@ export default function Register() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
-            <h1 className="text-3xl font-bold text-primary">NetworkMatch</h1>
+            <h1 className="text-3xl font-bold text-primary">DAA Monthly Matching</h1>
             <p className="text-slate-600 mt-2">Professional One-on-One Networking</p>
           </div>
           <CardTitle className="text-2xl">
