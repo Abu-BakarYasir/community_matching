@@ -53,25 +53,40 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
     enabled: open,
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (availability: any[]) => {
-      return apiRequest("/api/availability", {
-        method: "POST",
-        body: JSON.stringify({ availability }),
+  const saveAvailabilityMutation = useMutation({
+    mutationFn: async (availabilityData: any) => {
+      console.log("Saving availability data:", availabilityData);
+      
+      // Clear existing availability first
+      try {
+        await apiRequest("DELETE", "/api/availability");
+      } catch (error) {
+        console.log("No existing availability to delete");
+      }
+      
+      // Save new availability entries individually
+      const promises = availabilityData.map((avail: any) => {
+        console.log("Saving individual availability:", avail);
+        return apiRequest("POST", "/api/availability", avail);
       });
+      
+      const results = await Promise.all(promises);
+      console.log("Save results:", results);
+      return results;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/availability"] });
       toast({
-        title: "Availability Updated",
-        description: "Your availability preferences have been saved successfully!",
+        title: "Availability Saved",
+        description: "Your availability has been updated successfully.",
       });
       onOpenChange(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/availability"] });
     },
     onError: (error: any) => {
+      console.error("Availability save error:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to update availability",
+        title: "Error Saving Availability",
+        description: error.message || "Failed to save availability. Please try again.",
         variant: "destructive",
       });
     },
@@ -160,7 +175,7 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
       });
     });
 
-    saveMutation.mutate(availability);
+    saveAvailabilityMutation.mutate(availability);
   };
 
   const setQuickAvailability = (preset: string) => {
@@ -353,10 +368,10 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saveMutation.isPending}
+              disabled={saveAvailabilityMutation.isPending}
               className="min-w-[120px]"
             >
-              {saveMutation.isPending ? "Saving..." : "Save Availability"}
+              {saveAvailabilityMutation.isPending ? "Saving..." : "Save Availability"}
             </Button>
           </div>
         </div>

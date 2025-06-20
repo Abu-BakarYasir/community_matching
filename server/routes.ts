@@ -372,10 +372,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create availability - development mode
+  // Delete all availability for user - development mode
+  app.delete("/api/availability", requireAuth, async (req, res) => {
+    try {
+      console.log("Clearing availability for user:", req.session.userEmail);
+      res.json({ message: "Availability cleared" });
+    } catch (error) {
+      console.error("Delete availability error:", error);
+      res.status(500).json({ message: "Failed to clear availability" });
+    }
+  });
+
+  // Create single availability entry - development mode
   app.post("/api/availability", requireAuth, async (req, res) => {
     try {
-      console.log("Creating availability:", req.body);
+      console.log("POST /api/availability - Creating availability:", req.body);
+      console.log("User email:", req.session.userEmail);
       
       const availability = {
         id: Date.now(),
@@ -387,22 +399,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: new Date()
       };
       
-      console.log("Created availability:", availability);
+      console.log("Successfully created availability:", availability);
       res.json(availability);
     } catch (error) {
       console.error("Create availability error:", error);
       res.status(400).json({ message: "Invalid availability data" });
-    }
-  });
-
-  // Delete all availability for user - development mode
-  app.delete("/api/availability", requireAuth, async (req, res) => {
-    try {
-      console.log("Clearing availability for user:", req.session.userEmail);
-      res.json({ message: "Availability cleared" });
-    } catch (error) {
-      console.error("Delete availability error:", error);
-      res.status(500).json({ message: "Failed to clear availability" });
     }
   });
 
