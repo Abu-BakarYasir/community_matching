@@ -16,6 +16,7 @@ import { Users, Calendar, Heart, Settings, Play, RefreshCw, Trash2, Edit } from 
 export default function Admin() {
   const [matchingDay, setMatchingDay] = useState("1");
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [userAvailability, setUserAvailability] = useState<any[]>([]);
   const { toast } = useToast();
 
   const { data: users = [] } = useQuery({
@@ -141,6 +142,42 @@ export default function Admin() {
     }
   };
 
+  const handleEditUser = async (user: any) => {
+    setEditingUser(user);
+    // Fetch user's availability
+    try {
+      const response = await fetch(`/api/availability?userId=${user.id}`);
+      if (response.ok) {
+        const availability = await response.json();
+        setUserAvailability(availability);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user availability:', error);
+      setUserAvailability([]);
+    }
+  };
+
+  const updateAvailability = (dayOfWeek: number, field: string, value: any) => {
+    setUserAvailability(prev => {
+      const existing = prev.find(a => a.dayOfWeek === dayOfWeek);
+      if (existing) {
+        return prev.map(a => 
+          a.dayOfWeek === dayOfWeek 
+            ? { ...a, [field]: value }
+            : a
+        );
+      } else {
+        return [...prev, {
+          dayOfWeek,
+          startTime: '09:00',
+          endTime: '17:00',
+          isAvailable: true,
+          [field]: value
+        }];
+      }
+    });
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -264,7 +301,7 @@ export default function Admin() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setEditingUser(user)}
+                              onClick={() => handleEditUser(user)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -556,9 +593,29 @@ export default function Admin() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Edit User</h3>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault();
+              
+              // Update user profile
               updateUser.mutate(editingUser);
+              
+              // Update availability
+              try {
+                for (const avail of userAvailability) {
+                  if (avail.id) {
+                    // Update existing
+                    await apiRequest("PATCH", `/api/availability/${avail.id}`, avail);
+                  } else {
+                    // Create new
+                    await apiRequest("POST", `/api/availability`, {
+                      ...avail,
+                      userId: editingUser.id
+                    });
+                  }
+                }
+              } catch (error) {
+                console.error('Failed to update availability:', error);
+              }
             }}>
               <div className="space-y-4">
                 <div>
@@ -652,6 +709,45 @@ export default function Admin() {
                       <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="mt-6">
+                  <h4 className="font-medium mb-3">Weekly Availability</h4>
+                  <div className="space-y-3">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, index) => {
+                      const dayOfWeek = index + 1;
+                      const availability = userAvailability.find(a => a.dayOfWeek === dayOfWeek);
+                      
+                      return (
+                        <div key={day} className="flex items-center space-x-3 text-sm">
+                          <div className="w-20 font-medium">{day}</div>
+                          <input
+                            type="checkbox"
+                            checked={availability?.isAvailable || false}
+                            onChange={(e) => updateAvailability(dayOfWeek, 'isAvailable', e.target.checked)}
+                            className="rounded"
+                          />
+                          {availability?.isAvailable && (
+                            <>
+                              <input
+                                type="time"
+                                value={availability?.startTime || '09:00'}
+                                onChange={(e) => updateAvailability(dayOfWeek, 'startTime', e.target.value)}
+                                className="px-2 py-1 border rounded text-sm"
+                              />
+                              <span>to</span>
+                              <input
+                                type="time"
+                                value={availability?.endTime || '17:00'}
+                                onChange={(e) => updateAvailability(dayOfWeek, 'endTime', e.target.value)}
+                                className="px-2 py-1 border rounded text-sm"
+                              />
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
