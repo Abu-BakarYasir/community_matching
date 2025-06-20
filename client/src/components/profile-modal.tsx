@@ -82,9 +82,9 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
           <DialogTitle className="text-2xl">
             Complete Your Profile
           </DialogTitle>
-          <p className="text-slate-600">
+          <DialogDescription className="text-slate-600">
             Help us find better matches by answering a few questions
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 p-6">

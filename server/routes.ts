@@ -11,6 +11,14 @@ import { z } from "zod";
 declare module 'express-session' {
   interface SessionData {
     userEmail?: string;
+    userProfile?: {
+      jobTitle?: string;
+      company?: string;
+      industry?: string;
+    };
+    profileQuestions?: {
+      networkingGoals?: string[];
+    };
   }
 }
 
