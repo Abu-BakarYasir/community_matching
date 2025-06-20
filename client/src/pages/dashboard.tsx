@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Header } from "@/components/header";
 import { SchedulingModal } from "@/components/scheduling-modal";
 import { ProfileModal } from "@/components/profile-modal";
+import { AvailabilityModal } from "@/components/availability-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -301,7 +302,7 @@ export default function Dashboard() {
                 <Button 
                   variant="outline" 
                   className="w-full mt-4"
-                  onClick={() => {/* TODO: Manage availability */}}
+                  onClick={() => setAvailabilityOpen(true)}
                 >
                   Manage Availability
                 </Button>

@@ -67,9 +67,14 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
     });
   };
 
+  // Get the other user in the match
+  const otherUser = match && match.user1 && match.user2 && currentUser 
+    ? (match.user1.email === currentUser.email ? match.user2 : match.user1)
+    : null;
+
   const { data: otherUserAvailability } = useQuery({
     queryKey: ["/api/availability", otherUser?.id],
-    enabled: !!otherUser,
+    enabled: !!otherUser?.id,
   });
 
   const { data: currentUserAvailability } = useQuery({
@@ -129,11 +134,6 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
   };
 
   const availableTimes = getAvailableTimes();
-
-  // Get the other user in the match
-  const otherUser = match && match.user1 && match.user2 && currentUser 
-    ? (match.user1.email === currentUser.email ? match.user2 : match.user1)
-    : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
