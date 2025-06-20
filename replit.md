@@ -169,6 +169,8 @@ Preferred communication style: Simple, everyday language.
 - Added confirmation dialog for user deletion to prevent accidental deletions
 - Implemented cascading delete to clean up user matches and meetings
 - Updated admin interface to show one match per user in cleaner format
+- Enhanced algorithm to handle odd numbers of users with proper notifications for unmatched users
+- Implemented strict one-match-per-user-per-period enforcement with double-checking
 - Added prominent opt-in/opt-out toggle in dashboard top right with visual feedback
 - Users can control participation in monthly matching rounds with large toggle switch
 - Implemented PATCH /api/user/opt-status endpoint for managing opt-in status with database persistence

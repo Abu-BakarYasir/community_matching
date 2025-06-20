@@ -511,7 +511,7 @@ export default function Admin() {
 
                   <p className="text-xs text-slate-600">
                     Weights determine how much each factor influences match scores. 
-                    Random backup matching ensures everyone gets paired.
+                    Each user gets exactly one match per period. With odd numbers, one user may remain unmatched.
                   </p>
                 </CardContent>
               </Card>
@@ -524,7 +524,7 @@ export default function Admin() {
                   <div>
                     <h4 className="font-medium mb-2">Trigger Monthly Matching</h4>
                     <p className="text-sm text-slate-600 mb-3">
-                      Manually run the matching algorithm to create new matches for all active users.
+                      Run the matching algorithm. Each user gets one match per period. With odd numbers of users, one may remain unmatched and will be notified.
                     </p>
                     <Button 
                       onClick={() => triggerMatching.mutate()}

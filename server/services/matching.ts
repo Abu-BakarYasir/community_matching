@@ -85,21 +85,49 @@ class MatchingService {
     const usersWithoutMatches = activeUsers.filter(user => userMatchCount.get(user.id) === 0);
     console.log(`${usersWithoutMatches.length} users without high-quality matches, applying random matching...`);
     
-    // Shuffle unmatched users for random pairing
-    const shuffledUnmatched = [...usersWithoutMatches].sort(() => Math.random() - 0.5);
-    
-    for (let i = 0; i < shuffledUnmatched.length - 1; i += 2) {
-      const user1 = shuffledUnmatched[i];
-      const user2 = shuffledUnmatched[i + 1];
+    if (usersWithoutMatches.length >= 2) {
+      // Shuffle unmatched users for random pairing
+      const shuffledUnmatched = [...usersWithoutMatches].sort(() => Math.random() - 0.5);
       
-      const pairKey = [user1.id, user2.id].sort().join('-');
-      
-      if (!existingPairs.has(pairKey)) {
-        const randomScore = Math.floor(Math.random() * 25) + 35; // 35-60% for random matches
-        const match = await this.createMatch(user1, user2, randomScore, monthYear);
-        matches.push(match);
+      // Pair users sequentially, ensuring each gets only one match
+      for (let i = 0; i < shuffledUnmatched.length - 1; i += 2) {
+        const user1 = shuffledUnmatched[i];
+        const user2 = shuffledUnmatched[i + 1];
         
-        existingPairs.add(pairKey);
+        // Double-check neither user has been matched yet
+        if (userMatchCount.get(user1.id) === 0 && userMatchCount.get(user2.id) === 0) {
+          const pairKey = [user1.id, user2.id].sort().join('-');
+          
+          if (!existingPairs.has(pairKey)) {
+            const randomScore = Math.floor(Math.random() * 25) + 35; // 35-60% for random matches
+            const match = await this.createMatch(user1, user2, randomScore, monthYear);
+            matches.push(match);
+            
+            userMatchCount.set(user1.id, 1);
+            userMatchCount.set(user2.id, 1);
+            existingPairs.add(pairKey);
+          }
+        }
+      }
+    }
+    
+    // Handle odd number of users - one will remain unmatched
+    const finalUnmatched = activeUsers.filter(user => userMatchCount.get(user.id) === 0);
+    if (finalUnmatched.length > 0) {
+      console.log(`${finalUnmatched.length} user(s) remain unmatched due to odd number of active users`);
+      
+      // Option 1: Create a notification for unmatched users
+      for (const user of finalUnmatched) {
+        try {
+          await storage.createNotification({
+            userId: user.id,
+            type: 'no_match',
+            title: 'No Match This Month',
+            message: 'Due to an odd number of participants, you were not matched this month. You will be prioritized next month!'
+          });
+        } catch (error) {
+          console.log('Failed to create notification for unmatched user:', error);
+        }
       }
     }
     
