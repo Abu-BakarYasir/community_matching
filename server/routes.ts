@@ -888,6 +888,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test email endpoint
+  app.post('/api/admin/test-email', async (req, res) => {
+    try {
+      console.log('📧 Admin triggered test email to averyjs@gmail.com');
+      
+      // Import email service
+      const { emailService } = await import('./services/email');
+      
+      // Create test user objects
+      const testUser = {
+        id: 999,
+        email: 'averyjs@gmail.com',
+        firstName: 'Avery',
+        lastName: 'JS',
+        jobTitle: 'Developer',
+        company: 'Test Corp',
+        industry: 'Technology',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+      
+      const testPartner = {
+        id: 998,
+        email: 'partner@example.com',
+        firstName: 'Test',
+        lastName: 'Partner',
+        jobTitle: 'Product Manager',
+        company: 'Partner Corp',
+        industry: 'Technology',
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Send test match notification
+      await emailService.sendMatchNotification(testUser, testPartner, 87);
+      
+      console.log('✅ Test email process completed');
+      res.json({ message: 'Test email sent successfully', recipient: 'averyjs@gmail.com' });
+    } catch (error) {
+      console.error('❌ Error sending test email:', error);
+      res.status(500).json({ error: 'Failed to send test email', details: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
