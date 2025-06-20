@@ -1,91 +1,30 @@
+import { useState } from "react";
 import { Header } from "@/components/header";
+import { ProfileModal } from "@/components/profile-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { User, Mail, Building, Briefcase, Calendar, MapPin, Linkedin, Edit } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Profile() {
-  const { toast } = useToast();
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   
   const { data: user } = useQuery({
     queryKey: ["/api/auth/me"],
   });
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-  const [company, setCompany] = useState("");
-  const [industry, setIndustry] = useState("");
-  const [experienceLevel, setExperienceLevel] = useState("");
-  const [bio, setBio] = useState("");
-
-  useEffect(() => {
-    if (user) {
-      setFirstName(user.firstName || "");
-      setLastName(user.lastName || "");
-      setEmail(user.email || "");
-      setJobTitle(user.jobTitle || "");
-      setCompany(user.company || "");
-      setIndustry(user.industry || "");
-      setExperienceLevel(user.experienceLevel || "");
-      setBio(user.bio || "");
-    }
-  }, [user]);
-
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("PATCH", "/api/user/profile", data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    updateProfileMutation.mutate({
-      firstName,
-      lastName,
-      jobTitle,
-      company,
-      industry,
-      experienceLevel,
-      bio,
-    });
-  };
-
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  };
-
-  const getProfileCompletion = () => {
-    let completion = 0;
-    const fields = [firstName, lastName, email, jobTitle, company, industry, experienceLevel, bio];
-    const filledFields = fields.filter(field => field && field.trim()).length;
-    return Math.round((filledFields / fields.length) * 100);
-  };
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -93,180 +32,121 @@ export default function Profile() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">Profile Settings</h2>
-          <p className="text-slate-600">Manage your personal information and preferences.</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">Profile</h2>
+          <p className="text-slate-600">View and manage your professional information.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Summary */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Avatar className="h-24 w-24 mx-auto mb-4">
-                  <AvatarImage src={user?.profileImageUrl} />
-                  <AvatarFallback className="text-2xl">
-                    {getInitials(firstName, lastName)}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Profile Overview */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={user.profileImageUrl} />
+                  <AvatarFallback className="text-lg">
+                    {user.firstName?.[0]}{user.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
-                
-                <h3 className="text-xl font-semibold text-slate-900 mb-1">
-                  {firstName} {lastName}
-                </h3>
-                <p className="text-slate-600 mb-2">{jobTitle}</p>
-                <p className="text-sm text-slate-500 mb-4">{company}</p>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-600">Profile Completion</span>
-                    <span className="font-medium">{getProfileCompletion()}%</span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all"
-                      style={{ width: `${getProfileCompletion()}%` }}
-                    />
-                  </div>
+                <div>
+                  <CardTitle className="text-xl">
+                    {user.firstName} {user.lastName}
+                  </CardTitle>
+                  <p className="text-slate-600">{user.jobTitle || "No job title set"}</p>
                 </div>
-
-                <div className="mt-4 space-y-2">
-                  {industry && (
-                    <Badge variant="secondary" className="mr-2">
-                      {industry}
-                    </Badge>
-                  )}
-                  {experienceLevel && (
-                    <Badge variant="outline">
-                      {experienceLevel} years exp.
-                    </Badge>
-                  )}
+              </div>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <Mail className="h-5 w-5 text-slate-400" />
+                  <span className="text-slate-700">{user.email}</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Profile Form */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="Enter your first name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Enter your last name"
-                        required
-                      />
-                    </div>
+                
+                {user.jobTitle && (
+                  <div className="flex items-center space-x-3">
+                    <Briefcase className="h-5 w-5 text-slate-400" />
+                    <span className="text-slate-700">{user.jobTitle}</span>
                   </div>
-
-                  <div>
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      disabled
-                      className="bg-slate-50"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">
-                      Email cannot be changed after registration
-                    </p>
+                )}
+                
+                {user.company && (
+                  <div className="flex items-center space-x-3">
+                    <Building className="h-5 w-5 text-slate-400" />
+                    <span className="text-slate-700">{user.company}</span>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="jobTitle">Job Title</Label>
-                      <Input
-                        id="jobTitle"
-                        value={jobTitle}
-                        onChange={(e) => setJobTitle(e.target.value)}
-                        placeholder="e.g., Product Manager"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="company">Company</Label>
-                      <Input
-                        id="company"
-                        value={company}
-                        onChange={(e) => setCompany(e.target.value)}
-                        placeholder="e.g., Google, Microsoft"
-                      />
-                    </div>
+                )}
+                
+                {user.industry && (
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="h-5 w-5 text-slate-400" />
+                    <Badge variant="secondary">{user.industry}</Badge>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="industry">Industry</Label>
-                      <Select value={industry} onValueChange={setIndustry}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select industry" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Technology">Technology</SelectItem>
-                          <SelectItem value="Finance">Finance</SelectItem>
-                          <SelectItem value="Healthcare">Healthcare</SelectItem>
-                          <SelectItem value="Marketing">Marketing</SelectItem>
-                          <SelectItem value="Consulting">Consulting</SelectItem>
-                          <SelectItem value="Education">Education</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="experienceLevel">Experience Level</Label>
-                      <Select value={experienceLevel} onValueChange={setExperienceLevel}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select experience" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0-2">0-2 years</SelectItem>
-                          <SelectItem value="3-5">3-5 years</SelectItem>
-                          <SelectItem value="6-10">6-10 years</SelectItem>
-                          <SelectItem value="10+">10+ years</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="bio">Professional Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      placeholder="Tell others about your professional background, interests, and what you're looking for in networking..."
-                      rows={4}
-                    />
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button 
-                      type="submit"
-                      disabled={updateProfileMutation.isPending}
+                )}
+                
+                {user.linkedinUrl && (
+                  <div className="flex items-center space-x-3">
+                    <Linkedin className="h-5 w-5 text-slate-400" />
+                    <a 
+                      href={user.linkedinUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
                     >
-                      {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
-                    </Button>
+                      LinkedIn Profile
+                    </a>
                   </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+                )}
+                
+                {user.bio && (
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium text-slate-600">Bio:</span>
+                    <p className="text-slate-900 text-sm leading-relaxed">{user.bio}</p>
+                  </div>
+                )}
+                
+                <div className="flex items-center space-x-3">
+                  <Calendar className="h-5 w-5 text-slate-400" />
+                  <span className="text-slate-700">
+                    Joined {new Date(user.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={() => setProfileModalOpen(true)}
+                className="mt-6"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Profile Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Networking Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600">Total Matches</span>
+                  <span className="font-semibold">0</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600">Meetings Scheduled</span>
+                  <span className="font-semibold">0</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600">Active Status</span>
+                  <Badge variant={user.isActive ? "default" : "secondary"}>
+                    {user.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
       

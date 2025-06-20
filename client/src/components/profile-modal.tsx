@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Linkedin } from "lucide-react";
 
 interface ProfileModalProps {
   open: boolean;
@@ -17,23 +17,37 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
-  const [jobTitle, setJobTitle] = useState(user?.jobTitle || "");
-  const [company, setCompany] = useState(user?.company || "");
-  const [industry, setIndustry] = useState(user?.industry || "");
-  const [networkingGoals, setNetworkingGoals] = useState<string[]>(user?.profileQuestions?.networkingGoals || []);
-  
+  const [jobTitle, setJobTitle] = useState("");
+  const [company, setCompany] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [bio, setBio] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [networkingGoals, setNetworkingGoals] = useState<string[]>([]);
   const { toast } = useToast();
 
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: any) => {
+  useEffect(() => {
+    if (user) {
+      setJobTitle(user.jobTitle || "");
+      setCompany(user.company || "");
+      setIndustry(user.industry || "");
+      setBio(user.bio || "");
+      setLinkedinUrl(user.linkedinUrl || "");
+      setNetworkingGoals(user.profileQuestions?.networkingGoals || []);
+    }
+  }, [user]);
+
+  const updateProfile = useMutation({
+    mutationFn: async () => {
       await apiRequest("PATCH", "/api/user/profile", {
-        jobTitle: data.jobTitle,
-        company: data.company,
-        industry: data.industry,
+        jobTitle,
+        company,
+        industry,
+        bio,
+        linkedinUrl
       });
       
       return apiRequest("POST", "/api/user/profile-questions", {
-        networkingGoals: data.networkingGoals,
+        networkingGoals
       });
     },
     onSuccess: () => {
@@ -49,135 +63,148 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
     },
     onError: () => {
       toast({
-        title: "Error",
+        title: "Update Failed",
         description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handleNetworkingGoalChange = (goal: string, checked: boolean) => {
-    if (checked) {
-      setNetworkingGoals([...networkingGoals, goal]);
-    } else {
-      setNetworkingGoals(networkingGoals.filter(g => g !== goal));
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfile.mutate();
   };
 
-
-
-  const handleSave = () => {
-    updateProfileMutation.mutate({
-      jobTitle,
-      company,
-      industry,
-      networkingGoals,
-    });
+  const handleNetworkingGoalToggle = (goal: string) => {
+    setNetworkingGoals(prev => 
+      prev.includes(goal) 
+        ? prev.filter(g => g !== goal)
+        : [...prev, goal]
+    );
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">
-            Complete Your Profile
-          </DialogTitle>
-          <DialogDescription className="text-slate-600">
-            Help us find better matches by answering a few questions
+          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogDescription>
+            Update your professional information and networking preferences.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 p-6">
-          {/* Professional Background */}
-          <div>
-            <Label className="text-sm font-semibold text-slate-900">
-              What's your current role?
-            </Label>
-            <Input
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              placeholder="e.g., Product Manager, Software Engineer"
-              className="mt-2"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="jobTitle">Job Title</Label>
+              <Input
+                id="jobTitle"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g. Senior Data Scientist"
+              />
+            </div>
 
-          <div>
-            <Label className="text-sm font-semibold text-slate-900">
-              Company
-            </Label>
-            <Input
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="e.g., Google, Microsoft, Startup Inc."
-              className="mt-2"
-            />
-          </div>
+            <div>
+              <Label htmlFor="company">Company</Label>
+              <Input
+                id="company"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                placeholder="e.g. Acme Corp"
+              />
+            </div>
 
-          {/* Industry */}
-          <div>
-            <Label className="text-sm font-semibold text-slate-900 mb-3 block">
-              Which industry do you work in?
-            </Label>
-            <Select value={industry} onValueChange={setIndustry}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select industry..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Technology">Technology</SelectItem>
-                <SelectItem value="Finance">Finance</SelectItem>
-                <SelectItem value="Healthcare">Healthcare</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Consulting">Consulting</SelectItem>
-                <SelectItem value="Education">Education</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div>
+              <Label htmlFor="industry">Industry</Label>
+              <Select value={industry} onValueChange={setIndustry}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Technology">Technology</SelectItem>
+                  <SelectItem value="Healthcare">Healthcare</SelectItem>
+                  <SelectItem value="Finance">Finance</SelectItem>
+                  <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                  <SelectItem value="Retail">Retail</SelectItem>
+                  <SelectItem value="Consulting">Consulting</SelectItem>
+                  <SelectItem value="Government">Government</SelectItem>
+                  <SelectItem value="Non-profit">Non-profit</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Monthly Focus */}
-          <div>
-            <Label className="text-sm font-semibold text-slate-900 mb-3 block">
-              What do you want to focus on this month? (Select all that apply)
-            </Label>
-            <div className="space-y-2">
-              {[
-                { value: "learning-technical-skills", label: "Learning Technical Skills" },
-                { value: "building-data-projects", label: "Building Data Projects" },
-                { value: "job-hunting", label: "Job Hunting" },
-                { value: "networking", label: "Networking" },
-              ].map((goal) => (
-                <div key={goal.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={goal.value}
-                    checked={networkingGoals.includes(goal.value)}
-                    onCheckedChange={(checked) => handleNetworkingGoalChange(goal.value, checked as boolean)}
-                  />
-                  <Label htmlFor={goal.value} className="text-slate-700">
-                    {goal.label}
-                  </Label>
-                </div>
-              ))}
+            <div>
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Tell us about yourself, your interests, and what you're looking to achieve through networking..."
+                rows={4}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="linkedinUrl">LinkedIn Profile</Label>
+              <div className="relative">
+                <Linkedin className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  id="linkedinUrl"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/yourprofile"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>Monthly Focus Goals</Label>
+              <p className="text-sm text-slate-600 mb-3">
+                What are you hoping to achieve this month? (Select all that apply)
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: "learning_technical_skills", label: "Learning Technical Skills" },
+                  { value: "building-data-projects", label: "Building Data Projects" },
+                  { value: "job_hunting", label: "Job Hunting" },
+                  { value: "networking", label: "General Networking" },
+                  { value: "business_opportunities", label: "Business Opportunities" },
+                  { value: "mentorship", label: "Finding Mentorship" }
+                ].map((goal) => (
+                  <div key={goal.value} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={goal.value}
+                      checked={networkingGoals.includes(goal.value)}
+                      onChange={() => handleNetworkingGoalToggle(goal.value)}
+                      className="rounded border-slate-300"
+                    />
+                    <Label htmlFor={goal.value} className="text-sm font-normal">
+                      {goal.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-
-        </div>
-
-        <div className="flex justify-end space-x-3 p-6 border-t">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={updateProfileMutation.isPending}
-          >
-            Skip for now
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={updateProfileMutation.isPending}
-          >
-            {updateProfileMutation.isPending ? "Saving..." : "Save Profile"}
-          </Button>
-        </div>
+          <div className="flex justify-end space-x-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={updateProfile.isPending}>
+              {updateProfile.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

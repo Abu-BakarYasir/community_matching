@@ -10,9 +10,9 @@ export const users = pgTable("users", {
   jobTitle: text("job_title"),
   company: text("company"),
   industry: text("industry"),
-  experienceLevel: text("experience_level"), // "0-2", "3-5", "6-10", "10+"
   profileImageUrl: text("profile_image_url"),
   bio: text("bio"),
+  linkedinUrl: text("linkedin_url"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
