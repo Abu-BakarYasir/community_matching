@@ -14,7 +14,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [showMagicLink, setShowMagicLink] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();

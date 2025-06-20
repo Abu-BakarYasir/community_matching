@@ -9,6 +9,11 @@ import Register from "@/pages/register";
 import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
+// Create a separate Login component that defaults to login mode
+function Login() {
+  return <Register />;
+}
+
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/me"],
@@ -24,7 +29,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return <Register />;
+    return <Login />;
   }
 
   return <>{children}</>;
