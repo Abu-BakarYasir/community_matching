@@ -71,6 +71,8 @@ export const notifications = pgTable("notifications", {
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+}).extend({
+  linkedinUrl: z.string().url().optional().or(z.literal(""))
 });
 
 export const insertProfileQuestionsSchema = createInsertSchema(profileQuestions).omit({

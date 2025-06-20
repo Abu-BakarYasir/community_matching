@@ -103,7 +103,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### June 20, 2025 - Opt-in Toggle & Database Integration Completed  
+### June 20, 2025 - Profile System Unified & Login Page Default
+- Made login page the default route instead of registration for better user flow
+- Unified profile editing to use same modal on both dashboard and profile page
+- Removed experience level field and added LinkedIn URL field to user profiles
+- Enhanced profile modal with LinkedIn icon and better field organization
+- Profile page now shows LinkedIn as clickable link and uses modal for editing
 - Added prominent opt-in/opt-out toggle in dashboard top right with visual feedback
 - Users can control participation in monthly matching rounds with large toggle switch
 - Implemented PATCH /api/user/opt-status endpoint for managing opt-in status with database persistence

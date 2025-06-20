@@ -269,6 +269,12 @@ export default function Profile() {
           </div>
         </div>
       </main>
+      
+      <ProfileModal 
+        open={profileModalOpen}
+        onOpenChange={setProfileModalOpen}
+        user={user}
+      />
     </div>
   );
 }
