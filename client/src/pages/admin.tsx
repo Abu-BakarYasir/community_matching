@@ -145,6 +145,10 @@ export default function Admin() {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString();
+  };
+
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
@@ -308,6 +312,7 @@ export default function Admin() {
                       <TableHead>Match Score</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
+                      <TableHead>Time</TableHead>
                       <TableHead>Actions</TableHead>
                       <TableHead>Meeting</TableHead>
                     </TableRow>
@@ -536,7 +541,7 @@ export default function Admin() {
                       ) : (
                         <Play className="h-4 w-4 mr-2" />
                       )}
-                      Run Matching Now
+                      {triggerMatching.isPending ? "Running..." : "Run Matching Now"}
                     </Button>
                   </div>
                 </CardContent>

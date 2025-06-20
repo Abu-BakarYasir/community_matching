@@ -806,6 +806,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Trigger manual matching (for testing)
   app.post("/api/admin/trigger-matching", requireAuth, async (req, res) => {
     try {
+      // Clear all existing matches for this period first
+      const currentDate = new Date();
+      const monthYear = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      
+      console.log(`Clearing existing matches for period: ${monthYear}`);
+      const existingMatches = await storage.getMatchesByMonth(monthYear);
+      
+      for (const match of existingMatches) {
+        // Delete any meetings associated with this match
+        if (match.meeting) {
+          await storage.deleteMeeting?.(match.meeting.id);
+        }
+        // Delete the match
+        await storage.deleteMatch(match.id);
+      }
+      
+      console.log(`Cleared ${existingMatches.length} existing matches`);
+      
+      // Now run fresh matching
       const matches = await schedulerService.triggerMonthlyMatching(appSettings.weights);
       appSettings.lastMatchingRun = new Date().toISOString();
       res.json({ matches: matches.length, message: "Matching completed successfully" });
