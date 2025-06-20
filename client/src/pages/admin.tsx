@@ -310,7 +310,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="settings">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Matching Settings</CardTitle>
@@ -341,6 +341,90 @@ export default function Admin() {
                   >
                     {updateSettings.isPending ? "Updating..." : "Update Settings"}
                   </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Algorithm Weights</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Industry Match: {settings?.weights?.industry || 35}%</Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={settings?.weights?.industry || 35}
+                      onChange={(e) => {
+                        const newWeights = {
+                          ...settings?.weights,
+                          industry: parseInt(e.target.value)
+                        };
+                        updateSettings.mutate({ weights: newWeights });
+                      }}
+                      className="w-full mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Company Type: {settings?.weights?.company || 20}%</Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="40"
+                      value={settings?.weights?.company || 20}
+                      onChange={(e) => {
+                        const newWeights = {
+                          ...settings?.weights,
+                          company: parseInt(e.target.value)
+                        };
+                        updateSettings.mutate({ weights: newWeights });
+                      }}
+                      className="w-full mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Networking Goals: {settings?.weights?.networkingGoals || 30}%</Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={settings?.weights?.networkingGoals || 30}
+                      onChange={(e) => {
+                        const newWeights = {
+                          ...settings?.weights,
+                          networkingGoals: parseInt(e.target.value)
+                        };
+                        updateSettings.mutate({ weights: newWeights });
+                      }}
+                      className="w-full mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Job Title: {settings?.weights?.jobTitle || 15}%</Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="30"
+                      value={settings?.weights?.jobTitle || 15}
+                      onChange={(e) => {
+                        const newWeights = {
+                          ...settings?.weights,
+                          jobTitle: parseInt(e.target.value)
+                        };
+                        updateSettings.mutate({ weights: newWeights });
+                      }}
+                      className="w-full mt-2"
+                    />
+                  </div>
+
+                  <p className="text-xs text-slate-600">
+                    Weights determine how much each factor influences match scores. 
+                    Random backup matching ensures everyone gets paired.
+                  </p>
                 </CardContent>
               </Card>
 
