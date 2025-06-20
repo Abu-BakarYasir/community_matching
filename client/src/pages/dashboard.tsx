@@ -53,7 +53,8 @@ export default function Dashboard() {
   };
 
   const getOtherUser = (match: MatchWithUsers) => {
-    return match.user1.email === user?.email ? match.user2 : match.user1;
+    if (!match.user1 || !match.user2 || !user) return null;
+    return match.user1.email === user.email ? match.user2 : match.user1;
   };
 
   const getProfileCompletion = () => {
@@ -185,6 +186,7 @@ export default function Dashboard() {
                   <div className="space-y-4">
                     {recentMatches.map((match: MatchWithUsers) => {
                       const otherUser = getOtherUser(match);
+                      if (!otherUser) return null;
                       return (
                         <div
                           key={match.id}
@@ -212,14 +214,13 @@ export default function Dashboard() {
                             <Button variant="outline" size="sm">
                               View Profile
                             </Button>
-                            {match.status === 'pending' && (
-                              <Button 
-                                size="sm"
-                                onClick={() => handleScheduleMatch(match)}
-                              >
-                                Schedule Meeting
-                              </Button>
-                            )}
+                            <Button 
+                              size="sm"
+                              onClick={() => handleScheduleMatch(match)}
+                              disabled={match.status !== 'pending'}
+                            >
+                              {match.status === 'pending' ? 'Schedule Meeting' : 'Meeting Scheduled'}
+                            </Button>
                             {match.status === 'meeting_scheduled' && (
                               <Badge variant="secondary">Meeting Scheduled</Badge>
                             )}
@@ -258,6 +259,8 @@ export default function Dashboard() {
                   <div className="space-y-4">
                     {upcomingMeetings.map((meeting: MeetingWithMatch) => {
                       const otherUser = getOtherUser(meeting.match);
+                      if (!otherUser) return null;
+                      
                       const meetingDate = new Date(meeting.scheduledAt);
                       const isToday = meetingDate.toDateString() === new Date().toDateString();
                       
