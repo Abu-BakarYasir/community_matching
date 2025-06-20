@@ -103,9 +103,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### June 20, 2025 - Profile System Completed & Streamlined
+### June 20, 2025 - Dashboard Redesign & Profile System Completed
+- Reorganized dashboard layout: Next Matching Round at top, Upcoming Meetings second, combined Profile & Availability section
+- Fixed profile completion calculation to properly show 100% when all fields completed (removed availability from calculation)
 - Updated profile questions to focus on monthly goals: learning technical skills, building data projects, job hunting, networking
 - Removed years of experience and typical availability questions per user preference
+- Combined Profile and Availability into single streamlined section with dual action buttons
+- Added prominent Next Matching Round card with countdown and completion prompts
 - Fixed availability saving system completely - now working perfectly with proper API integration
 - Implemented complete profile update system with session-based storage for development mode
 - Fixed ProfileModal component with proper DialogDescription import and streamlined form
