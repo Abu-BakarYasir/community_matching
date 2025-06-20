@@ -111,9 +111,33 @@ export default function Admin() {
     },
   });
 
+  const deleteMatch = useMutation({
+    mutationFn: (matchId: number) => apiRequest("DELETE", `/api/admin/matches/${matchId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
+      toast({
+        title: "Match Deleted",
+        description: "Match has been successfully deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete match. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteUser = (userId: number, userName: string) => {
     if (confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
       deleteUser.mutate(userId);
+    }
+  };
+
+  const handleDeleteMatch = (matchId: number, matchName: string) => {
+    if (confirm(`Are you sure you want to delete the match between ${matchName}? This action cannot be undone.`)) {
+      deleteMatch.mutate(matchId);
     }
   };
 
@@ -284,6 +308,7 @@ export default function Admin() {
                       <TableHead>Match Score</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
+                      <TableHead>Actions</TableHead>
                       <TableHead>Meeting</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -524,7 +549,7 @@ export default function Admin() {
       {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Edit User</h3>
             <form onSubmit={(e) => {
               e.preventDefault();
@@ -583,6 +608,43 @@ export default function Admin() {
                       <SelectItem value="Government">Government</SelectItem>
                       <SelectItem value="Non-profit">Non-profit</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="bio">Bio</Label>
+                  <textarea
+                    id="bio"
+                    value={editingUser.bio || ""}
+                    onChange={(e) => setEditingUser({...editingUser, bio: e.target.value})}
+                    className="w-full p-2 border border-gray-300 rounded-md h-20 resize-none"
+                    placeholder="Professional bio..."
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
+                  <Input
+                    id="linkedinUrl"
+                    value={editingUser.linkedinUrl || ""}
+                    onChange={(e) => setEditingUser({...editingUser, linkedinUrl: e.target.value})}
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Status</Label>
+                  <Select 
+                    value={editingUser.isActive ? "active" : "inactive"} 
+                    onValueChange={(value) => setEditingUser({...editingUser, isActive: value === "active"})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

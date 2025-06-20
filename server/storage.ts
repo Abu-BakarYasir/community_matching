@@ -30,6 +30,7 @@ export interface IStorage {
   getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]>;
   createMatch(match: InsertMatch): Promise<Match>;
   updateMatch(id: number, updates: Partial<InsertMatch>): Promise<Match | undefined>;
+  deleteMatch(id: number): Promise<boolean>;
 
   // Meeting operations
   getMeeting(id: number): Promise<Meeting | undefined>;

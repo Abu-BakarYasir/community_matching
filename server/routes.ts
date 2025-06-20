@@ -763,6 +763,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete match (admin only)
+  app.delete("/api/admin/matches/:id", requireAuth, async (req, res) => {
+    try {
+      const matchId = parseInt(req.params.id);
+      
+      // Delete any meetings associated with this match first
+      const meetings = await storage.getMeetingsByUser(matchId); // This needs to be adapted for match-based lookup
+      
+      // Delete the match
+      const success = await storage.deleteMatch?.(matchId);
+      if (!success) {
+        return res.status(404).json({ message: "Match not found" });
+      }
+      
+      res.json({ message: "Match deleted successfully" });
+    } catch (error) {
+      console.error("Delete match error:", error);
+      res.status(500).json({ message: "Failed to delete match" });
+    }
+  });
+
   // Trigger manual matching (for testing)
   app.post("/api/admin/trigger-matching", requireAuth, async (req, res) => {
     try {
