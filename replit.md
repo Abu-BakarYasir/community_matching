@@ -103,7 +103,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### June 20, 2025 - Database Integration & Dashboard Cleanup Completed
+### June 20, 2025 - Opt-in Toggle & Database Integration Completed  
+- Added prominent opt-in/opt-out toggle in dashboard top right with visual feedback
+- Users can control participation in monthly matching rounds with large toggle switch
+- Implemented PATCH /api/user/opt-status endpoint for managing opt-in status with database persistence
+- Enhanced Next Matching Round card to show appropriate status based on opt-in state and profile completion
 - Removed KPI score cards from dashboard top section per user preference (total matches, scheduled meetings, etc.)
 - Implemented full database persistence for profile and availability data with session fallback
 - Enhanced user profile API to create/update users in database automatically on login

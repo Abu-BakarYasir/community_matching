@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Users, Calendar, Clock, Handshake, ArrowRight, Video, Coffee, User } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { MatchWithUsers, MeetingWithMatch } from "@shared/schema";
 
 export default function Dashboard() {
@@ -42,6 +44,34 @@ export default function Dashboard() {
   const handleScheduleMatch = (match: MatchWithUsers) => {
     setSelectedMatch(match);
     setSchedulingOpen(true);
+  };
+
+  const { toast } = useToast();
+
+  const optToggleMutation = useMutation({
+    mutationFn: async (isActive: boolean) => {
+      return apiRequest("PATCH", "/api/user/opt-status", { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast({
+        title: user?.isActive ? "Opted Out" : "Opted In",
+        description: user?.isActive 
+          ? "You won't be included in future matches until you opt back in." 
+          : "You'll be included in the next matching round!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update opt-in status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleOptToggle = () => {
+    optToggleMutation.mutate(!user?.isActive);
   };
 
   const getMatchScoreClass = (score: number) => {
@@ -91,12 +121,45 @@ export default function Dashboard() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
+        {/* Welcome Section with Opt-in Toggle */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">
-            Welcome back, {user?.firstName}!
-          </h2>
-          <p className="text-slate-600">Here's your networking activity for this month.</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                Welcome back, {user?.firstName}!
+              </h2>
+              <p className="text-slate-600">Here's your networking activity for this month.</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <p className="text-sm font-medium text-slate-900">
+                  {user?.isActive ? "Opted In" : "Opted Out"}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {user?.isActive ? "You'll be included in matches" : "You won't be matched"}
+                </p>
+              </div>
+              <Button
+                variant={user?.isActive ? "default" : "outline"}
+                onClick={handleOptToggle}
+                disabled={optToggleMutation.isPending}
+                className={`relative w-24 h-12 rounded-full transition-all ${
+                  user?.isActive 
+                    ? "bg-green-500 hover:bg-green-600 text-white border-green-500" 
+                    : "bg-slate-200 hover:bg-slate-300 text-slate-600 border-slate-300"
+                }`}
+              >
+                <div className={`absolute left-1 top-1 w-10 h-10 bg-white rounded-full shadow-md transition-transform ${
+                  user?.isActive ? "translate-x-12" : "translate-x-0"
+                }`} />
+                <span className={`relative z-10 text-xs font-medium ${
+                  user?.isActive ? "text-white" : "text-slate-600"
+                }`}>
+                  {optToggleMutation.isPending ? "..." : (user?.isActive ? "ON" : "OFF")}
+                </span>
+              </Button>
+            </div>
+          </div>
         </div>
 
 
@@ -118,10 +181,22 @@ export default function Dashboard() {
                   <div className="text-sm text-slate-600">days left</div>
                 </div>
               </div>
-              {profileCompletion < 100 && (
+              {!user?.isActive ? (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800">
+                    You're currently opted out of matching. Toggle the switch above to participate in the next round.
+                  </p>
+                </div>
+              ) : profileCompletion < 100 ? (
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                   <p className="text-sm text-amber-800">
                     Complete your profile to participate in the next matching round!
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    You're all set for the next matching round!
                   </p>
                 </div>
               )}

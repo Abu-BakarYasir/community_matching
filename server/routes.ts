@@ -312,6 +312,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user opt-in status
+  app.patch("/api/user/opt-status", requireAuth, async (req, res) => {
+    try {
+      console.log("Updating opt-in status:", req.body);
+      const email = req.session.userEmail!;
+      const { isActive } = req.body;
+      
+      // Try to update in database first
+      try {
+        let user = await storage.getUserByEmail(email);
+        if (user) {
+          user = await storage.updateUser(user.id, { isActive });
+          console.log("Opt-in status updated in database:", user);
+          res.json(user);
+          return;
+        }
+      } catch (dbError) {
+        console.log("Database update failed, using session fallback:", dbError);
+      }
+      
+      // Fallback to session storage
+      if (!req.session.userProfile) {
+        req.session.userProfile = {};
+      }
+      req.session.userProfile.isActive = isActive;
+      
+      console.log("Opt-in status updated in session:", req.session.userProfile);
+      res.json({ message: "Opt-in status updated successfully" });
+    } catch (error) {
+      console.error("Update opt-in status error:", error);
+      res.status(500).json({ message: "Failed to update opt-in status" });
+    }
+  });
+
   // Get user matches
   app.get("/api/matches", requireAuth, async (req, res) => {
     try {
