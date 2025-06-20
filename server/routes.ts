@@ -189,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // Update user with session data if it exists
         if (req.session.userProfile) {
-          user = await storage.updateUser(user.id, req.session.userProfile);
+          user = await storage.updateUser(user.id, req.session.userProfile) || user;
         }
       }
 
@@ -242,9 +242,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         let user = await storage.getUserByEmail(email);
         if (user) {
-          user = await storage.updateUser(user.id, req.body);
-          console.log("Profile updated in database:", user);
-          res.json(user);
+          const updatedUser = await storage.updateUser(user.id, req.body);
+          console.log("Profile updated in database:", updatedUser);
+          res.json(updatedUser || user);
           return;
         }
       } catch (dbError) {
