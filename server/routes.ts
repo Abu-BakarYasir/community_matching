@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { emailService } from "./services/email";
 import { schedulerService } from "./services/scheduler";
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema } from "@shared/schema";
+import { createDevUser, getDevUser, getDevUserByEmail } from "./dev-auth";
 import { z } from "zod";
 
 // Extend session data type
@@ -121,6 +122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email } = req.body;
+      console.log("Login attempt for:", email);
       
       if (!email || !email.includes('@')) {
         return res.status(400).json({ message: "Valid email required" });
@@ -129,6 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use development mode when database is down
       let user = getDevUserByEmail(email);
       if (!user) {
+        console.log("Creating new dev user for:", email);
         user = createDevUser(email);
       }
       

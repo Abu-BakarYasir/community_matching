@@ -43,8 +43,11 @@ export default function Register() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/auth/login", data);
-      return response.json();
+      const response = await apiRequest("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
@@ -52,7 +55,7 @@ export default function Register() {
         title: "Welcome back!",
         description: "You have been logged in successfully.",
       });
-      setLocation("/dashboard");
+      setLocation("/");
     },
     onError: (error: any) => {
       toast({

@@ -1,5 +1,6 @@
 // Development authentication bypass for database issues
-const devUsers = new Map();
+const devUsers = new Map<number, any>();
+const devUsersByEmail = new Map<string, any>();
 let userIdCounter = 1;
 
 export function createDevUser(email: string) {
@@ -20,6 +21,8 @@ export function createDevUser(email: string) {
     bio: null
   };
   devUsers.set(id, user);
+  devUsersByEmail.set(email, user);
+  console.log(`Created dev user: ${email} with ID ${id}`);
   return user;
 }
 
@@ -28,5 +31,5 @@ export function getDevUser(id: number) {
 }
 
 export function getDevUserByEmail(email: string) {
-  return Array.from(devUsers.values()).find(user => user.email === email);
+  return devUsersByEmail.get(email);
 }
