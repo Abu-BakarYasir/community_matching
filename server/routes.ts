@@ -619,8 +619,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get("/api/admin/users", requireAuth, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Get admin users error:", error);
+      res.status(500).json({ message: "Failed to get users" });
+    }
+  });
+
+  app.get("/api/admin/matches", requireAuth, async (req, res) => {
+    try {
+      // Get all matches with user data
+      const allUsers = await storage.getAllUsers();
+      const allMatches = [];
+      
+      for (const user of allUsers) {
+        const userMatches = await storage.getMatchesByUser(user.id);
+        allMatches.push(...userMatches);
+      }
+      
+      // Remove duplicates (same match appears for both users)
+      const uniqueMatches = allMatches.filter((match, index, self) => 
+        index === self.findIndex(m => m.id === match.id)
+      );
+      
+      res.json(uniqueMatches);
+    } catch (error) {
+      console.error("Get admin matches error:", error);
+      res.status(500).json({ message: "Failed to get matches" });
+    }
+  });
+
+  app.get("/api/admin/meetings", requireAuth, async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      const allMeetings = [];
+      
+      for (const user of allUsers) {
+        const userMeetings = await storage.getMeetingsByUser(user.id);
+        allMeetings.push(...userMeetings);
+      }
+      
+      // Remove duplicates
+      const uniqueMeetings = allMeetings.filter((meeting, index, self) => 
+        index === self.findIndex(m => m.id === meeting.id)
+      );
+      
+      res.json(uniqueMeetings);
+    } catch (error) {
+      console.error("Get admin meetings error:", error);
+      res.status(500).json({ message: "Failed to get meetings" });
+    }
+  });
+
+  app.get("/api/admin/settings", requireAuth, async (req, res) => {
+    try {
+      // For now, return default settings
+      // In a real app, this would come from a settings table
+      res.json({
+        matchingDay: 1, // First day of the month
+        isMatchingEnabled: true,
+        lastMatchingRun: null
+      });
+    } catch (error) {
+      console.error("Get admin settings error:", error);
+      res.status(500).json({ message: "Failed to get settings" });
+    }
+  });
+
+  app.patch("/api/admin/settings", requireAuth, async (req, res) => {
+    try {
+      // For now, just acknowledge the update
+      // In a real app, this would update a settings table
+      console.log("Admin settings updated:", req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Update admin settings error:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
   // Trigger manual matching (for testing)
-  app.post("/api/admin/trigger-matching", async (req, res) => {
+  app.post("/api/admin/trigger-matching", requireAuth, async (req, res) => {
     try {
       const matches = await schedulerService.triggerMonthlyMatching();
       res.json({ matches: matches.length, message: "Matching completed successfully" });

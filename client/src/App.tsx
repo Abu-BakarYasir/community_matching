@@ -54,6 +54,11 @@ function Router() {
           <Profile />
         </AuthWrapper>
       )} />
+      <Route path="/admin" component={() => (
+        <AuthWrapper>
+          <Admin />
+        </AuthWrapper>
+      )} />
       <Route path="/register" component={Register} />
       <Route component={NotFound} />
     </Switch>
