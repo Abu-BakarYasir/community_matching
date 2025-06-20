@@ -675,15 +675,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Store settings in memory (in production, use database)
+  let appSettings = {
+    matchingDay: 1,
+    isMatchingEnabled: true,
+    lastMatchingRun: null,
+    weights: {
+      industry: 35,
+      company: 20,
+      networkingGoals: 30,
+      jobTitle: 15
+    }
+  };
+
   app.get("/api/admin/settings", requireAuth, async (req, res) => {
     try {
-      // For now, return default settings
-      // In a real app, this would come from a settings table
-      res.json({
-        matchingDay: 1, // First day of the month
-        isMatchingEnabled: true,
-        lastMatchingRun: null
-      });
+      res.json(appSettings);
     } catch (error) {
       console.error("Get admin settings error:", error);
       res.status(500).json({ message: "Failed to get settings" });
@@ -692,10 +699,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/admin/settings", requireAuth, async (req, res) => {
     try {
-      // For now, just acknowledge the update
-      // In a real app, this would update a settings table
       console.log("Admin settings updated:", req.body);
-      res.json({ success: true });
+      
+      // Update settings
+      if (req.body.matchingDay) {
+        appSettings.matchingDay = req.body.matchingDay;
+      }
+      
+      if (req.body.weights) {
+        appSettings.weights = { ...appSettings.weights, ...req.body.weights };
+      }
+      
+      res.json(appSettings);
     } catch (error) {
       console.error("Update admin settings error:", error);
       res.status(500).json({ message: "Failed to update settings" });
@@ -705,7 +720,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Trigger manual matching (for testing)
   app.post("/api/admin/trigger-matching", requireAuth, async (req, res) => {
     try {
-      const matches = await schedulerService.triggerMonthlyMatching();
+      const matches = await schedulerService.triggerMonthlyMatching(appSettings.weights);
+      appSettings.lastMatchingRun = new Date().toISOString();
       res.json({ matches: matches.length, message: "Matching completed successfully" });
     } catch (error) {
       console.error("Manual matching error:", error);

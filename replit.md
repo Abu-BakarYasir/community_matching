@@ -148,6 +148,18 @@ Preferred communication style: Simple, everyday language.
 - Implemented manual matching trigger functionality
 - Added admin API endpoints for users, matches, meetings, and settings
 - Integrated with existing scheduler service for administrative control
+
+### June 20, 2025 - Enhanced Matching Algorithm & Admin Controls
+- Rebuilt matching algorithm to work with current user schema (removed experienceLevel dependency)
+- Added configurable algorithm weights in admin dashboard with sliders
+- Implemented two-phase matching: high-quality matches (60%+) + random backup matching
+- Added company compatibility scoring and job title matching logic
+- Enhanced networking goals overlap calculation with union-based scoring
+- Implemented random backup matching to ensure all opted-in users get paired
+- Added real-time weight adjustment in admin interface
+- Updated algorithm to use industry (35%), company (20%), networking goals (30%), job title (15%) weights
+- Random matches get 35-60% scores to distinguish from high-quality matches
+- Added comprehensive error handling for email and notification failures
 - Added prominent opt-in/opt-out toggle in dashboard top right with visual feedback
 - Users can control participation in monthly matching rounds with large toggle switch
 - Implemented PATCH /api/user/opt-status endpoint for managing opt-in status with database persistence

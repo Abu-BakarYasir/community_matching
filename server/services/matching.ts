@@ -3,7 +3,7 @@ import { emailService } from './email';
 import type { User, ProfileQuestions } from '@shared/schema';
 
 class MatchingService {
-  async runMonthlyMatching() {
+  async runMonthlyMatching(weights?: any) {
     console.log('Starting monthly matching process...');
     
     const currentDate = new Date();
@@ -15,6 +15,11 @@ class MatchingService {
     
     console.log(`Found ${activeUsers.length} active users for matching`);
     
+    if (activeUsers.length < 2) {
+      console.log('Not enough users for matching');
+      return [];
+    }
+    
     // Get existing matches for this month to avoid duplicates
     const existingMatches = await storage.getMatchesByMonth(monthYear);
     const existingPairs = new Set(
@@ -24,8 +29,15 @@ class MatchingService {
     );
     
     const matches = [];
+    const unmatchedUsers = [];
+    const userMatchCount = new Map();
     
-    // Generate matches for each user
+    // Initialize match counts
+    activeUsers.forEach(user => userMatchCount.set(user.id, 0));
+    
+    // Phase 1: High-quality matching (60%+ compatibility)
+    const potentialMatches = [];
+    
     for (let i = 0; i < activeUsers.length; i++) {
       for (let j = i + 1; j < activeUsers.length; j++) {
         const user1 = activeUsers[i];
@@ -39,38 +51,52 @@ class MatchingService {
         }
         
         // Calculate match score
-        const matchScore = await this.calculateMatchScore(user1, user2);
+        const matchScore = await this.calculateMatchScore(user1, user2, weights);
         
-        // Only create matches with score >= 60%
-        if (matchScore >= 60) {
-          const match = await storage.createMatch({
-            user1Id: user1.id,
-            user2Id: user2.id,
-            matchScore,
-            monthYear,
-            status: 'pending'
-          });
-          
-          matches.push(match);
-          
-          // Send email notifications
-          await emailService.sendMatchNotification(user1, user2, matchScore);
-          
-          // Create notifications
-          await storage.createNotification({
-            userId: user1.id,
-            type: 'match_found',
-            title: 'New Match Found!',
-            message: `You have a new ${matchScore}% match with ${user2.firstName} ${user2.lastName}`
-          });
-          
-          await storage.createNotification({
-            userId: user2.id,
-            type: 'match_found',
-            title: 'New Match Found!',
-            message: `You have a new ${matchScore}% match with ${user1.firstName} ${user1.lastName}`
-          });
-        }
+        potentialMatches.push({
+          user1,
+          user2,
+          matchScore,
+          pairKey
+        });
+      }
+    }
+    
+    // Sort by match score (highest first)
+    potentialMatches.sort((a, b) => b.matchScore - a.matchScore);
+    
+    // Create high-quality matches
+    for (const potential of potentialMatches) {
+      if (potential.matchScore >= 60) {
+        const match = await this.createMatch(potential.user1, potential.user2, potential.matchScore, monthYear);
+        matches.push(match);
+        
+        userMatchCount.set(potential.user1.id, userMatchCount.get(potential.user1.id) + 1);
+        userMatchCount.set(potential.user2.id, userMatchCount.get(potential.user2.id) + 1);
+        
+        existingPairs.add(potential.pairKey);
+      }
+    }
+    
+    // Phase 2: Random backup matching for unmatched users
+    const usersWithoutMatches = activeUsers.filter(user => userMatchCount.get(user.id) === 0);
+    console.log(`${usersWithoutMatches.length} users without high-quality matches, applying random matching...`);
+    
+    // Shuffle unmatched users for random pairing
+    const shuffledUnmatched = [...usersWithoutMatches].sort(() => Math.random() - 0.5);
+    
+    for (let i = 0; i < shuffledUnmatched.length - 1; i += 2) {
+      const user1 = shuffledUnmatched[i];
+      const user2 = shuffledUnmatched[i + 1];
+      
+      const pairKey = [user1.id, user2.id].sort().join('-');
+      
+      if (!existingPairs.has(pairKey)) {
+        const randomScore = Math.floor(Math.random() * 25) + 35; // 35-60% for random matches
+        const match = await this.createMatch(user1, user2, randomScore, monthYear);
+        matches.push(match);
+        
+        existingPairs.add(pairKey);
       }
     }
     
@@ -78,64 +104,107 @@ class MatchingService {
     return matches;
   }
   
-  private async calculateMatchScore(user1: User, user2: User): Promise<number> {
+  private async createMatch(user1: User, user2: User, matchScore: number, monthYear: string) {
+    const match = await storage.createMatch({
+      user1Id: user1.id,
+      user2Id: user2.id,
+      matchScore,
+      monthYear,
+      status: 'pending'
+    });
+    
+    // Send email notifications
+    try {
+      await emailService.sendMatchNotification(user1, user2, matchScore);
+    } catch (error) {
+      console.log('Email notification failed:', error);
+    }
+    
+    // Create notifications
+    try {
+      await storage.createNotification({
+        userId: user1.id,
+        type: 'match_found',
+        title: 'New Match Found!',
+        message: `You have a new ${matchScore}% match with ${user2.firstName} ${user2.lastName}`
+      });
+      
+      await storage.createNotification({
+        userId: user2.id,
+        type: 'match_found',
+        title: 'New Match Found!',
+        message: `You have a new ${matchScore}% match with ${user1.firstName} ${user1.lastName}`
+      });
+    } catch (error) {
+      console.log('Notification creation failed:', error);
+    }
+    
+    return match;
+  }
+  
+  private async calculateMatchScore(user1: User, user2: User, weights?: any): Promise<number> {
     const profile1 = await storage.getProfileQuestions(user1.id);
     const profile2 = await storage.getProfileQuestions(user2.id);
     
+    // Default weights (can be overridden from admin settings)
+    const defaultWeights = {
+      industry: 35,
+      company: 20,
+      networkingGoals: 30,
+      jobTitle: 15
+    };
+    
+    const w = weights || defaultWeights;
     let score = 0;
     let factors = 0;
     
-    // Industry matching (25% weight)
+    // Industry matching
     if (user1.industry && user2.industry) {
       factors++;
       if (user1.industry === user2.industry) {
-        score += 25;
+        score += w.industry;
       } else {
-        // Related industries get partial score
         score += this.getIndustryCompatibility(user1.industry, user2.industry);
       }
     }
     
-    // Experience level matching (20% weight)
-    if (user1.experienceLevel && user2.experienceLevel) {
+    // Company size/type compatibility
+    if (user1.company && user2.company) {
       factors++;
-      score += this.getExperienceCompatibility(user1.experienceLevel, user2.experienceLevel);
+      if (user1.company === user2.company) {
+        score += w.company; // Same company
+      } else {
+        score += this.getCompanyCompatibility(user1.company, user2.company);
+      }
     }
     
-    // Networking goals overlap (30% weight)
+    // Job title compatibility
+    if (user1.jobTitle && user2.jobTitle) {
+      factors++;
+      score += this.getJobTitleCompatibility(user1.jobTitle, user2.jobTitle, w.jobTitle);
+    }
+    
+    // Networking goals overlap
     if (profile1?.networkingGoals && profile2?.networkingGoals) {
       factors++;
-      const goals1 = profile1.networkingGoals as string[];
-      const goals2 = profile2.networkingGoals as string[];
-      const overlap = goals1.filter(goal => goals2.includes(goal)).length;
-      const maxGoals = Math.max(goals1.length, goals2.length);
-      score += (overlap / maxGoals) * 30;
+      const goals1 = Array.isArray(profile1.networkingGoals) ? profile1.networkingGoals : [];
+      const goals2 = Array.isArray(profile2.networkingGoals) ? profile2.networkingGoals : [];
+      
+      if (goals1.length > 0 && goals2.length > 0) {
+        const overlap = goals1.filter(goal => goals2.includes(goal)).length;
+        const union = new Set([...goals1, ...goals2]).size;
+        score += (overlap / union) * w.networkingGoals;
+      }
     }
     
-    // Availability compatibility (15% weight)
-    if (profile1?.availabilityPreferences && profile2?.availabilityPreferences) {
-      factors++;
-      const avail1 = profile1.availabilityPreferences as string[];
-      const avail2 = profile2.availabilityPreferences as string[];
-      const overlap = avail1.filter(time => avail2.includes(time)).length;
-      const maxAvail = Math.max(avail1.length, avail2.length);
-      score += (overlap / maxAvail) * 15;
+    // Base compatibility for having profiles
+    if (factors === 0) {
+      return 40; // Low but not zero for users without much profile data
     }
     
-    // Interests overlap (10% weight)
-    if (profile1?.interests && profile2?.interests) {
-      factors++;
-      const interests1 = profile1.interests as string[];
-      const interests2 = profile2.interests as string[];
-      const overlap = interests1.filter(interest => interests2.includes(interest)).length;
-      const maxInterests = Math.max(interests1.length, interests2.length);
-      score += (overlap / maxInterests) * 10;
-    }
-    
-    // Normalize score based on available factors
-    if (factors === 0) return 50; // Default score if no data
-    
-    return Math.round(Math.min(100, Math.max(0, score)));
+    // Normalize score
+    const finalScore = Math.round(Math.min(100, Math.max(0, score * (4 / factors))));
+    return finalScore;
   }
   
   private getIndustryCompatibility(industry1: string, industry2: string): number {
@@ -158,19 +227,87 @@ class MatchingService {
     return 5; // Small score for different industries
   }
   
-  private getExperienceCompatibility(exp1: string, exp2: string): number {
-    const levels = ['0-2', '3-5', '6-10', '10+'];
-    const idx1 = levels.indexOf(exp1);
-    const idx2 = levels.indexOf(exp2);
+  private getCompanyCompatibility(company1: string, company2: string): number {
+    // Same company gets full points (handled above)
+    // Different companies get partial points based on size/type
     
-    if (idx1 === -1 || idx2 === -1) return 10;
+    const startups = ['startup', 'inc', 'llc', 'co'];
+    const enterprises = ['corp', 'corporation', 'ltd', 'limited', 'group'];
     
-    const diff = Math.abs(idx1 - idx2);
+    const isStartup1 = startups.some(term => company1.toLowerCase().includes(term));
+    const isStartup2 = startups.some(term => company2.toLowerCase().includes(term));
     
-    if (diff === 0) return 20; // Same level
-    if (diff === 1) return 15; // Adjacent levels
-    if (diff === 2) return 10; // Two levels apart
-    return 5; // Far apart
+    const isEnterprise1 = enterprises.some(term => company1.toLowerCase().includes(term));
+    const isEnterprise2 = enterprises.some(term => company2.toLowerCase().includes(term));
+    
+    if ((isStartup1 && isStartup2) || (isEnterprise1 && isEnterprise2)) {
+      return 12; // Similar company types
+    }
+    
+    return 5; // Different company types
+  }
+  
+  private getJobTitleCompatibility(title1: string, title2: string, weight: number): number {
+    const senior1 = title1.toLowerCase().includes('senior') || title1.toLowerCase().includes('lead');
+    const senior2 = title2.toLowerCase().includes('senior') || title2.toLowerCase().includes('lead');
+    
+    const roles1 = this.extractRoleKeywords(title1);
+    const roles2 = this.extractRoleKeywords(title2);
+    
+    const commonRoles = roles1.filter(role => roles2.includes(role));
+    
+    let score = 0;
+    
+    // Same seniority level
+    if (senior1 === senior2) {
+      score += weight * 0.3;
+    }
+    
+    // Role overlap
+    if (commonRoles.length > 0) {
+      score += weight * 0.7;
+    } else if (this.areRelatedRoles(roles1, roles2)) {
+      score += weight * 0.4;
+    }
+    
+    return Math.min(weight, score);
+  }
+  
+  private extractRoleKeywords(title: string): string[] {
+    const keywords = [
+      'engineer', 'developer', 'programmer', 'architect',
+      'manager', 'director', 'lead', 'coordinator',
+      'analyst', 'scientist', 'researcher', 'specialist',
+      'designer', 'product', 'marketing', 'sales',
+      'consultant', 'advisor', 'founder', 'ceo'
+    ];
+    
+    return keywords.filter(keyword => 
+      title.toLowerCase().includes(keyword)
+    );
+  }
+  
+  private areRelatedRoles(roles1: string[], roles2: string[]): boolean {
+    const relatedGroups = [
+      ['engineer', 'developer', 'programmer', 'architect'],
+      ['manager', 'director', 'lead', 'coordinator'],
+      ['analyst', 'scientist', 'researcher'],
+      ['designer', 'product'],
+      ['marketing', 'sales'],
+      ['consultant', 'advisor'],
+      ['founder', 'ceo']
+    ];
+    
+    for (const group of relatedGroups) {
+      const hasRole1 = roles1.some(role => group.includes(role));
+      const hasRole2 = roles2.some(role => group.includes(role));
+      
+      if (hasRole1 && hasRole2) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 }
 
