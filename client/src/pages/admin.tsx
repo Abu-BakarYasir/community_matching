@@ -130,6 +130,24 @@ export default function Admin() {
     },
   });
 
+  const deleteMeeting = useMutation({
+    mutationFn: (meetingId: number) => apiRequest("DELETE", `/api/admin/meetings/${meetingId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/meetings"] });
+      toast({
+        title: "Meeting Deleted",
+        description: "Meeting has been successfully deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete meeting. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteUser = (userId: number, userName: string) => {
     if (confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
       deleteUser.mutate(userId);
@@ -396,55 +414,117 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="meetings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Meeting Schedule</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Participants</TableHead>
-                      <TableHead>Scheduled Date</TableHead>
-                      <TableHead>Meeting Link</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {meetings.map((meeting: any) => (
-                      <TableRow key={meeting.id}>
-                        <TableCell className="font-medium">
-                          {meeting.match?.user1?.firstName} {meeting.match?.user1?.lastName}
-                          {" & "}
-                          {meeting.match?.user2?.firstName} {meeting.match?.user2?.lastName}
-                        </TableCell>
-                        <TableCell>{formatDateTime(meeting.scheduledAt)}</TableCell>
-                        <TableCell>
-                          <a 
-                            href={meeting.meetingUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            Join Meeting
-                          </a>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            meeting.status === 'scheduled' ? 'default' :
-                            meeting.status === 'completed' ? 'secondary' : 'destructive'
-                          }>
-                            {meeting.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatDate(meeting.createdAt)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <div className="rounded-lg border">
+              <div className="p-4 border-b">
+                <h3 className="text-lg font-semibold">Meeting Management</h3>
+                <p className="text-sm text-gray-600">Manage all scheduled meetings between matched users</p>
+              </div>
+              
+              {meetings && meetings.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Participants</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Scheduled Date</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Status</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Match Score</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Meeting Link</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {meetings.map((meeting: any) => (
+                        <tr key={meeting.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center space-x-3">
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {meeting.match.user1.firstName} {meeting.match.user1.lastName}
+                                </div>
+                                <div className="text-xs text-gray-500">{meeting.match.user1.email}</div>
+                              </div>
+                              <span className="text-gray-400">↔</span>
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {meeting.match.user2.firstName} {meeting.match.user2.lastName}
+                                </div>
+                                <div className="text-xs text-gray-500">{meeting.match.user2.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {meeting.scheduledAt ? formatDate(meeting.scheduledAt) : 'Not scheduled'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                              meeting.status === 'scheduled' 
+                                ? 'bg-green-100 text-green-800'
+                                : meeting.status === 'completed'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {meeting.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex items-center">
+                              <span className="font-medium">{meeting.match.matchScore}%</span>
+                              <div className="ml-2 w-16 bg-gray-200 rounded-full h-1.5">
+                                <div 
+                                  className="bg-green-500 h-1.5 rounded-full" 
+                                  style={{ width: `${meeting.match.matchScore}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <a 
+                              href="https://meet.google.com/wnf-cjab-twp" 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-blue-600 hover:underline"
+                            >
+                              Join Meeting
+                            </a>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  console.log('Edit meeting:', meeting.id);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to delete this meeting? This action cannot be undone.`)) {
+                                    deleteMeeting.mutate(meeting.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No meetings scheduled</h3>
+                  <p className="text-gray-500">Meetings will appear here once users schedule them through matches.</p>
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="settings">
