@@ -4,13 +4,13 @@ import { storage } from "./storage";
 import { emailService } from "./services/email";
 import { schedulerService } from "./services/scheduler";
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema } from "@shared/schema";
-import { createDevUser, getDevUser, getDevUserByEmail } from "./dev-auth";
+
 import { z } from "zod";
 
 // Extend session data type
 declare module 'express-session' {
   interface SessionData {
-    userId?: number;
+    userEmail?: string;
   }
 }
 
@@ -18,9 +18,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize scheduler
   schedulerService.init();
 
-  // Auth middleware - simple session-based auth with fallback
+  // Simple auth - just check if we have a user email in the session
   const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.session?.userId) {
+    if (!req.session?.userEmail) {
       return res.status(401).json({ message: "Authentication required" });
     }
     next();
@@ -118,25 +118,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Development login that works without database
+  // Simple email-based "login" - no real authentication
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email } = req.body;
-      console.log("Login attempt for:", email);
       
       if (!email || !email.includes('@')) {
         return res.status(400).json({ message: "Valid email required" });
       }
       
-      // Use development mode when database is down
-      let user = getDevUserByEmail(email);
-      if (!user) {
-        console.log("Creating new dev user for:", email);
-        user = createDevUser(email);
-      }
+      // Just store the email in session - no database needed
+      req.session.userEmail = email;
       
-      req.session.userId = user.id;
-      console.log(`Dev login successful for ${email}, userId: ${user.id}`);
+      // Create a basic user object
+      const [firstName, lastName] = email.split('@')[0].split('.');
+      const user = {
+        id: Date.now(),
+        email,
+        firstName: firstName || "User",
+        lastName: lastName || "",
+        isActive: true,
+        createdAt: new Date(),
+        jobTitle: null,
+        company: null,
+        industry: null,
+        experienceLevel: null
+      };
+      
+      console.log(`Simple login for ${email}`);
       res.json(user);
     } catch (error) {
       console.error("Login error:", error);
@@ -146,29 +155,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Logout user
   app.post("/api/auth/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Logout failed" });
-      }
-      res.json({ message: "Logged out successfully" });
-    });
+    req.session.userEmail = undefined;
+    res.json({ message: "Logged out successfully" });
   });
 
-  // Get current user (development mode)
+  // Get current user - simple version
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
-      const user = getDevUser(userId);
+      const email = req.session.userEmail!;
+      const [firstName, lastName] = email.split('@')[0].split('.');
       
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      res.json({
-        ...user,
+      const user = {
+        id: Date.now(),
+        email,
+        firstName: firstName || "User",
+        lastName: lastName || "",
+        isActive: true,
+        createdAt: new Date(),
+        jobTitle: null,
+        company: null,
+        industry: null,
+        experienceLevel: null,
         profileQuestions: null,
         availability: []
-      });
+      };
+      
+      res.json(user);
     } catch (error) {
       console.error("Get current user error:", error);
       res.status(500).json({ message: "Failed to get user data" });
