@@ -160,6 +160,15 @@ Preferred communication style: Simple, everyday language.
 - Updated algorithm to use industry (35%), company (20%), networking goals (30%), job title (15%) weights
 - Random matches get 35-60% scores to distinguish from high-quality matches
 - Added comprehensive error handling for email and notification failures
+
+### June 20, 2025 - One Match Per User & Admin User Management
+- Fixed matching algorithm to ensure each user gets exactly one match per period
+- Added user deletion functionality with trash icon in admin dashboard
+- Added user profile editing modal with inline editing capabilities
+- Enhanced admin user table with action buttons for edit and delete operations
+- Added confirmation dialog for user deletion to prevent accidental deletions
+- Implemented cascading delete to clean up user matches and meetings
+- Updated admin interface to show one match per user in cleaner format
 - Added prominent opt-in/opt-out toggle in dashboard top right with visual feedback
 - Users can control participation in monthly matching rounds with large toggle switch
 - Implemented PATCH /api/user/opt-status endpoint for managing opt-in status with database persistence

@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Calendar, Heart, Settings, Play, RefreshCw } from "lucide-react";
+import { Users, Calendar, Heart, Settings, Play, RefreshCw, Trash2, Edit } from "lucide-react";
 
 export default function Admin() {
   const [matchingDay, setMatchingDay] = useState("1");
+  const [editingUser, setEditingUser] = useState<any>(null);
   const { toast } = useToast();
 
   const { data: users = [] } = useQuery({
@@ -71,6 +72,49 @@ export default function Admin() {
 
   const handleUpdateMatchingDay = () => {
     updateSettings.mutate({ matchingDay: parseInt(matchingDay) });
+  };
+
+  const deleteUser = useMutation({
+    mutationFn: (userId: number) => apiRequest("DELETE", `/api/admin/users/${userId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "User Deleted",
+        description: "User has been successfully deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete user. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUser = useMutation({
+    mutationFn: (data: any) => apiRequest("PATCH", `/api/admin/users/${data.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      setEditingUser(null);
+      toast({
+        title: "User Updated",
+        description: "User profile has been successfully updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update user. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteUser = (userId: number, userName: string) => {
+    if (confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+      deleteUser.mutate(userId);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -169,6 +213,7 @@ export default function Admin() {
                       <TableHead>Industry</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Joined</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -186,6 +231,24 @@ export default function Admin() {
                           </Badge>
                         </TableCell>
                         <TableCell>{formatDate(user.createdAt)}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingUser(user)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteUser(user.id, `${user.firstName} ${user.lastName}`)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -457,6 +520,90 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Edit User</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              updateUser.mutate(editingUser);
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={editingUser.firstName || ""}
+                    onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={editingUser.lastName || ""}
+                    onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="jobTitle">Job Title</Label>
+                  <Input
+                    id="jobTitle"
+                    value={editingUser.jobTitle || ""}
+                    onChange={(e) => setEditingUser({...editingUser, jobTitle: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="company">Company</Label>
+                  <Input
+                    id="company"
+                    value={editingUser.company || ""}
+                    onChange={(e) => setEditingUser({...editingUser, company: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="industry">Industry</Label>
+                  <Select 
+                    value={editingUser.industry || ""} 
+                    onValueChange={(value) => setEditingUser({...editingUser, industry: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Technology">Technology</SelectItem>
+                      <SelectItem value="Healthcare">Healthcare</SelectItem>
+                      <SelectItem value="Finance">Finance</SelectItem>
+                      <SelectItem value="Education">Education</SelectItem>
+                      <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="Retail">Retail</SelectItem>
+                      <SelectItem value="Consulting">Consulting</SelectItem>
+                      <SelectItem value="Government">Government</SelectItem>
+                      <SelectItem value="Non-profit">Non-profit</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditingUser(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateUser.isPending}>
+                  {updateUser.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

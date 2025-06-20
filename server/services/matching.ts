@@ -65,16 +65,19 @@ class MatchingService {
     // Sort by match score (highest first)
     potentialMatches.sort((a, b) => b.matchScore - a.matchScore);
     
-    // Create high-quality matches
+    // Create high-quality matches (one per user)
     for (const potential of potentialMatches) {
       if (potential.matchScore >= 60) {
-        const match = await this.createMatch(potential.user1, potential.user2, potential.matchScore, monthYear);
-        matches.push(match);
-        
-        userMatchCount.set(potential.user1.id, userMatchCount.get(potential.user1.id) + 1);
-        userMatchCount.set(potential.user2.id, userMatchCount.get(potential.user2.id) + 1);
-        
-        existingPairs.add(potential.pairKey);
+        // Only match if both users don't have a match yet
+        if (userMatchCount.get(potential.user1.id) === 0 && userMatchCount.get(potential.user2.id) === 0) {
+          const match = await this.createMatch(potential.user1, potential.user2, potential.matchScore, monthYear);
+          matches.push(match);
+          
+          userMatchCount.set(potential.user1.id, 1);
+          userMatchCount.set(potential.user2.id, 1);
+          
+          existingPairs.add(potential.pairKey);
+        }
       }
     }
     

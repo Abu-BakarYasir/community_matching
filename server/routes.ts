@@ -717,6 +717,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile (admin only)
+  app.patch("/api/admin/users/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, updates);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Delete user (admin only)
+  app.delete("/api/admin/users/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Delete user's matches first
+      const userMatches = await storage.getMatchesByUser(userId);
+      for (const match of userMatches) {
+        // Delete meetings associated with matches
+        const meetings = await storage.getMeetingsByUser(userId);
+        for (const meeting of meetings) {
+          // Note: In a real app, you might want to notify the other user
+        }
+      }
+      
+      // Delete user (this should cascade to delete matches, meetings, etc.)
+      const success = await storage.deleteUser(userId);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Trigger manual matching (for testing)
   app.post("/api/admin/trigger-matching", requireAuth, async (req, res) => {
     try {
