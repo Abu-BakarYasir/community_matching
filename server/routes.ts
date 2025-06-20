@@ -168,9 +168,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Logged out successfully" });
   });
 
-  // Get current user - simple version
+  // Get current user with database persistence
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
+      const email = req.session.userEmail!;
+      let user = await storage.getUserByEmail(email);
+      
+      // Create user if doesn't exist
+      if (!user) {
+        const [firstName, lastName] = email.split('@')[0].split('.');
+        user = await storage.createUser({
+          email,
+          firstName: firstName || "User",
+          lastName: lastName || "",
+          isActive: true,
+          jobTitle: req.session.userProfile?.jobTitle || null,
+          company: req.session.userProfile?.company || null,
+          industry: req.session.userProfile?.industry || null,
+        });
+      } else {
+        // Update user with session data if it exists
+        if (req.session.userProfile) {
+          user = await storage.updateUser(user.id, req.session.userProfile);
+        }
+      }
+
+      // Get profile questions
+      const profileQuestions = await storage.getProfileQuestions(user.id);
+      if (req.session.profileQuestions && !profileQuestions) {
+        await storage.createProfileQuestions({
+          ...req.session.profileQuestions,
+          userId: user.id
+        });
+      }
+
+      res.json({
+        ...user,
+        profileQuestions: profileQuestions || req.session.profileQuestions || null
+      });
+    } catch (error) {
+      console.error("Get current user error:", error);
+      
+      // Fallback to session-based user for development
       const email = req.session.userEmail!;
       const [firstName, lastName] = email.split('@')[0].split('.');
       
@@ -190,18 +229,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       res.json(user);
-    } catch (error) {
-      console.error("Get current user error:", error);
-      res.status(500).json({ message: "Failed to get user data" });
     }
   });
 
-  // Update user profile (development mode)
+  // Update user profile with database persistence
   app.patch("/api/user/profile", requireAuth, async (req, res) => {
     try {
       console.log("Updating user profile:", req.body);
+      const email = req.session.userEmail!;
       
-      // Store profile data in session for development
+      // Try to update in database first
+      try {
+        let user = await storage.getUserByEmail(email);
+        if (user) {
+          user = await storage.updateUser(user.id, req.body);
+          console.log("Profile updated in database:", user);
+          res.json(user);
+          return;
+        }
+      } catch (dbError) {
+        console.log("Database update failed, using session fallback:", dbError);
+      }
+      
+      // Fallback to session storage
       if (!req.session.userProfile) {
         req.session.userProfile = {};
       }
@@ -211,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body
       };
       
-      console.log("Profile updated:", req.session.userProfile);
+      console.log("Profile updated in session:", req.session.userProfile);
       res.json({ message: "Profile updated successfully" });
     } catch (error) {
       console.error("Update profile error:", error);
@@ -219,14 +269,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save profile questions (development mode)
+  // Save profile questions with database persistence
   app.post("/api/user/profile-questions", requireAuth, async (req, res) => {
     try {
       console.log("Saving profile questions:", req.body);
+      const email = req.session.userEmail!;
       
+      // Try to save to database first
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (user) {
+          const existing = await storage.getProfileQuestions(user.id);
+          let profileQuestions;
+          
+          if (existing) {
+            profileQuestions = await storage.updateProfileQuestions(user.id, {
+              ...req.body,
+              userId: user.id
+            });
+          } else {
+            profileQuestions = await storage.createProfileQuestions({
+              ...req.body,
+              userId: user.id
+            });
+          }
+          
+          console.log("Profile questions saved to database:", profileQuestions);
+          res.json(profileQuestions);
+          return;
+        }
+      } catch (dbError) {
+        console.log("Database save failed, using session fallback:", dbError);
+      }
+      
+      // Fallback to session storage
       req.session.profileQuestions = req.body;
-      
-      console.log("Profile questions saved:", req.session.profileQuestions);
+      console.log("Profile questions saved to session:", req.session.profileQuestions);
       res.json({ message: "Profile questions saved successfully" });
     } catch (error) {
       console.error("Save profile questions error:", error);

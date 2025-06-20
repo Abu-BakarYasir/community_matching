@@ -103,7 +103,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### June 20, 2025 - Dashboard Redesign & Profile System Completed
+### June 20, 2025 - Database Integration & Dashboard Cleanup Completed
+- Removed KPI score cards from dashboard top section per user preference (total matches, scheduled meetings, etc.)
+- Implemented full database persistence for profile and availability data with session fallback
+- Enhanced user profile API to create/update users in database automatically on login
+- Added database persistence for profile questions with proper user association
+- Availability system now saves to database with proper user relationships and fallback handling
 - Reorganized dashboard layout: Next Matching Round at top, Upcoming Meetings second, combined Profile & Availability section
 - Fixed profile completion calculation to properly show 100% when all fields completed (removed availability from calculation)
 - Updated profile questions to focus on monthly goals: learning technical skills, building data projects, job hunting, networking
