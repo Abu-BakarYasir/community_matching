@@ -48,6 +48,13 @@ export interface IStorage {
   getNotifications(userId: number): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: number): Promise<boolean>;
+  deleteNotification?(id: number): Promise<boolean>;
+  
+  // Profile operations
+  deleteProfileQuestions?(userId: number): Promise<boolean>;
+  
+  // Meeting operations
+  deleteMeeting?(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -315,6 +322,36 @@ export class DatabaseStorage implements IStorage {
       .set({ isRead: true })
       .where(eq(notifications.id, id));
     return result.rowCount > 0;
+  }
+
+  async deleteNotification(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(notifications).where(eq(notifications.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      return false;
+    }
+  }
+
+  async deleteProfileQuestions(userId: number): Promise<boolean> {
+    try {
+      const result = await db.delete(profileQuestions).where(eq(profileQuestions.userId, userId));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting profile questions:', error);
+      return false;
+    }
+  }
+
+  async deleteMeeting(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(meetings).where(eq(meetings.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting meeting:', error);
+      return false;
+    }
   }
 }
 

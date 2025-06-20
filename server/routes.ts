@@ -740,17 +740,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.id);
       
-      // Delete user's matches first
+      // First, delete all related data
       const userMatches = await storage.getMatchesByUser(userId);
       for (const match of userMatches) {
-        // Delete meetings associated with matches
-        const meetings = await storage.getMeetingsByUser(userId);
-        for (const meeting of meetings) {
-          // Note: In a real app, you might want to notify the other user
+        // Delete meetings associated with this match
+        if (match.meeting) {
+          await storage.deleteMeeting?.(match.meeting.id);
         }
+        // Delete the match
+        await storage.deleteMatch(match.id);
       }
       
-      // Delete user (this should cascade to delete matches, meetings, etc.)
+      // Delete user's notifications
+      const notifications = await storage.getNotifications(userId);
+      for (const notification of notifications) {
+        await storage.deleteNotification?.(notification.id);
+      }
+      
+      // Delete user's availability
+      const availability = await storage.getAvailability(userId);
+      for (const avail of availability) {
+        await storage.deleteAvailability(avail.id);
+      }
+      
+      // Delete user's profile questions
+      const profile = await storage.getProfileQuestions(userId);
+      if (profile) {
+        await storage.deleteProfileQuestions?.(userId);
+      }
+      
+      // Finally, delete the user
       const success = await storage.deleteUser(userId);
       if (!success) {
         return res.status(404).json({ message: "User not found" });
