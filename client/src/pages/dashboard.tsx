@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [selectedMatch, setSelectedMatch] = useState<MatchWithUsers | null>(null);
   const [schedulingOpen, setSchedulingOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [availabilityOpen, setAvailabilityOpen] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ["/api/auth/me"],
@@ -378,6 +379,11 @@ export default function Dashboard() {
         open={profileOpen}
         onOpenChange={setProfileOpen}
         user={user}
+      />
+
+      <AvailabilityModal 
+        open={availabilityOpen}
+        onOpenChange={setAvailabilityOpen}
       />
     </div>
   );

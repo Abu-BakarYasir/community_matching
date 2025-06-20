@@ -67,9 +67,68 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
     });
   };
 
-  const availableTimes = [
-    "09:00", "10:30", "14:00", "15:30", "16:00"
-  ];
+  const { data: otherUserAvailability } = useQuery({
+    queryKey: ["/api/availability", otherUser?.id],
+    enabled: !!otherUser,
+  });
+
+  const { data: currentUserAvailability } = useQuery({
+    queryKey: ["/api/availability"],
+  });
+
+  // Get available times based on both users' availability
+  const getAvailableTimes = () => {
+    if (!selectedDate || !otherUserAvailability || !currentUserAvailability) {
+      return ["09:00", "10:30", "14:00", "15:30", "16:00"]; // Fallback times
+    }
+
+    const dayOfWeek = selectedDate.getDay();
+    
+    // Get both users' availability for the selected day
+    const currentUserSlots = currentUserAvailability.filter((slot: any) => 
+      slot.dayOfWeek === dayOfWeek && slot.isAvailable
+    );
+    const otherUserSlots = otherUserAvailability.filter((slot: any) => 
+      slot.dayOfWeek === dayOfWeek && slot.isAvailable
+    );
+    
+    // Find overlapping time slots
+    const overlappingTimes: string[] = [];
+    
+    currentUserSlots.forEach((currentSlot: any) => {
+      otherUserSlots.forEach((otherSlot: any) => {
+        // Simple overlap check - if start/end times match or overlap
+        const currentStart = currentSlot.startTime;
+        const currentEnd = currentSlot.endTime;
+        const otherStart = otherSlot.startTime;
+        const otherEnd = otherSlot.endTime;
+        
+        // If there's any overlap, add some time options
+        if (currentStart <= otherEnd && currentEnd >= otherStart) {
+          const startTime = currentStart > otherStart ? currentStart : otherStart;
+          const endTime = currentEnd < otherEnd ? currentEnd : otherEnd;
+          
+          // Add hourly slots within the overlap
+          let current = startTime;
+          while (current < endTime) {
+            if (!overlappingTimes.includes(current)) {
+              overlappingTimes.push(current);
+            }
+            // Increment by 30 minutes
+            const [hours, minutes] = current.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + 30;
+            const newHours = Math.floor(totalMinutes / 60);
+            const newMinutes = totalMinutes % 60;
+            current = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+          }
+        }
+      });
+    });
+    
+    return overlappingTimes.length > 0 ? overlappingTimes.sort() : ["09:00", "10:30", "14:00", "15:30", "16:00"];
+  };
+
+  const availableTimes = getAvailableTimes();
 
   // Get the other user in the match
   const otherUser = match && match.user1 && match.user2 && currentUser 
@@ -146,19 +205,33 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
 
           {/* Time Selection */}
           <div>
-            <h3 className="text-lg font-semibold mb-3">Available Times</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {availableTimes.map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTime === time ? "default" : "outline"}
-                  onClick={() => setSelectedTime(time)}
-                  className="h-12"
-                >
-                  {time}
-                </Button>
-              ))}
-            </div>
+            <h3 className="text-lg font-semibold mb-3">
+              Available Times
+              {selectedDate && (
+                <span className="text-sm font-normal text-slate-600 ml-2">
+                  (Based on both users' availability)
+                </span>
+              )}
+            </h3>
+            {availableTimes.length === 0 ? (
+              <div className="text-center py-8 bg-slate-50 rounded-lg">
+                <p className="text-slate-600">No overlapping availability found for this date.</p>
+                <p className="text-sm text-slate-500 mt-1">Try selecting a different date or coordinate directly.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                {availableTimes.map((time) => (
+                  <Button
+                    key={time}
+                    variant={selectedTime === time ? "default" : "outline"}
+                    onClick={() => setSelectedTime(time)}
+                    className="h-12"
+                  >
+                    {time}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Confirm Button */}

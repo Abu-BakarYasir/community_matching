@@ -269,6 +269,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get availability for a specific user (for scheduling)
+  app.get("/api/availability/:userId", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const availability = await storage.getAvailability(userId);
+      res.json(availability);
+    } catch (error) {
+      console.error("Get user availability error:", error);
+      res.status(500).json({ message: "Failed to get user availability" });
+    }
+  });
+
   // Update availability
   app.post("/api/availability", requireAuth, async (req, res) => {
     try {
