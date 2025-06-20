@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { Users, Calendar, Clock, Handshake, ArrowRight, Video, Coffee } from "lucide-react";
+import { Users, Calendar, Clock, Handshake, ArrowRight, Video, Coffee, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { MatchWithUsers, MeetingWithMatch } from "@shared/schema";
 
@@ -158,168 +158,131 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Matches */}
-          <div className="lg:col-span-2">
+        <div className="space-y-8">
+          {/* Next Matching Round - Top Priority */}
+          <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Next Matching Round</h3>
+                  <p className="text-slate-600 mb-1">Monthly matches are generated on the 1st of each month</p>
+                  <p className="text-sm text-slate-500">
+                    Next round: <span className="font-medium">July 1st, 2025</span>
+                  </p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-primary">{daysRemaining}</div>
+                  <div className="text-sm text-slate-600">days left</div>
+                </div>
+              </div>
+              {profileCompletion < 100 && (
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800">
+                    Complete your profile to participate in the next matching round!
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Meetings - Second Priority */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Upcoming Meetings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {upcomingMeetings.length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">No meetings scheduled</p>
+                  <p className="text-sm text-slate-400 mt-1">Schedule meetings with your matches!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {upcomingMeetings.map((meeting: MeetingWithMatch) => {
+                    const otherUser = getOtherUser(meeting.match);
+                    if (!otherUser) return null;
+                    
+                    const meetingDate = new Date(meeting.scheduledAt);
+                    const isToday = meetingDate.toDateString() === new Date().toDateString();
+                    
+                    return (
+                      <div
+                        key={meeting.id}
+                        className={`flex items-center space-x-4 p-4 rounded-lg border ${
+                          isToday ? 'bg-primary/5 border-primary/20' : 'bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          isToday ? 'bg-primary/10' : 'bg-slate-200'
+                        }`}>
+                          {meeting.meetingType === 'video' ? (
+                            <Video className={`h-5 w-5 ${isToday ? 'text-primary' : 'text-slate-600'}`} />
+                          ) : (
+                            <Coffee className={`h-5 w-5 ${isToday ? 'text-primary' : 'text-slate-600'}`} />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-slate-900">
+                            {otherUser.firstName} {otherUser.lastName}
+                          </p>
+                          <p className="text-sm text-slate-600">
+                            {isToday ? 'Today' : 'Tomorrow'}, {meetingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          <p className={`text-xs ${isToday ? 'text-primary' : 'text-slate-500'}`}>
+                            {meeting.meetingType === 'video' ? 'Video Call' : 'Coffee Chat'}
+                          </p>
+                        </div>
+                        {meeting.meetingLink && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(meeting.meetingLink, '_blank')}
+                          >
+                            Join Meeting
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Combined Profile & Availability */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">Your Recent Matches</CardTitle>
-                  {matches.length > 0 && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary">
-                      New matches available
-                    </Badge>
-                  )}
+                  <CardTitle className="text-lg">Profile & Availability</CardTitle>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setProfileOpen(true)}
+                    >
+                      Edit Profile
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setAvailabilityOpen(true)}
+                    >
+                      Set Schedule
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
-                {matches.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-slate-900 mb-2">No matches yet</h3>
-                    <p className="text-slate-600 mb-4">
-                      Complete your profile to get better matches in the next monthly cycle.
-                    </p>
-                    <Button onClick={() => setProfileOpen(true)}>
-                      Complete Profile
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {recentMatches.map((match: MatchWithUsers) => {
-                      const otherUser = getOtherUser(match);
-                      if (!otherUser) return null;
-                      return (
-                        <div
-                          key={match.id}
-                          className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-primary/30 transition-colors"
-                        >
-                          <div className="flex items-center space-x-4">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={otherUser.profileImageUrl} />
-                              <AvatarFallback>
-                                {getInitials(otherUser.firstName, otherUser.lastName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h4 className="font-semibold text-slate-900">
-                                {otherUser.firstName} {otherUser.lastName}
-                              </h4>
-                              <p className="text-sm text-slate-600">{otherUser.jobTitle}</p>
-                              <p className="text-sm text-slate-500">{otherUser.company}</p>
-                              <Badge className={`text-xs mt-1 ${getMatchScoreClass(match.matchScore || 0)}`}>
-                                {match.matchScore}% Match
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            <Button variant="outline" size="sm">
-                              View Profile
-                            </Button>
-                            <Button 
-                              size="sm"
-                              onClick={() => handleScheduleMatch(match)}
-                              disabled={match.status !== 'pending'}
-                            >
-                              {match.status === 'pending' ? 'Schedule Meeting' : 'Meeting Scheduled'}
-                            </Button>
-                            {match.status === 'meeting_scheduled' && (
-                              <Badge variant="secondary">Meeting Scheduled</Badge>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                    
-                    {matches.length > 3 && (
-                      <div className="text-center mt-6">
-                        <Button variant="link" className="text-primary">
-                          View All Matches <ArrowRight className="h-4 w-4 ml-1" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Upcoming Meetings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Upcoming Meetings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {upcomingMeetings.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Calendar className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                    <p className="text-sm text-slate-600">No upcoming meetings</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {upcomingMeetings.map((meeting: MeetingWithMatch) => {
-                      const otherUser = getOtherUser(meeting.match);
-                      if (!otherUser) return null;
-                      
-                      const meetingDate = new Date(meeting.scheduledAt);
-                      const isToday = meetingDate.toDateString() === new Date().toDateString();
-                      
-                      return (
-                        <div
-                          key={meeting.id}
-                          className={`flex items-center space-x-3 p-3 rounded-lg border ${
-                            isToday ? 'bg-primary/5 border-primary/20' : 'bg-slate-50'
-                          }`}
-                        >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            isToday ? 'bg-primary/10' : 'bg-slate-200'
-                          }`}>
-                            {meeting.meetingType === 'video' ? (
-                              <Video className={`h-4 w-4 ${isToday ? 'text-primary' : 'text-slate-600'}`} />
-                            ) : (
-                              <Coffee className={`h-4 w-4 ${isToday ? 'text-primary' : 'text-slate-600'}`} />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-slate-900">
-                              {otherUser.firstName} {otherUser.lastName}
-                            </p>
-                            <p className="text-sm text-slate-600">
-                              {isToday ? 'Today' : 'Tomorrow'}, {meetingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                            <p className={`text-xs ${isToday ? 'text-primary' : 'text-slate-500'}`}>
-                              {meeting.meetingType === 'video' ? 'Video Call' : 'Coffee Chat'}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4"
-                  onClick={() => setAvailabilityOpen(true)}
-                >
-                  Manage Availability
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Profile Completion */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Profile Strength</h3>
-                <div className="space-y-3">
+                {/* Profile Completion */}
+                <div className="space-y-3 mb-6">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-600">Profile Completion</span>
                     <span className="text-sm font-medium text-slate-900">{profileCompletion}%</span>
                   </div>
                   <Progress value={profileCompletion} className="h-2" />
-                  <div className="space-y-2 mt-4">
+                  <div className="grid grid-cols-1 gap-2 mt-3">
                     <div className="flex items-center text-sm">
                       <div className={`w-2 h-2 rounded-full mr-2 ${user?.firstName ? 'bg-green-500' : 'bg-slate-300'}`} />
                       <span className={user?.firstName ? 'text-slate-600' : 'text-slate-400'}>
@@ -335,35 +298,82 @@ export default function Dashboard() {
                     <div className="flex items-center text-sm">
                       <div className={`w-2 h-2 rounded-full mr-2 ${user?.profileQuestions?.networkingGoals?.length ? 'bg-green-500' : 'bg-slate-300'}`} />
                       <span className={user?.profileQuestions?.networkingGoals?.length ? 'text-slate-600' : 'text-slate-400'}>
-                        Networking preferences set
+                        Monthly focus selected
                       </span>
                     </div>
                   </div>
                 </div>
-                <Button 
-                  className="w-full mt-4"
-                  onClick={() => setProfileOpen(true)}
-                >
-                  Complete Profile
-                </Button>
+
+                {/* Weekly Availability Preview */}
+                <div>
+                  <h4 className="text-sm font-medium text-slate-900 mb-3">Weekly Schedule</h4>
+                  <div className="grid grid-cols-7 gap-2">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                      <div key={day} className="text-center">
+                        <div className="text-xs font-medium text-slate-600 mb-1">{day}</div>
+                        <div className="h-8 rounded border bg-slate-50 border-slate-200" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-center mt-3">
+                    <p className="text-sm text-slate-500">Set your schedule to help others book meetings</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Monthly Matching Status */}
-            <Card className="networking-gradient text-white">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Next Matching Round</h3>
-                <p className="text-blue-100 text-sm mb-4">
-                  Your profile will be included in the next monthly matching cycle.
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Days remaining:</span>
-                  <span className="text-2xl font-bold">{daysRemaining}</span>
-                </div>
-                <Progress 
-                  value={(30 - daysRemaining) / 30 * 100} 
-                  className="mt-3 [&>div]:bg-white" 
-                />
+            {/* Recent Matches */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Recent Matches</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {matches.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500">No matches yet</p>
+                    <p className="text-sm text-slate-400 mt-1">Complete your profile to get matched!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentMatches.map((match: MatchWithUsers) => {
+                      const otherUser = getOtherUser(match);
+                      if (!otherUser) return null;
+                      return (
+                        <div
+                          key={match.id}
+                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={otherUser.profileImageUrl} />
+                              <AvatarFallback>
+                                {getInitials(otherUser.firstName, otherUser.lastName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-slate-900">
+                                {otherUser.firstName} {otherUser.lastName}
+                              </p>
+                              <p className="text-sm text-slate-500">{otherUser.jobTitle}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="secondary">{match.matchScore}% match</Badge>
+                            {match.status === 'pending' && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleScheduleMatch(match)}
+                              >
+                                Schedule
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
