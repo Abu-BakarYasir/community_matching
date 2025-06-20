@@ -77,9 +77,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
+    // Clean updates to avoid timestamp issues
+    const cleanUpdates = { ...updates };
+    
+    // Remove fields that shouldn't be updated or cause timestamp issues
+    delete cleanUpdates.id;
+    delete cleanUpdates.createdAt;
+    delete cleanUpdates.updatedAt;
+    
     const [user] = await db
       .update(users)
-      .set(updates)
+      .set({
+        ...cleanUpdates,
+        updatedAt: new Date()
+      })
       .where(eq(users.id, id))
       .returning();
     return user || undefined;
