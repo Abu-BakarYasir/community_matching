@@ -465,26 +465,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get availability
   app.get("/api/availability", requireAuth, async (req, res) => {
     try {
-      const email = req.session.userEmail!;
+      const { userId } = req.query;
       
-      // Try database first
-      try {
+      let targetUserId: number;
+      
+      if (userId) {
+        // Admin requesting another user's availability
+        targetUserId = parseInt(userId as string);
+        console.log("Admin requesting availability for user:", targetUserId);
+      } else {
+        // User requesting their own availability
+        const email = req.session.userEmail!;
         const user = await storage.getUserByEmail(email);
-        if (user) {
-          const availability = await storage.getAvailability(user.id);
-          console.log("Retrieved availability from database:", availability);
-          res.json(availability);
-          return;
+        if (!user) {
+          return res.json([]);
         }
-      } catch (dbError) {
-        console.log("Database get failed:", dbError);
+        targetUserId = user.id;
+        console.log("User requesting own availability:", targetUserId);
       }
       
-      // Fallback to empty array
-      res.json([]);
+      // Get availability from database
+      try {
+        const availability = await storage.getAvailability(targetUserId);
+        console.log("Retrieved availability from database for user", targetUserId, ":", availability);
+        res.json(availability);
+      } catch (dbError) {
+        console.log("Database get failed:", dbError);
+        res.json([]);
+      }
     } catch (error) {
       console.error("Get availability error:", error);
-      res.json([]); // Fallback to empty array
+      res.json([]);
     }
   });
 

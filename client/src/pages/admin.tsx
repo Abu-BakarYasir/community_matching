@@ -144,11 +144,21 @@ export default function Admin() {
 
   const handleEditUser = async (user: any) => {
     setEditingUser(user);
+    // Reset state first
+    setUserAvailability([]);
+    
     // Fetch user's availability from database
     try {
       const response = await apiRequest("GET", `/api/availability?userId=${user.id}`);
       console.log('Fetched availability for user', user.id, ':', response);
-      setUserAvailability(response || []);
+      
+      // Ensure response is an array
+      if (Array.isArray(response)) {
+        setUserAvailability(response);
+      } else {
+        console.warn('Availability response is not an array:', response);
+        setUserAvailability([]);
+      }
     } catch (error) {
       console.error('Failed to fetch user availability:', error);
       setUserAvailability([]);
@@ -729,7 +739,7 @@ export default function Admin() {
                   <div className="space-y-3">
                     {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, index) => {
                       const dayOfWeek = index + 1;
-                      const availability = userAvailability.find(a => a.dayOfWeek === dayOfWeek);
+                      const availability = Array.isArray(userAvailability) ? userAvailability.find(a => a.dayOfWeek === dayOfWeek) : null;
                       
                       return (
                         <div key={day} className="flex items-center space-x-3 text-sm">
