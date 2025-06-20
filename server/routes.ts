@@ -46,7 +46,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Login user
+  // Send magic link
+  app.post("/api/auth/magic-link", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ message: "Valid email required" });
+      }
+      
+      let user = await storage.getUserByEmail(email);
+      
+      // Create user if they don't exist
+      if (!user) {
+        const [firstName, lastName] = email.split('@')[0].split('.');
+        user = await storage.createUser({
+          email,
+          firstName: firstName || "User",
+          lastName: lastName || "",
+          isActive: true
+        });
+      }
+      
+      // Generate magic token (in production, use crypto.randomBytes)
+      const magicToken = Buffer.from(`${user.id}:${Date.now()}`).toString('base64');
+      
+      // Store token temporarily (in production, use Redis or database)
+      const magicTokens = new Map();
+      magicTokens.set(magicToken, { userId: user.id, expires: Date.now() + 15 * 60 * 1000 }); // 15 minutes
+      app.locals.magicTokens = magicTokens;
+      
+      // In production, send actual email
+      console.log(`Magic link for ${email}: http://localhost:5000/api/auth/verify?token=${magicToken}`);
+      
+      res.json({ 
+        message: "Magic link sent! Check your console for the link (in production, check your email)",
+        magicLink: `http://localhost:5000/api/auth/verify?token=${magicToken}` // Remove in production
+      });
+    } catch (error) {
+      console.error("Magic link error:", error);
+      res.status(500).json({ message: "Failed to send magic link" });
+    }
+  });
+
+  // Verify magic link
+  app.get("/api/auth/verify", async (req, res) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ message: "Invalid token" });
+      }
+      
+      const magicTokens = app.locals.magicTokens || new Map();
+      const tokenData = magicTokens.get(token);
+      
+      if (!tokenData || tokenData.expires < Date.now()) {
+        return res.status(401).json({ message: "Token expired or invalid" });
+      }
+      
+      // Log user in
+      req.session.userId = tokenData.userId;
+      magicTokens.delete(token); // Use token only once
+      
+      // Redirect to app
+      res.redirect('/');
+    } catch (error) {
+      console.error("Verify token error:", error);
+      res.status(500).json({ message: "Verification failed" });
+    }
+  });
+
+  // Simple login (keep for development)
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email } = req.body;
