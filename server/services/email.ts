@@ -1,19 +1,20 @@
-import nodemailer from 'nodemailer';
+import { MailService } from '@sendgrid/mail';
 import type { User, Match, Meeting } from '@shared/schema';
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private mailService: MailService;
+  private isConfigured: boolean;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER || process.env.EMAIL_USER,
-        pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
-      },
-    });
+    this.mailService = new MailService();
+    this.isConfigured = !!process.env.SENDGRID_API_KEY;
+    
+    if (this.isConfigured) {
+      this.mailService.setApiKey(process.env.SENDGRID_API_KEY!);
+      console.log('✅ SendGrid email service initialized');
+    } else {
+      console.log('⚠️ SENDGRID_API_KEY not found. Email functionality will be simulated.');
+    }
   }
 
   async sendMatchNotification(user1: User, user2: User, matchScore: number) {
