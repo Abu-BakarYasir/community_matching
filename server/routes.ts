@@ -674,15 +674,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         allMeetings.push(...userMeetings);
       }
       
-      // Remove duplicates
-      const uniqueMeetings = allMeetings.filter((meeting, index, self) => 
-        index === self.findIndex(m => m.id === meeting.id)
-      );
+      // Remove duplicates and sort by scheduled date
+      const uniqueMeetings = allMeetings
+        .filter((meeting, index, self) => 
+          index === self.findIndex(m => m.id === meeting.id)
+        )
+        .sort((a, b) => {
+          if (!a.scheduledAt && !b.scheduledAt) return 0;
+          if (!a.scheduledAt) return 1;
+          if (!b.scheduledAt) return -1;
+          return new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime();
+        });
       
       res.json(uniqueMeetings);
     } catch (error) {
       console.error("Get admin meetings error:", error);
       res.status(500).json({ message: "Failed to get meetings" });
+    }
+  });
+
+  // Delete meeting (admin only)
+  app.delete("/api/admin/meetings/:id", requireAuth, async (req, res) => {
+    try {
+      const meetingId = parseInt(req.params.id);
+      const success = await storage.deleteMeeting?.(meetingId);
+      
+      if (success) {
+        res.json({ message: "Meeting deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Meeting not found" });
+      }
+    } catch (error) {
+      console.error("Delete meeting error:", error);
+      res.status(500).json({ message: "Failed to delete meeting" });
+    }
+  });
+
+  // Update meeting (admin only)
+  app.patch("/api/admin/meetings/:id", requireAuth, async (req, res) => {
+    try {
+      const meetingId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const meeting = await storage.updateMeeting(meetingId, updates);
+      
+      if (!meeting) {
+        return res.status(404).json({ message: "Meeting not found" });
+      }
+      
+      res.json(meeting);
+    } catch (error) {
+      console.error("Update meeting error:", error);
+      res.status(500).json({ message: "Failed to update meeting" });
     }
   });
 
