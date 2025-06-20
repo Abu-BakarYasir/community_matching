@@ -181,11 +181,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: lastName || "",
         isActive: true,
         createdAt: new Date(),
-        jobTitle: null,
-        company: null,
-        industry: null,
+        jobTitle: req.session.userProfile?.jobTitle || null,
+        company: req.session.userProfile?.company || null,
+        industry: req.session.userProfile?.industry || null,
         experienceLevel: null,
-        profileQuestions: null,
+        profileQuestions: req.session.profileQuestions || null,
         availability: []
       };
       
@@ -196,47 +196,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user profile
+  // Update user profile (development mode)
   app.patch("/api/user/profile", requireAuth, async (req, res) => {
     try {
-      const updates = req.body;
-      const userId = req.session.userId!;
-      const user = await storage.updateUser(userId, updates);
+      console.log("Updating user profile:", req.body);
       
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      // Store profile data in session for development
+      if (!req.session.userProfile) {
+        req.session.userProfile = {};
       }
       
-      res.json(user);
+      req.session.userProfile = {
+        ...req.session.userProfile,
+        ...req.body
+      };
+      
+      console.log("Profile updated:", req.session.userProfile);
+      res.json({ message: "Profile updated successfully" });
     } catch (error) {
       console.error("Update profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
-  // Save profile questions
+  // Save profile questions (development mode)
   app.post("/api/user/profile-questions", requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
-      const questionsData = insertProfileQuestionsSchema.parse({
-        ...req.body,
-        userId
-      });
+      console.log("Saving profile questions:", req.body);
       
-      // Check if profile questions already exist
-      const existing = await storage.getProfileQuestions(userId);
+      req.session.profileQuestions = req.body;
       
-      let profileQuestions;
-      if (existing) {
-        profileQuestions = await storage.updateProfileQuestions(userId, questionsData);
-      } else {
-        profileQuestions = await storage.createProfileQuestions(questionsData);
-      }
-      
-      res.json(profileQuestions);
+      console.log("Profile questions saved:", req.session.profileQuestions);
+      res.json({ message: "Profile questions saved successfully" });
     } catch (error) {
       console.error("Save profile questions error:", error);
-      res.status(400).json({ message: "Invalid profile questions data" });
+      res.status(500).json({ message: "Failed to save profile questions" });
     }
   });
 
