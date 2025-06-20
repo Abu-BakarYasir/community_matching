@@ -78,6 +78,16 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async deleteUser(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(users).where(eq(users.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users);
   }
@@ -190,6 +200,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(matches.id, id))
       .returning();
     return match || undefined;
+  }
+
+  async deleteMatch(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(matches).where(eq(matches.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      return false;
+    }
   }
 
   async getMeeting(id: number): Promise<Meeting | undefined> {
