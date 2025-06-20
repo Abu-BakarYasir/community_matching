@@ -26,13 +26,13 @@ The application follows a full-stack architecture with clear separation between 
 ## Key Components
 
 ### Database Schema
-The application uses five main entities:
+The application uses PostgreSQL with Drizzle ORM and five main entities:
 - **Users**: Core user profiles with professional information
 - **Profile Questions**: Extended user preferences and networking goals
 - **Matches**: Compatibility-based user pairings with scoring
 - **Meetings**: Scheduled interactions between matched users
-- **Availability**: User scheduling preferences (referenced but not fully implemented)
-- **Notifications**: System-generated user notifications (referenced but not fully implemented)
+- **Availability**: User scheduling preferences
+- **Notifications**: System-generated user notifications
 
 ### Matching Algorithm
 - Automated monthly matching process via cron jobs

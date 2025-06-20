@@ -1,4 +1,14 @@
-import { users, profileQuestions, matches, meetings, availability, notifications, type User, type InsertUser, type ProfileQuestions, type InsertProfileQuestions, type Match, type InsertMatch, type Meeting, type InsertMeeting, type Availability, type InsertAvailability, type Notification, type InsertNotification, type UserWithProfile, type MatchWithUsers, type MeetingWithMatch } from "@shared/schema";
+import type { 
+  User, InsertUser, 
+  ProfileQuestions, InsertProfileQuestions,
+  Match, InsertMatch, MatchWithUsers,
+  Meeting, InsertMeeting, MeetingWithMatch,
+  Availability, InsertAvailability,
+  Notification, InsertNotification
+} from "@shared/schema";
+import { users, profileQuestions, matches, meetings, availability, notifications } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -38,130 +48,100 @@ export interface IStorage {
   markNotificationAsRead(id: number): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private profileQuestions: Map<number, ProfileQuestions>;
-  private matches: Map<number, Match>;
-  private meetings: Map<number, Meeting>;
-  private availability: Map<number, Availability>;
-  private notifications: Map<number, Notification>;
-  
-  private currentUserId: number;
-  private currentProfileQuestionId: number;
-  private currentMatchId: number;
-  private currentMeetingId: number;
-  private currentAvailabilityId: number;
-  private currentNotificationId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.profileQuestions = new Map();
-    this.matches = new Map();
-    this.meetings = new Map();
-    this.availability = new Map();
-    this.notifications = new Map();
-    
-    this.currentUserId = 1;
-    this.currentProfileQuestionId = 1;
-    this.currentMatchId = 1;
-    this.currentMeetingId = 1;
-    this.currentAvailabilityId = 1;
-    this.currentNotificationId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { 
-      ...insertUser,
-      id, 
-      createdAt: new Date(),
-      isActive: insertUser.isActive ?? true,
-      jobTitle: insertUser.jobTitle ?? null,
-      company: insertUser.company ?? null,
-      industry: insertUser.industry ?? null,
-      experienceLevel: insertUser.experienceLevel ?? null,
-      profileImageUrl: insertUser.profileImageUrl ?? null,
-      bio: insertUser.bio ?? null
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (!user) return undefined;
-    
-    const updatedUser = { ...user, ...updates };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    return await db.select().from(users);
   }
 
   async getProfileQuestions(userId: number): Promise<ProfileQuestions | undefined> {
-    return Array.from(this.profileQuestions.values()).find(pq => pq.userId === userId);
+    const [questions] = await db.select().from(profileQuestions).where(eq(profileQuestions.userId, userId));
+    return questions || undefined;
   }
 
   async createProfileQuestions(questions: InsertProfileQuestions): Promise<ProfileQuestions> {
-    const id = this.currentProfileQuestionId++;
-    const profileQuestion: ProfileQuestions = { 
-      ...questions, 
-      id,
-      userId: questions.userId ?? null,
-      networkingGoals: (questions.networkingGoals as string[]) ?? null,
-      availabilityPreferences: (questions.availabilityPreferences as string[]) ?? null,
-      interests: (questions.interests as string[]) ?? null,
-      lookingFor: questions.lookingFor ?? null
-    };
-    this.profileQuestions.set(id, profileQuestion);
+    const [profileQuestion] = await db
+      .insert(profileQuestions)
+      .values(questions)
+      .returning();
     return profileQuestion;
   }
 
   async updateProfileQuestions(userId: number, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined> {
-    const existing = Array.from(this.profileQuestions.values()).find(pq => pq.userId === userId);
-    if (!existing) return undefined;
-    
-    const updated = { 
-      ...existing, 
-      ...updates,
-      networkingGoals: (updates.networkingGoals as string[]) ?? existing.networkingGoals,
-      availabilityPreferences: (updates.availabilityPreferences as string[]) ?? existing.availabilityPreferences,
-      interests: (updates.interests as string[]) ?? existing.interests
-    };
-    this.profileQuestions.set(existing.id, updated);
-    return updated;
+    const [updated] = await db
+      .update(profileQuestions)
+      .set(updates)
+      .where(eq(profileQuestions.userId, userId))
+      .returning();
+    return updated || undefined;
   }
 
   async getMatch(id: number): Promise<Match | undefined> {
-    return this.matches.get(id);
+    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    return match || undefined;
   }
 
   async getMatchesByUser(userId: number): Promise<MatchWithUsers[]> {
-    const userMatches = Array.from(this.matches.values())
-      .filter(match => match.user1Id === userId || match.user2Id === userId);
-    
+    const userMatches = await db
+      .select({
+        id: matches.id,
+        user1Id: matches.user1Id,
+        user2Id: matches.user2Id,
+        matchScore: matches.matchScore,
+        status: matches.status,
+        monthYear: matches.monthYear,
+        createdAt: matches.createdAt,
+        user1: users,
+        user2: users
+      })
+      .from(matches)
+      .leftJoin(users, eq(matches.user1Id, users.id))
+      .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
+
+    // We need to get both users for each match
     const matchesWithUsers: MatchWithUsers[] = [];
+    
     for (const match of userMatches) {
-      const user1 = this.users.get(match.user1Id!);
-      const user2 = this.users.get(match.user2Id!);
-      const meeting = Array.from(this.meetings.values()).find(m => m.matchId === match.id);
+      const user1 = await this.getUser(match.user1Id!);
+      const user2 = await this.getUser(match.user2Id!);
       
       if (user1 && user2) {
         matchesWithUsers.push({
-          ...match,
+          id: match.id,
+          user1Id: match.user1Id,
+          user2Id: match.user2Id,
+          matchScore: match.matchScore,
+          status: match.status,
+          monthYear: match.monthYear,
+          createdAt: match.createdAt,
           user1,
-          user2,
-          meeting
+          user2
         });
       }
     }
@@ -170,21 +150,22 @@ export class MemStorage implements IStorage {
   }
 
   async getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]> {
-    const monthMatches = Array.from(this.matches.values())
-      .filter(match => match.monthYear === monthYear);
-    
+    const monthMatches = await db
+      .select()
+      .from(matches)
+      .where(eq(matches.monthYear, monthYear));
+
     const matchesWithUsers: MatchWithUsers[] = [];
+    
     for (const match of monthMatches) {
-      const user1 = this.users.get(match.user1Id!);
-      const user2 = this.users.get(match.user2Id!);
-      const meeting = Array.from(this.meetings.values()).find(m => m.matchId === match.id);
+      const user1 = await this.getUser(match.user1Id!);
+      const user2 = await this.getUser(match.user2Id!);
       
       if (user1 && user2) {
         matchesWithUsers.push({
           ...match,
           user1,
-          user2,
-          meeting
+          user2
         });
       }
     }
@@ -193,48 +174,51 @@ export class MemStorage implements IStorage {
   }
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
-    const id = this.currentMatchId++;
-    const match: Match = { 
-      ...insertMatch, 
-      id, 
-      createdAt: new Date(),
-      status: insertMatch.status ?? "pending",
-      user1Id: insertMatch.user1Id ?? null,
-      user2Id: insertMatch.user2Id ?? null,
-      matchScore: insertMatch.matchScore ?? null,
-      monthYear: insertMatch.monthYear ?? null
-    };
-    this.matches.set(id, match);
+    const [match] = await db
+      .insert(matches)
+      .values(insertMatch)
+      .returning();
     return match;
   }
 
   async updateMatch(id: number, updates: Partial<InsertMatch>): Promise<Match | undefined> {
-    const match = this.matches.get(id);
-    if (!match) return undefined;
-    
-    const updatedMatch = { ...match, ...updates };
-    this.matches.set(id, updatedMatch);
-    return updatedMatch;
+    const [match] = await db
+      .update(matches)
+      .set(updates)
+      .where(eq(matches.id, id))
+      .returning();
+    return match || undefined;
   }
 
   async getMeeting(id: number): Promise<Meeting | undefined> {
-    return this.meetings.get(id);
+    const [meeting] = await db.select().from(meetings).where(eq(meetings.id, id));
+    return meeting || undefined;
   }
 
   async getMeetingsByUser(userId: number): Promise<MeetingWithMatch[]> {
-    const userMatches = await this.getMatchesByUser(userId);
-    const matchIds = userMatches.map(match => match.id);
-    
-    const userMeetings = Array.from(this.meetings.values())
-      .filter(meeting => matchIds.includes(meeting.matchId!));
-    
+    const userMeetings = await db
+      .select({
+        meeting: meetings,
+        match: matches
+      })
+      .from(meetings)
+      .innerJoin(matches, eq(meetings.matchId, matches.id))
+      .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
+
     const meetingsWithMatch: MeetingWithMatch[] = [];
-    for (const meeting of userMeetings) {
-      const match = userMatches.find(m => m.id === meeting.matchId);
-      if (match) {
+    
+    for (const result of userMeetings) {
+      const user1 = await this.getUser(result.match.user1Id!);
+      const user2 = await this.getUser(result.match.user2Id!);
+      
+      if (user1 && user2) {
         meetingsWithMatch.push({
-          ...meeting,
-          match
+          ...result.meeting,
+          match: {
+            ...result.match,
+            user1,
+            user2
+          }
         });
       }
     }
@@ -243,94 +227,71 @@ export class MemStorage implements IStorage {
   }
 
   async createMeeting(insertMeeting: InsertMeeting): Promise<Meeting> {
-    const id = this.currentMeetingId++;
-    const meeting: Meeting = { 
-      ...insertMeeting, 
-      id,
-      duration: insertMeeting.duration ?? 30,
-      status: insertMeeting.status ?? "scheduled",
-      matchId: insertMeeting.matchId ?? null,
-      scheduledAt: insertMeeting.scheduledAt ?? null,
-      meetingType: insertMeeting.meetingType ?? null,
-      meetingLink: insertMeeting.meetingLink ?? null,
-      location: insertMeeting.location ?? null,
-      notes: insertMeeting.notes ?? null
-    };
-    this.meetings.set(id, meeting);
+    const [meeting] = await db
+      .insert(meetings)
+      .values(insertMeeting)
+      .returning();
     return meeting;
   }
 
   async updateMeeting(id: number, updates: Partial<InsertMeeting>): Promise<Meeting | undefined> {
-    const meeting = this.meetings.get(id);
-    if (!meeting) return undefined;
-    
-    const updatedMeeting = { ...meeting, ...updates };
-    this.meetings.set(id, updatedMeeting);
-    return updatedMeeting;
+    const [meeting] = await db
+      .update(meetings)
+      .set(updates)
+      .where(eq(meetings.id, id))
+      .returning();
+    return meeting || undefined;
   }
 
   async getAvailability(userId: number): Promise<Availability[]> {
-    return Array.from(this.availability.values()).filter(avail => avail.userId === userId);
+    return await db.select().from(availability).where(eq(availability.userId, userId));
   }
 
   async createAvailability(insertAvailability: InsertAvailability): Promise<Availability> {
-    const id = this.currentAvailabilityId++;
-    const availability: Availability = { 
-      ...insertAvailability, 
-      id,
-      isAvailable: insertAvailability.isAvailable ?? true,
-      userId: insertAvailability.userId ?? null,
-      dayOfWeek: insertAvailability.dayOfWeek ?? null,
-      startTime: insertAvailability.startTime ?? null,
-      endTime: insertAvailability.endTime ?? null
-    };
-    this.availability.set(id, availability);
-    return availability;
+    const [avail] = await db
+      .insert(availability)
+      .values(insertAvailability)
+      .returning();
+    return avail;
   }
 
   async updateAvailability(id: number, updates: Partial<InsertAvailability>): Promise<Availability | undefined> {
-    const availability = this.availability.get(id);
-    if (!availability) return undefined;
-    
-    const updatedAvailability = { ...availability, ...updates };
-    this.availability.set(id, updatedAvailability);
-    return updatedAvailability;
+    const [avail] = await db
+      .update(availability)
+      .set(updates)
+      .where(eq(availability.id, id))
+      .returning();
+    return avail || undefined;
   }
 
   async deleteAvailability(id: number): Promise<boolean> {
-    return this.availability.delete(id);
+    const result = await db.delete(availability).where(eq(availability.id, id));
+    return result.rowCount > 0;
   }
 
   async getNotifications(userId: number): Promise<Notification[]> {
-    return Array.from(this.notifications.values())
-      .filter(notification => notification.userId === userId)
-      .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(notifications.createdAt);
   }
 
   async createNotification(insertNotification: InsertNotification): Promise<Notification> {
-    const id = this.currentNotificationId++;
-    const notification: Notification = { 
-      ...insertNotification, 
-      id,
-      createdAt: new Date(),
-      isRead: insertNotification.isRead ?? false,
-      type: insertNotification.type ?? null,
-      title: insertNotification.title ?? null,
-      message: insertNotification.message ?? null,
-      userId: insertNotification.userId ?? null
-    };
-    this.notifications.set(id, notification);
+    const [notification] = await db
+      .insert(notifications)
+      .values(insertNotification)
+      .returning();
     return notification;
   }
 
   async markNotificationAsRead(id: number): Promise<boolean> {
-    const notification = this.notifications.get(id);
-    if (!notification) return false;
-    
-    notification.isRead = true;
-    this.notifications.set(id, notification);
-    return true;
+    const result = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id));
+    return result.rowCount > 0;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
