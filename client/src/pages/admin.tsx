@@ -144,13 +144,11 @@ export default function Admin() {
 
   const handleEditUser = async (user: any) => {
     setEditingUser(user);
-    // Fetch user's availability
+    // Fetch user's availability from database
     try {
-      const response = await fetch(`/api/availability?userId=${user.id}`);
-      if (response.ok) {
-        const availability = await response.json();
-        setUserAvailability(availability);
-      }
+      const response = await apiRequest("GET", `/api/availability?userId=${user.id}`);
+      console.log('Fetched availability for user', user.id, ':', response);
+      setUserAvailability(response || []);
     } catch (error) {
       console.error('Failed to fetch user availability:', error);
       setUserAvailability([]);
@@ -596,11 +594,12 @@ export default function Admin() {
             <form onSubmit={async (e) => {
               e.preventDefault();
               
-              // Update user profile
-              updateUser.mutate(editingUser);
-              
-              // Update availability
               try {
+                // Update user profile
+                await apiRequest("PATCH", `/api/admin/users/${editingUser.id}`, editingUser);
+                
+                // Update availability
+                console.log('Updating availability:', userAvailability);
                 for (const avail of userAvailability) {
                   if (avail.id) {
                     // Update existing
@@ -613,8 +612,22 @@ export default function Admin() {
                     });
                   }
                 }
+                
+                // Close modal and refresh data
+                setEditingUser(null);
+                queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+                
+                toast({
+                  title: "User Updated",
+                  description: "User profile and availability updated successfully.",
+                });
               } catch (error) {
-                console.error('Failed to update availability:', error);
+                console.error('Failed to update user:', error);
+                toast({
+                  title: "Update Failed",
+                  description: "Failed to update user. Please try again.",
+                  variant: "destructive",
+                });
               }
             }}>
               <div className="space-y-4">
