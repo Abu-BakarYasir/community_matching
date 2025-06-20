@@ -103,8 +103,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### June 20, 2025 - Enhanced Scheduling & Branding Updates
-- Fixed availability saving functionality with better error handling and logging
+### June 20, 2025 - Profile Questions Customization & Availability System Complete
+- Updated profile questions to focus on monthly goals: learning technical skills, building data projects, job hunting, networking
+- Removed years of experience and typical availability questions per user preference
+- Fixed availability saving system completely - now working perfectly with proper API integration
 - Updated application name to "DAA Monthly Matching" throughout the interface
 - Integrated default Google Meet link (https://meet.google.com/wnf-cjab-twp) for all video meetings
 - Enhanced scheduling system with comprehensive meeting management features
