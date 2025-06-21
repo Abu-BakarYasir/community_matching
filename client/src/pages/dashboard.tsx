@@ -165,16 +165,16 @@ export default function Dashboard() {
                 variant="ghost"
                 onClick={handleOptToggle}
                 disabled={optToggleMutation.isPending}
-                className={`relative w-20 h-10 rounded-full transition-all duration-300 ease-in-out p-1 ${
+                className={`relative w-16 h-8 rounded-full transition-all duration-300 ease-in-out p-0.5 ${
                   user?.isActive 
                     ? "bg-green-500 hover:bg-green-600" 
                     : "bg-slate-300 hover:bg-slate-400"
                 }`}
               >
-                <div className={`w-8 h-8 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out ${
-                  user?.isActive ? "translate-x-10" : "translate-x-0"
+                <div className={`w-7 h-7 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out flex items-center justify-center ${
+                  user?.isActive ? "translate-x-8" : "translate-x-0"
                 }`}>
-                  <span className={`flex items-center justify-center w-full h-full text-xs font-bold ${
+                  <span className={`text-xs font-bold ${
                     user?.isActive ? "text-green-600" : "text-slate-600"
                   }`}>
                     {optToggleMutation.isPending ? "..." : (user?.isActive ? "ON" : "OFF")}
