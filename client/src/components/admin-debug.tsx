@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, setAuthToken } from "@/lib/queryClient";
 
 export function AdminDebug() {
   const { data: user } = useQuery({
@@ -18,7 +18,7 @@ export function AdminDebug() {
       });
       
       if (response.token) {
-        localStorage.setItem('authToken', response.token);
+        setAuthToken(response.token);
       }
       
       return response;

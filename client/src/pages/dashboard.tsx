@@ -3,6 +3,7 @@ import { Header } from "@/components/header";
 import { SchedulingModal } from "@/components/scheduling-modal";
 import { ProfileModal } from "@/components/profile-modal";
 import { AvailabilityModal } from "@/components/availability-modal";
+import { AdminDebug } from "@/components/admin-debug";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
