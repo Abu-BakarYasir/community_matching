@@ -276,6 +276,7 @@ Preferred communication style: Simple, everyday language.
 - Moved "Next Matching Round" section below current matches per user preference
 - Improved information hierarchy with current round activities displayed prominently
 - Enhanced user experience by showing active content before future planning information
+- Restored detailed next round information including status, profile completion, and matching timeline
 
 ### June 20, 2025 - Authentication System Completed
 - Implemented simplified email-based authentication without database dependencies
