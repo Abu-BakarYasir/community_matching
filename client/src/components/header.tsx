@@ -65,9 +65,11 @@ export function Header() {
                 <DropdownMenuItem onClick={() => setLocation("/dashboard")}>
                   Dashboard
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocation("/admin")}>
-                  Admin
-                </DropdownMenuItem>
+                {user?.isAdmin && (
+                  <DropdownMenuItem onClick={() => setLocation("/admin")}>
+                    Admin
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={() => logoutMutation.mutate()}
                   className="text-red-600"

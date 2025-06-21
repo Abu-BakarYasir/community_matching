@@ -55,7 +55,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   }, [user]);
 
   useEffect(() => {
-    if (userAvailability) {
+    if (userAvailability && userAvailability.length > 0) {
       setAvailability(userAvailability);
     }
   }, [userAvailability]);

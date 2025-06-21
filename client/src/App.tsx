@@ -10,6 +10,14 @@ import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
+function AdminRoute() {
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/me"],
+  });
+  
+  return user?.isAdmin ? <Admin /> : <NotFound />;
+}
+
 // Create a separate Login component that defaults to login mode
 function Login() {
   return <Register />;
@@ -66,7 +74,7 @@ function Router() {
       )} />
       <Route path="/admin" component={() => (
         <AuthWrapper>
-          <Admin />
+          <AdminRoute />
         </AuthWrapper>
       )} />
       <Route path="/register" component={Register} />

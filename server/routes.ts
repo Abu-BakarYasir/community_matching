@@ -6,7 +6,7 @@ import { emailService } from "./services/email";
 import { schedulerService } from "./services/scheduler";
 import { timeSlotService } from "./services/timeSlots";
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema } from "@shared/schema";
-import { generateToken, requireAuth, AuthenticatedRequest } from "./auth";
+import { generateToken, requireAuth, requireAdmin, AuthenticatedRequest } from "./auth";
 
 import { z } from "zod";
 
@@ -182,7 +182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate JWT token
-      const token = generateToken({ id: user.id, email: user.email });
+      const token = generateToken({ id: user.id, email: user.email, isAdmin: user.isAdmin });
       
       // Set token as httpOnly cookie for security
       res.cookie('authToken', token, {
@@ -194,7 +194,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`JWT login successful for ${email}`);
       res.json({ 
-        user,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isAdmin: user.isAdmin || false,
+          jobTitle: user.jobTitle,
+          company: user.company,
+          industry: user.industry,
+          profileImageUrl: user.profileImageUrl,
+          bio: user.bio,
+          linkedinUrl: user.linkedinUrl,
+          isActive: user.isActive,
+          createdAt: user.createdAt
+        },
         token // Also send token for API calls
       });
     } catch (error) {
@@ -223,6 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         ...user,
+        isAdmin: user.isAdmin || false,
         profileQuestions
       });
     } catch (error) {
@@ -722,7 +737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  app.get("/api/admin/users", requireAuth, async (req, res) => {
+  app.get("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -732,7 +747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/matches", requireAuth, async (req, res) => {
+  app.get("/api/admin/matches", requireAuth, requireAdmin, async (req, res) => {
     try {
       // Get all matches with user data
       const allUsers = await storage.getAllUsers();
@@ -755,7 +770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/meetings", requireAuth, async (req, res) => {
+  app.get("/api/admin/meetings", requireAuth, requireAdmin, async (req, res) => {
     try {
       const allUsers = await storage.getAllUsers();
       const allMeetings = [];
@@ -837,7 +852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  app.get("/api/admin/settings", requireAuth, async (req, res) => {
+  app.get("/api/admin/settings", requireAuth, requireAdmin, async (req, res) => {
     try {
       res.json(appSettings);
     } catch (error) {
@@ -846,7 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/admin/settings", requireAuth, async (req, res) => {
+  app.patch("/api/admin/settings", requireAuth, requireAdmin, async (req, res) => {
     try {
       console.log("Admin settings updated:", req.body);
       
@@ -969,7 +984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trigger manual matching (for testing)
-  app.post("/api/admin/trigger-matching", requireAuth, async (req, res) => {
+  app.post("/api/admin/trigger-matching", requireAuth, requireAdmin, async (req, res) => {
     try {
       // Clear all existing matches for this period first
       const currentDate = new Date();
@@ -1044,7 +1059,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email template endpoints
-  app.get('/api/admin/email-template', async (req, res) => {
+  app.get('/api/admin/email-template', requireAuth, requireAdmin, async (req, res) => {
     try {
       // For now, return the current template structure
       const template = {
@@ -1071,7 +1086,7 @@ The DAA Monthly Matching Team`
     }
   });
 
-  app.post('/api/admin/email-template', async (req, res) => {
+  app.post('/api/admin/email-template', requireAuth, requireAdmin, async (req, res) => {
     try {
       const { subject, content } = req.body;
       console.log('Updating email template:', { subject, content });
@@ -1086,7 +1101,7 @@ The DAA Monthly Matching Team`
     }
   });
 
-  app.post('/api/admin/preview-email', async (req, res) => {
+  app.post('/api/admin/preview-email', requireAuth, requireAdmin, async (req, res) => {
     try {
       const { subject, content } = req.body;
       

@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   profileImageUrl: text("profile_image_url"),
   bio: text("bio"),
   linkedinUrl: text("linkedin_url"),
+  isAdmin: boolean("is_admin").default(false),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
