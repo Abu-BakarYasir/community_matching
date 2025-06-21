@@ -251,7 +251,15 @@ Preferred communication style: Simple, everyday language.
 - Admin access now properly restricted with 403 errors for non-admin users
 - Full admin authentication system working with database persistence
 
-### June 21, 2025 - Next Round Matching Card & UI Improvements
+### June 21, 2025 - Dashboard Layout Reorganization & Profile Completion
+- Repositioned "Profile & Availability" section to bottom of dashboard per user preference
+- Enhanced profile completion calculation to include schedule/availability setup as 4th requirement
+- Added "Schedule availability set" indicator to profile completion checklist
+- Updated completion percentage to reflect all 4 requirements: basic info, professional details, monthly focus, and availability
+- Maintained "Next Round's Matches" card positioned below current matches
+- Improved dashboard flow with logical information hierarchy from current matches to future planning to profile management
+
+### June 21, 2025 - Next Round Matching Card & Admin Integration
 - Added comprehensive "Next Round's Matches" card positioned below current matches per user preference
 - Implemented automatic calculation of next matching date with admin settings integration
 - Created dynamic status indicators based on user opt-in toggle and profile completion

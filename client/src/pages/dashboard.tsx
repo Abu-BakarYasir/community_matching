@@ -98,15 +98,15 @@ export default function Dashboard() {
   const getProfileCompletion = () => {
     if (!user) return 0;
     
-    let completion = 0;
-    if (user.firstName && user.lastName) completion += 20;
-    if (user.email) completion += 20;
-    if (user.jobTitle) completion += 20;
-    if (user.company) completion += 15;
-    if (user.industry) completion += 15;
-    if (user.profileQuestions?.networkingGoals?.length) completion += 10;
+    let completed = 0;
+    const total = 4;
     
-    return Math.min(100, completion);
+    if (user.firstName && user.lastName) completed++;
+    if (user.jobTitle && user.company && user.industry) completed++;
+    if (user.profileQuestions?.networkingGoals?.length) completed++;
+    if (userAvailability && userAvailability.length > 0) completed++;
+    
+    return Math.round((completed / total) * 100);
   };
 
   const profileCompletion = getProfileCompletion();
@@ -452,7 +452,99 @@ Looking forward to connecting!`;
               <NextRoundCard user={user} />
             </CardContent>
           </Card>
-          </div>
+
+          {/* Profile & Availability - Moved to Bottom */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Profile & Availability</CardTitle>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setProfileOpen(true)}
+                  >
+                    Edit Profile
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setAvailabilityOpen(true)}
+                  >
+                    Set Schedule
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-slate-700">Job Title:</span>
+                    <p className={user?.jobTitle ? 'text-slate-600' : 'text-slate-400'}>
+                      {user?.jobTitle || 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-slate-700">Company:</span>
+                    <p className={user?.company ? 'text-slate-600' : 'text-slate-400'}>
+                      {user?.company || 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-slate-700">Industry:</span>
+                    <p className={user?.industry ? 'text-slate-600' : 'text-slate-400'}>
+                      {user?.industry || 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-slate-700">Monthly Focus:</span>
+                    <p className={user?.profileQuestions?.networkingGoals?.length ? 'text-slate-600' : 'text-slate-400'}>
+                      {user?.profileQuestions?.networkingGoals?.length > 0 
+                        ? `${user.profileQuestions.networkingGoals.length} goals selected`
+                        : 'Not set'
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-slate-700">Profile Completion</span>
+                    <span className="text-sm text-slate-600">{profileCompletion}%</span>
+                  </div>
+                  <Progress value={profileCompletion} className="mb-3" />
+                  <div className="space-y-1">
+                    <div className="flex items-center text-sm">
+                      <div className={`w-2 h-2 rounded-full mr-2 ${user?.firstName ? 'bg-green-500' : 'bg-slate-300'}`} />
+                      <span className={user?.firstName ? 'text-slate-600' : 'text-slate-400'}>
+                        Basic info completed
+                      </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <div className={`w-2 h-2 rounded-full mr-2 ${user?.jobTitle ? 'bg-green-500' : 'bg-slate-300'}`} />
+                      <span className={user?.jobTitle ? 'text-slate-600' : 'text-slate-400'}>
+                        Professional details added
+                      </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <div className={`w-2 h-2 rounded-full mr-2 ${user?.profileQuestions?.networkingGoals?.length ? 'bg-green-500' : 'bg-slate-300'}`} />
+                      <span className={user?.profileQuestions?.networkingGoals?.length ? 'text-slate-600' : 'text-slate-400'}>
+                        Monthly focus selected
+                      </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <div className={`w-2 h-2 rounded-full mr-2 ${userAvailability && userAvailability.length > 0 ? 'bg-green-500' : 'bg-slate-300'}`} />
+                      <span className={userAvailability && userAvailability.length > 0 ? 'text-slate-600' : 'text-slate-400'}>
+                        Schedule availability set
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         </div>
       </main>
 
