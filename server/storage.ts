@@ -28,6 +28,7 @@ export interface IStorage {
   getMatch(id: number): Promise<Match | undefined>;
   getMatchesByUser(userId: number): Promise<MatchWithUsers[]>;
   getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]>;
+  getAllMatches(): Promise<MatchWithUsers[]>;
   createMatch(match: InsertMatch): Promise<Match>;
   updateMatch(id: number, updates: Partial<InsertMatch>): Promise<Match | undefined>;
   deleteMatch(id: number): Promise<boolean>;
@@ -35,6 +36,7 @@ export interface IStorage {
   // Meeting operations
   getMeeting(id: number): Promise<Meeting | undefined>;
   getMeetingsByUser(userId: number): Promise<MeetingWithMatch[]>;
+  getAllMeetings(): Promise<Meeting[]>;
   createMeeting(meeting: InsertMeeting): Promise<Meeting>;
   updateMeeting(id: number, updates: Partial<InsertMeeting>): Promise<Meeting | undefined>;
 
@@ -263,6 +265,31 @@ export class DatabaseStorage implements IStorage {
       .where(eq(matches.id, id))
       .returning();
     return match || undefined;
+  }
+
+  async getAllMatches(): Promise<MatchWithUsers[]> {
+    try {
+      const allMatches = await db.select().from(matches);
+      const matchesWithUsers: MatchWithUsers[] = [];
+      
+      for (const match of allMatches) {
+        const user1 = await this.getUser(match.user1Id!);
+        const user2 = await this.getUser(match.user2Id!);
+        
+        if (user1 && user2) {
+          matchesWithUsers.push({
+            ...match,
+            user1,
+            user2
+          });
+        }
+      }
+      
+      return matchesWithUsers;
+    } catch (error) {
+      console.error("Error getting all matches:", error);
+      return [];
+    }
   }
 
   async deleteMatch(id: number): Promise<boolean> {

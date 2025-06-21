@@ -298,6 +298,15 @@ Preferred communication style: Simple, everyday language.
 - Backend stores defaultFirstName and defaultLastName in app settings with API endpoints
 - Admin interface includes input fields with helpful descriptions for name configuration
 
+### June 21, 2025 - Admin "Delete All" Functionality Implementation
+- Added comprehensive "Delete All" functionality for admin tables (users, matches, meetings)
+- Implemented backend API endpoints: DELETE /api/admin/users, /api/admin/matches, /api/admin/meetings
+- Added getAllMatches() and getAllMeetings() methods to storage interface for bulk operations
+- Frontend includes "Delete All" buttons in each admin tab with proper confirmation dialogs
+- Admin user protection: Delete All Users preserves admin accounts to prevent lockout
+- All delete operations include loading states and success/error toast notifications
+- Bulk deletion endpoints return count of deleted items for user feedback
+
 ### June 21, 2025 - Add to Calendar Feature Implementation
 - Added "Add to Calendar" button to dashboard for scheduled meetings
 - Switched from ICS file downloads to Google Calendar links for better reliability

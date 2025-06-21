@@ -148,6 +148,60 @@ export default function Admin() {
     },
   });
 
+  const deleteAllUsers = useMutation({
+    mutationFn: () => apiRequest("DELETE", "/api/admin/users"),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Users Deleted",
+        description: data.message,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete users. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAllMatches = useMutation({
+    mutationFn: () => apiRequest("DELETE", "/api/admin/matches"),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
+      toast({
+        title: "Matches Deleted",
+        description: data.message,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete matches. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAllMeetings = useMutation({
+    mutationFn: () => apiRequest("DELETE", "/api/admin/meetings"),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/meetings"] });
+      toast({
+        title: "Meetings Deleted",
+        description: data.message,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete meetings. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteUser = (userId: number, userName: string) => {
     if (confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
       deleteUser.mutate(userId);

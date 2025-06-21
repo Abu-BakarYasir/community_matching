@@ -759,26 +759,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/matches", requireAuth, requireAdmin, async (req, res) => {
+  // Delete all users (except admins)
+  app.delete("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
     try {
-      // Get all matches with user data
-      const allUsers = await storage.getAllUsers();
-      const allMatches = [];
+      const users = await storage.getAllUsers();
+      let deletedCount = 0;
       
-      for (const user of allUsers) {
-        const userMatches = await storage.getMatchesByUser(user.id);
-        allMatches.push(...userMatches);
+      for (const user of users) {
+        // Don't delete admin users to prevent lockout
+        if (!user.isAdmin) {
+          await storage.deleteUser(user.id);
+          deletedCount++;
+        }
       }
       
-      // Remove duplicates (same match appears for both users)
-      const uniqueMatches = allMatches.filter((match, index, self) => 
-        index === self.findIndex(m => m.id === match.id)
-      );
-      
-      res.json(uniqueMatches);
+      res.json({ message: `Deleted ${deletedCount} users (admin users preserved)` });
+    } catch (error) {
+      console.error("Delete all users error:", error);
+      res.status(500).json({ message: "Failed to delete users" });
+    }
+  });
+
+  app.get("/api/admin/matches", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const matches = await storage.getAllMatches();
+      res.json(matches);
     } catch (error) {
       console.error("Get admin matches error:", error);
       res.status(500).json({ message: "Failed to get matches" });
+    }
+  });
+
+  // Delete all matches
+  app.delete("/api/admin/matches", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const matches = await storage.getAllMatches();
+      let deletedCount = 0;
+      
+      for (const match of matches) {
+        await storage.deleteMatch(match.id);
+        deletedCount++;
+      }
+      
+      res.json({ message: `Deleted ${deletedCount} matches` });
+    } catch (error) {
+      console.error("Delete all matches error:", error);
+      res.status(500).json({ message: "Failed to delete matches" });
     }
   });
 
