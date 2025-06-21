@@ -715,6 +715,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notification endpoints removed per user request
 
   // Dashboard stats
+  // Public settings endpoint for non-sensitive admin settings
+  app.get("/api/settings/public", async (req, res) => {
+    try {
+      // For now, return hardcoded values - later this can be connected to admin settings
+      res.json({
+        monthlyMatchingDay: 1, // This should be configurable in admin settings
+        appName: "DAA Matches"
+      });
+    } catch (error) {
+      console.error("Error fetching public settings:", error);
+      res.status(500).json({ message: "Error fetching settings" });
+    }
+  });
+
   app.get("/api/dashboard/stats", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const matches = await storage.getMatchesByUser(req.user!.id);

@@ -252,13 +252,14 @@ Preferred communication style: Simple, everyday language.
 - Full admin authentication system working with database persistence
 
 ### June 21, 2025 - Next Round Matching Card & UI Improvements
-- Added comprehensive "Next Round's Matches" card to dashboard with real-time countdown timer
-- Implemented automatic calculation of next first Monday matching date with precise timing
+- Added comprehensive "Next Round's Matches" card positioned below current matches per user preference
+- Implemented automatic calculation of next matching date with admin settings integration
 - Created dynamic status indicators based on user opt-in toggle and profile completion
 - Added visual countdown display showing days, hours, minutes, and seconds until next matching
 - Integrated status badges showing "Participating", "Opted Out", or "Profile Needed"
 - Fixed profile picture upload to immediately refresh UI cache for instant visual updates
 - Enhanced dashboard layout with prominent next round information and clear participation status
+- Added public settings endpoint to fetch matching schedule from admin configuration
 
 ### June 21, 2025 - Admin Authentication System & UI Improvements  
 - Fixed critical login issue with response.json() error by properly handling fetch responses

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, CheckCircle, AlertCircle, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 interface NextRoundCardProps {
   user: any;
@@ -15,42 +16,42 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
     seconds: number;
   }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  // Calculate next first Monday of the month
+  // Get admin settings for matching schedule - fetch publicly available settings
+  const { data: adminSettings } = useQuery({
+    queryKey: ["/api/settings/public"],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/settings/public');
+        if (response.ok) {
+          return response.json();
+        }
+        // Fallback if endpoint doesn't exist
+        return { monthlyMatchingDay: 1 };
+      } catch {
+        return { monthlyMatchingDay: 1 };
+      }
+    }
+  });
+
+  // Calculate next matching date based on admin settings
   const getNextMatchingDate = () => {
     const now = new Date();
+    const matchingDay = adminSettings?.monthlyMatchingDay || 1; // Default to 1st if not set
+    
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
-    // First, try current month
-    let targetMonth = currentMonth;
-    let targetYear = currentYear;
+    // Try current month first
+    let targetDate = new Date(currentYear, currentMonth, matchingDay);
     
-    // Find first Monday of the target month
-    const firstOfMonth = new Date(targetYear, targetMonth, 1);
-    const firstMonday = new Date(firstOfMonth);
-    
-    // Calculate days until Monday (1 = Monday, 0 = Sunday)
-    const dayOfWeek = firstOfMonth.getDay();
-    const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7;
-    firstMonday.setDate(1 + daysUntilMonday);
-    
-    // If first Monday has passed this month, go to next month
-    if (firstMonday <= now) {
-      targetMonth = (currentMonth + 1) % 12;
-      if (targetMonth === 0) {
-        targetYear = currentYear + 1;
-      }
-      
-      const nextFirstOfMonth = new Date(targetYear, targetMonth, 1);
-      const nextFirstMonday = new Date(nextFirstOfMonth);
-      const nextDayOfWeek = nextFirstOfMonth.getDay();
-      const nextDaysUntilMonday = nextDayOfWeek === 0 ? 1 : (8 - nextDayOfWeek) % 7;
-      nextFirstMonday.setDate(1 + nextDaysUntilMonday);
-      
-      return nextFirstMonday;
+    // If the date has passed this month, go to next month
+    if (targetDate <= now) {
+      const nextMonth = (currentMonth + 1) % 12;
+      const nextYear = nextMonth === 0 ? currentYear + 1 : currentYear;
+      targetDate = new Date(nextYear, nextMonth, matchingDay);
     }
     
-    return firstMonday;
+    return targetDate;
   };
 
   useEffect(() => {
@@ -179,7 +180,9 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
       {/* Quick Info */}
       <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
         <Users className="h-4 w-4" />
-        <span>Matches are created on the first Monday of each month</span>
+        <span>
+          Matches are created on the {adminSettings?.monthlyMatchingDay || "1st"} of each month
+        </span>
       </div>
     </div>
   );

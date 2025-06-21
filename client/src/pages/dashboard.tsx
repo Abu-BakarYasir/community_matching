@@ -189,19 +189,6 @@ export default function Dashboard() {
 
 
         <div className="space-y-8">
-          {/* Next Round's Matches Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Next Round's Matches
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <NextRoundCard user={user} />
-            </CardContent>
-          </Card>
-
           {/* This Round's Matches & Meetings - Top Priority */}
           <Card>
             <CardHeader>
@@ -453,7 +440,18 @@ Looking forward to connecting!`;
               </CardContent>
             </Card>
 
-
+          {/* Next Round's Matches Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Next Round's Matches
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <NextRoundCard user={user} />
+            </CardContent>
+          </Card>
           </div>
         </div>
       </main>
