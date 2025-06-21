@@ -33,45 +33,107 @@ class EmailService {
     // Use verified sender identity from DataAnalystRoadmap.com domain
     const fromEmail = process.env.EMAIL_FROM || 'avery@dataanalystroadmap.com';
     
-    const createEmailContent = (recipient: User, partner: User) => ({
-      from: fromEmail,
-      to: recipient.email,
-      subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2px;">
-          <div style="background: white; color: #333; margin: 2px; padding: 30px; border-radius: 8px;">
-            <h2 style="color: #667eea; margin-top: 0;">🎯 You've been matched!</h2>
-            
-            <p>Hi ${recipient.firstName},</p>
-            
-            <p>Great news! We've found you a networking match based on your professional profile and goals.</p>
-            
-            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
-              <h3 style="margin-top: 0; color: #1e293b;">Your Match:</h3>
-              <p style="margin: 8px 0;"><strong>${partner.firstName} ${partner.lastName}</strong></p>
-              <p style="margin: 4px 0; color: #64748b;">${partner.jobTitle || 'Professional'} ${partner.company ? `at ${partner.company}` : ''}</p>
-              <p style="margin: 4px 0; color: #64748b;">Industry: ${partner.industry || 'Various'}</p>
-            </div>
-            
-            <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0; color: #059669;"><strong>Match Score: ${matchScore}%</strong></p>
-              <div style="background: #d1fae5; height: 8px; border-radius: 4px; margin-top: 8px;">
-                <div style="background: #10b981; height: 8px; border-radius: 4px; width: ${matchScore}%;"></div>
-              </div>
-            </div>
-            
-            <p>This match was made based on your professional backgrounds, networking goals, and industry compatibility.</p>
-            
-            <a href="${process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : process.env.APP_URL || 'https://daa-monthly-matching.replit.app'}/dashboard" 
-               style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
-              View Match & Schedule Meeting
-            </a>
-            
-            <p>Best regards,<br>The DAA Monthly Matching Team</p>
-          </div>
-        </div>
-      `
+    // Get suggested meeting times and check if meeting already exists
+    const suggestedTimes = await timeSlotService.getSuggestedMeetingTimes(user1.id, user2.id);
+    
+    // Check if there's already a scheduled meeting for this match
+    const user1Meetings = await storage.getMeetingsByUser(user1.id);
+    const user2Meetings = await storage.getMeetingsByUser(user2.id);
+    
+    const matchMeeting = [...user1Meetings, ...user2Meetings].find(m => {
+      if (!m.match) return false;
+      return (m.match.user1Id === user1.id && m.match.user2Id === user2.id) ||
+             (m.match.user1Id === user2.id && m.match.user2Id === user1.id);
     });
+
+    const createEmailContent = (recipient: User, partner: User) => {
+      // Meeting information section
+      const meetingInfoHtml = matchMeeting 
+        ? `
+          <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
+            <h3 style="color: #28a745; margin-top: 0;">📅 Meeting Scheduled</h3>
+            <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+              <p style="margin: 5px 0;"><strong>Date & Time:</strong> ${new Date(matchMeeting.scheduledAt).toLocaleDateString()} at ${new Date(matchMeeting.scheduledAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+              <p style="margin: 5px 0;"><strong>Duration:</strong> ${matchMeeting.duration} minutes</p>
+              <p style="margin: 5px 0;"><strong>Meeting Link:</strong> <a href="${matchMeeting.meetingLink}" style="color: #667eea; text-decoration: none;">${matchMeeting.meetingLink}</a></p>
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+              <a href="${matchMeeting.meetingLink}" 
+                 style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-size: 14px; margin-right: 10px;">
+                Join Meeting
+              </a>
+              <a href="https://daa-monthly-matching.replit.app/dashboard" 
+                 style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-size: 14px;">
+                Reschedule
+              </a>
+            </div>
+          </div>
+        `
+        : suggestedTimes.length > 0 
+        ? `
+          <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #667eea; margin-top: 0;">🗓️ Auto-Scheduled Meeting</h3>
+            <p style="margin-bottom: 15px;">We've automatically scheduled your meeting for next week at 2 PM. You can reschedule if needed.</p>
+            <div style="background: #fff8dc; padding: 15px; border-radius: 8px; margin: 15px 0;">
+              <h4 style="margin-top: 0; color: #b8860b;">Alternative Times Available:</h4>
+              ${suggestedTimes.slice(0, 3).map(slot => 
+                `<div style="background: white; padding: 10px; margin: 8px 0; border-radius: 5px; border-left: 4px solid #667eea;">
+                  <strong>${slot.dayName}, ${new Date(slot.date).toLocaleDateString()}</strong> at ${slot.time}
+                </div>`
+              ).join('')}
+            </div>
+          </div>
+        `
+        : `
+          <div style="background: #fff8dc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #b8860b; margin: 0;">💡 Meeting auto-scheduled for next week. Set your availability in the dashboard to see more options!</p>
+          </div>
+        `;
+
+      return {
+        from: fromEmail,
+        to: recipient.email,
+        subject,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2px;">
+            <div style="background: white; color: #333; margin: 2px; padding: 30px; border-radius: 8px;">
+              <h2 style="color: #667eea; margin-top: 0;">🎯 You've been matched!</h2>
+              
+              <p>Hi ${recipient.firstName},</p>
+              
+              <p>Great news! We've found you a networking match based on your professional profile and goals.</p>
+              
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                <h3 style="margin-top: 0; color: #1e293b;">Your Match:</h3>
+                <p style="margin: 8px 0;"><strong>${partner.firstName} ${partner.lastName}</strong></p>
+                <p style="margin: 4px 0; color: #64748b;">${partner.jobTitle || 'Professional'} ${partner.company ? `at ${partner.company}` : ''}</p>
+                <p style="margin: 4px 0; color: #64748b;">Industry: ${partner.industry || 'Various'}</p>
+              </div>
+              
+              <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0; color: #059669;"><strong>Match Score: ${matchScore}%</strong></p>
+                <div style="background: #d1fae5; height: 8px; border-radius: 4px; margin-top: 8px;">
+                  <div style="background: #10b981; height: 8px; border-radius: 4px; width: ${matchScore}%;"></div>
+                </div>
+              </div>
+              
+              ${meetingInfoHtml}
+              
+              <p>This match was made based on your professional backgrounds, networking goals, and industry compatibility.</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://daa-monthly-matching.replit.app/dashboard" 
+                   style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  View Dashboard
+                </a>
+              </div>
+              
+              <p>Best regards,<br>The DAA Monthly Matching Team</p>
+            </div>
+          </div>
+        `
+      };
+    };
 
     try {
       console.log(`📧 Sending emails via SendGrid API...`);

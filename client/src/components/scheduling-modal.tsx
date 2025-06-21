@@ -28,11 +28,19 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
   });
 
   const scheduleMutation = useMutation({
-    mutationFn: (meetingData: any) => apiRequest("POST", "/api/meetings", meetingData),
+    mutationFn: (meetingData: any) => {
+      if (match?.meeting) {
+        // Update existing meeting
+        return apiRequest("PATCH", `/api/meetings/${match.meeting.id}`, meetingData);
+      } else {
+        // Create new meeting
+        return apiRequest("POST", "/api/meetings", meetingData);
+      }
+    },
     onSuccess: () => {
       toast({
-        title: "Meeting Scheduled",
-        description: "Your meeting has been scheduled successfully!",
+        title: match?.meeting ? "Meeting Rescheduled" : "Meeting Scheduled",
+        description: match?.meeting ? "Your meeting has been rescheduled successfully!" : "Your meeting has been scheduled successfully!",
       });
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["/api/meetings"] });
@@ -41,7 +49,7 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to schedule meeting",
+        description: error.message || (match?.meeting ? "Failed to reschedule meeting" : "Failed to schedule meeting"),
         variant: "destructive",
       });
     },
@@ -146,7 +154,10 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            {otherUser ? `Schedule Meeting with ${otherUser.firstName} ${otherUser.lastName}` : 'Schedule Meeting'}
+            {match?.meeting 
+              ? `Reschedule Meeting with ${otherUser?.firstName} ${otherUser?.lastName}`
+              : `Schedule Meeting with ${otherUser?.firstName} ${otherUser?.lastName}`
+            }
           </DialogTitle>
         </DialogHeader>
         
@@ -156,6 +167,19 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
           </div>
         ) : (
         <div className="space-y-6">
+          {/* Current Meeting Info (if exists) */}
+          {match?.meeting && (
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <h3 className="font-semibold text-yellow-800 mb-2">Current Meeting</h3>
+              <p className="text-sm text-yellow-700">
+                <strong>Scheduled:</strong> {new Date(match.meeting.scheduledAt).toLocaleDateString()} at {new Date(match.meeting.scheduledAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </p>
+              <p className="text-sm text-yellow-700">
+                <strong>Link:</strong> <a href={match.meeting.meetingLink} target="_blank" rel="noopener noreferrer" className="underline">{match.meeting.meetingLink}</a>
+              </p>
+            </div>
+          )}
+
           {/* Match Information */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
             <div className="flex items-center space-x-4">
@@ -257,7 +281,12 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
               disabled={scheduleMutation.isPending}
               className="min-w-[140px] bg-blue-600 hover:bg-blue-700"
             >
-              {scheduleMutation.isPending ? "Scheduling..." : selectedDate && selectedTime ? "Confirm Meeting" : "Auto-Schedule Meeting"}
+              {scheduleMutation.isPending 
+                ? (match?.meeting ? "Rescheduling..." : "Scheduling...") 
+                : selectedDate && selectedTime 
+                  ? (match?.meeting ? "Confirm Reschedule" : "Confirm Meeting")
+                  : (match?.meeting ? "Auto-Reschedule" : "Auto-Schedule Meeting")
+              }
             </Button>
           </div>
         </div>
