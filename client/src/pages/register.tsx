@@ -25,21 +25,16 @@ export default function Register() {
       return response.json();
     },
     onSuccess: async () => {
-      // Force refetch user data immediately
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
       toast({
         title: "Welcome to DAA Monthly Matching!",
         description: "Your account has been created successfully.",
       });
-      // For deployed version, force page reload to ensure proper state
-      if (window.location.hostname !== 'localhost') {
-        window.location.href = '/dashboard';
-      } else {
-        // Development version uses client-side routing
-        setTimeout(() => {
-          setLocation("/dashboard");
-        }, 100);
-      }
+      
+      // Clear any existing auth cache
+      queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+      
+      // Simple page reload works best for authentication
+      window.location.href = '/dashboard';
     },
     onError: (error: any) => {
       toast({
@@ -56,21 +51,19 @@ export default function Register() {
       return response.json();
     },
     onSuccess: async () => {
-      // Force refetch user data immediately
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
+      console.log("Login successful, redirecting...");
       toast({
         title: "Welcome back!",
         description: "You have been logged in successfully.",
       });
-      // For deployed version, force page reload to ensure proper state
-      if (window.location.hostname !== 'localhost') {
+      
+      // Clear any existing auth cache and force immediate refetch
+      queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+      
+      // Add a small delay to ensure session is set, then reload
+      setTimeout(() => {
         window.location.href = '/dashboard';
-      } else {
-        // Development version uses client-side routing
-        setTimeout(() => {
-          setLocation("/dashboard");
-        }, 100);
-      }
+      }, 500);
     },
     onError: (error: any) => {
       toast({

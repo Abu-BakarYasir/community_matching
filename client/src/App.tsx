@@ -20,7 +20,10 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     queryKey: ["/api/auth/me"],
     retry: false,
     refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
+
+  console.log("AuthWrapper state:", { user: !!user, isLoading, error: !!error });
 
   if (isLoading) {
     return (
@@ -32,9 +35,11 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   // If there's an error or no user data, show login
   if (error || !user) {
+    console.log("Showing login - user:", !!user, "error:", error);
     return <Login />;
   }
 
+  console.log("User authenticated, showing protected content");
   return <>{children}</>;
 }
 

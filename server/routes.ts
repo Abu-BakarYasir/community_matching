@@ -28,6 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Simple auth - just check if we have a user email in the session
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log("Auth check - Session userEmail:", req.session?.userEmail);
     if (!req.session?.userEmail) {
       return res.status(401).json({ message: "Authentication required" });
     }
