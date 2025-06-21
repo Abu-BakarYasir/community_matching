@@ -359,12 +359,29 @@ export default function Dashboard() {
                                   
                                   console.log('🗓️ Add to Calendar clicked for meeting:', meeting.id);
                                   
-                                  // Use server endpoint for reliable download
-                                  const calendarUrl = `/api/meetings/${meeting.id}/calendar`;
-                                  console.log('Opening calendar URL:', calendarUrl);
+                                  // Create Google Calendar URL
+                                  const startDate = new Date(meeting.scheduledAt);
+                                  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour meeting
                                   
-                                  // Open in new tab to trigger download
-                                  window.open(calendarUrl, '_blank');
+                                  // Format dates for Google Calendar (YYYYMMDDTHHMMSSZ)
+                                  const formatForGoogle = (date: Date) => {
+                                    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+                                  };
+                                  
+                                  const title = `DAA Matches Meeting with ${otherUser.firstName} ${otherUser.lastName}`;
+                                  const details = `Networking meeting scheduled through DAA Matches.
+
+Meeting Link: ${meeting.meetingLink}
+Match Score: ${match.matchScore}%
+
+Looking forward to connecting!`;
+                                  
+                                  const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatForGoogle(startDate)}/${formatForGoogle(endDate)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(meeting.meetingLink)}&ctz=America/New_York`;
+                                  
+                                  console.log('Opening Google Calendar:', googleCalendarUrl);
+                                  
+                                  // Open Google Calendar in new tab
+                                  window.open(googleCalendarUrl, '_blank');
                                 }}
                                 size="sm"
                                 variant="outline"

@@ -253,11 +253,11 @@ Preferred communication style: Simple, everyday language.
 
 ### June 21, 2025 - Add to Calendar Feature Implementation
 - Added "Add to Calendar" button to dashboard for scheduled meetings
-- Implemented ICS calendar file generation with meeting details, location, and duration
-- Enhanced email notifications with calendar attachments and download links
-- Added calendar endpoint for server-side ICS file generation
-- Calendar events include meeting links, participant information, and match scores
-- Both dashboard and email provide one-click calendar integration for all calendar apps
+- Switched from ICS file downloads to Google Calendar links for better reliability
+- Enhanced email notifications with Google Calendar links alongside meeting join buttons
+- Calendar events include meeting details, participant information, match scores, and meeting links
+- One-click calendar integration opens Google Calendar in new tab with pre-filled meeting details
+- Improved user experience with direct browser-based calendar integration
 
 ### June 20, 2025 - Authentication System Completed
 - Implemented simplified email-based authentication without database dependencies
