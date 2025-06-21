@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Header } from "@/components/header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -720,28 +720,28 @@ export default function Admin() {
                     <label className="text-sm font-medium">Email Content Template</label>
                     <textarea
                       rows={12}
-                      defaultValue={`Hi {{firstName}},
+                      defaultValue="Hi FIRST_NAME,
 
 Great news! We've found you a networking match based on your professional profile and goals.
 
 Your Match:
-{{partnerName}} - {{partnerTitle}} at {{partnerCompany}}
-Industry: {{partnerIndustry}}
+PARTNER_NAME - PARTNER_TITLE at PARTNER_COMPANY
+Industry: PARTNER_INDUSTRY
 
-Match Score: {{matchScore}}%
+Match Score: MATCH_SCORE%
 
 This match was made based on your professional backgrounds, networking goals, and industry compatibility.
 
 Best regards,
-The DAA Monthly Matching Team`}
+The DAA Monthly Matching Team"
                       className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                      placeholder="Email template content (use {{variables}} for dynamic content)"
+                      placeholder="Email template content (use variables for dynamic content)"
                     />
                   </div>
                   
                   <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
                     <strong>Available Variables:</strong><br/>
-                    {{firstName}}, {{lastName}}, {{partnerName}}, {{partnerTitle}}, {{partnerCompany}}, {{partnerIndustry}}, {{matchScore}}
+                    FIRST_NAME, LAST_NAME, PARTNER_NAME, PARTNER_TITLE, PARTNER_COMPANY, PARTNER_INDUSTRY, MATCH_SCORE
                   </div>
                   
                   <div className="flex gap-3">
