@@ -407,6 +407,29 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
+  async getAllMeetings(): Promise<Meeting[]> {
+    try {
+      const result = await db.select().from(meetings);
+      console.log(`getAllMeetings found ${result.length} meetings`);
+      return result;
+    } catch (error) {
+      console.error("Error getting all meetings:", error);
+      return [];
+    }
+  }
+
+  async deleteMeeting(id: number): Promise<boolean> {
+    try {
+      console.log(`Attempting to delete meeting ${id}`);
+      const result = await db.delete(meetings).where(eq(meetings.id, id));
+      console.log(`Delete meeting ${id} result:`, result.rowCount);
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting meeting:", error);
+      return false;
+    }
+  }
+
   async deleteNotification(id: number): Promise<boolean> {
     try {
       const result = await db.delete(notifications).where(eq(notifications.id, id));

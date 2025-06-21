@@ -875,6 +875,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete all meetings
+  app.delete("/api/admin/meetings", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const meetings = await storage.getAllMeetings();
+      let deletedCount = 0;
+      
+      console.log(`Found ${meetings.length} meetings to delete`);
+      
+      for (const meeting of meetings) {
+        const success = await storage.deleteMeeting(meeting.id);
+        if (success) {
+          deletedCount++;
+          console.log(`Deleted meeting ${meeting.id}`);
+        } else {
+          console.log(`Failed to delete meeting ${meeting.id}`);
+        }
+      }
+      
+      console.log(`Admin deleted ${deletedCount} meetings`);
+      res.json({ message: `Deleted ${deletedCount} meetings`, deletedCount });
+    } catch (error) {
+      console.error("Delete all meetings error:", error);
+      res.status(500).json({ message: "Failed to delete meetings" });
+    }
+  });
+
   // Store settings in memory (in production, use database)
   let appSettings = {
     matchingDay: 1,
