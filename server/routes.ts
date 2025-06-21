@@ -808,6 +808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     appName: "DAA Matches",
     preventMeetingOverlap: true,
     googleMeetLink: "https://meet.google.com/wnf-cjab-twp",
+    monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
     weights: {
       industry: 35,
       company: 20,
@@ -848,6 +849,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (req.body.googleMeetLink) {
         appSettings.googleMeetLink = req.body.googleMeetLink;
+      }
+      
+      if (req.body.monthlyGoals && Array.isArray(req.body.monthlyGoals)) {
+        appSettings.monthlyGoals = req.body.monthlyGoals;
       }
       
       res.json(appSettings);

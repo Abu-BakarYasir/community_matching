@@ -630,6 +630,47 @@ export default function Admin() {
                     </Button>
                   </div>
 
+                  <div>
+                    <Label htmlFor="monthlyGoals">Monthly Focus Goals</Label>
+                    <div className="mt-2 space-y-2">
+                      {(settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]).map((goal, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Input
+                            value={goal}
+                            onChange={(e) => {
+                              const newGoals = [...(settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"])];
+                              newGoals[index] = e.target.value;
+                              updateSettings.mutate({ monthlyGoals: newGoals });
+                            }}
+                            className="flex-1"
+                            placeholder="Enter goal option"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newGoals = (settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]).filter((_, i) => i !== index);
+                              updateSettings.mutate({ monthlyGoals: newGoals });
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const newGoals = [...(settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]), "New Goal"];
+                          updateSettings.mutate({ monthlyGoals: newGoals });
+                        }}
+                      >
+                        Add Goal
+                      </Button>
+                    </div>
+                    <p className="text-sm text-slate-600 mt-1">Options users can select for their monthly networking focus</p>
+                  </div>
+
                   <Button 
                     onClick={handleUpdateMatchingDay}
                     disabled={updateSettings.isPending}

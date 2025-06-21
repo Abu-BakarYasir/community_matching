@@ -270,7 +270,7 @@ Preferred communication style: Simple, everyday language.
 - Added Google Meet Link field to admin settings panel for easy customization
 - Meeting creation now uses configurable Google Meet link from admin settings
 
-### June 21, 2025 - Dashboard Layout Reorganization
+### June 21, 2025 - Dashboard Layout Reorganization & Configurable Monthly Goals
 - Reorganized dashboard layout to prioritize current matches and meetings first
 - Changed "Your Matches & Meetings" to "This Round's Matches & Meetings" for clarity
 - Moved "Next Matching Round" section below current matches per user preference
@@ -278,6 +278,10 @@ Preferred communication style: Simple, everyday language.
 - Enhanced user experience by showing active content before future planning information
 - Restored detailed next round information including status, profile completion, and matching timeline
 - Removed weekly schedule preview section from dashboard per user request
+- Added configurable "Monthly Focus Goals" setting in admin panel
+- Admins can now customize the networking goal options that users select from
+- Profile modal dynamically loads goal options from admin settings
+- Added ability to add, edit, and remove monthly goal options in real-time
 
 ### June 20, 2025 - Authentication System Completed
 - Implemented simplified email-based authentication without database dependencies
