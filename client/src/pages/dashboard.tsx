@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { SchedulingModal } from "@/components/scheduling-modal";
 import { ProfileModal } from "@/components/profile-modal";
 import { AvailabilityModal } from "@/components/availability-modal";
 import { AdminDebug } from "@/components/admin-debug";
+import { NextRoundCard } from "@/components/next-round-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -188,6 +189,19 @@ export default function Dashboard() {
 
 
         <div className="space-y-8">
+          {/* Next Round's Matches Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Next Round's Matches
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <NextRoundCard user={user} />
+            </CardContent>
+          </Card>
+
           {/* This Round's Matches & Meetings - Top Priority */}
           <Card>
             <CardHeader>

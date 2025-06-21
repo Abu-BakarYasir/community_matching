@@ -251,7 +251,16 @@ Preferred communication style: Simple, everyday language.
 - Admin access now properly restricted with 403 errors for non-admin users
 - Full admin authentication system working with database persistence
 
-### June 21, 2025 - Admin Authentication System & UI Improvements
+### June 21, 2025 - Next Round Matching Card & UI Improvements
+- Added comprehensive "Next Round's Matches" card to dashboard with real-time countdown timer
+- Implemented automatic calculation of next first Monday matching date with precise timing
+- Created dynamic status indicators based on user opt-in toggle and profile completion
+- Added visual countdown display showing days, hours, minutes, and seconds until next matching
+- Integrated status badges showing "Participating", "Opted Out", or "Profile Needed"
+- Fixed profile picture upload to immediately refresh UI cache for instant visual updates
+- Enhanced dashboard layout with prominent next round information and clear participation status
+
+### June 21, 2025 - Admin Authentication System & UI Improvements  
 - Fixed critical login issue with response.json() error by properly handling fetch responses
 - Implemented complete admin authentication system with JWT tokens and database-backed admin roles
 - Protected all admin API endpoints with requireAdmin middleware for security
@@ -260,7 +269,6 @@ Preferred communication style: Simple, everyday language.
 - Made yourmama@gmail.com an admin user with full dashboard access privileges
 - Added admin debug panel for testing authentication and token refresh functionality
 - Fixed apiRequest function to properly handle JSON responses and prevent authentication errors
-- Fixed profile picture upload to immediately refresh UI cache for instant visual updates
 
 ### June 21, 2025 - Configurable App Name & Profile Picture Infrastructure
 - Made app name configurable through admin settings panel (changed to "DAA Matches")
