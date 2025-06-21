@@ -17,6 +17,8 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
+  // Check if this is a first-time user completing their profile
+  const isFirstTimeSetup = !user?.firstName || !user?.lastName || !user?.jobTitle || !user?.company || !user?.industry;
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");
   const [industry, setIndustry] = useState("");
@@ -92,8 +94,10 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       
       toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
+        title: isFirstTimeSetup ? "Welcome to DAA Matches!" : "Profile Updated",
+        description: isFirstTimeSetup 
+          ? "Your profile is complete. You can now start networking!" 
+          : "Your profile has been successfully updated.",
       });
       
       onOpenChange(false);
@@ -136,12 +140,17 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={isFirstTimeSetup ? () => {} : onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle>
+            {isFirstTimeSetup ? "Complete Your Profile" : "Edit Profile"}
+          </DialogTitle>
           <DialogDescription>
-            Update your professional information and networking preferences.
+            {isFirstTimeSetup 
+              ? "Welcome! Please complete your profile to start networking with other professionals."
+              : "Update your professional information and networking preferences."
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -185,28 +194,36 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="jobTitle">Job Title</Label>
+              <Label htmlFor="jobTitle">
+                Job Title {isFirstTimeSetup && <span className="text-red-500">*</span>}
+              </Label>
               <Input
                 id="jobTitle"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 placeholder="e.g. Senior Data Scientist"
+                required={isFirstTimeSetup}
               />
             </div>
 
             <div>
-              <Label htmlFor="company">Company</Label>
+              <Label htmlFor="company">
+                Company {isFirstTimeSetup && <span className="text-red-500">*</span>}
+              </Label>
               <Input
                 id="company"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 placeholder="e.g. Acme Corp"
+                required={isFirstTimeSetup}
               />
             </div>
 
             <div>
-              <Label htmlFor="industry">Industry</Label>
-              <Select value={industry} onValueChange={setIndustry}>
+              <Label htmlFor="industry">
+                Industry {isFirstTimeSetup && <span className="text-red-500">*</span>}
+              </Label>
+              <Select value={industry} onValueChange={setIndustry} required={isFirstTimeSetup}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your industry" />
                 </SelectTrigger>
@@ -274,17 +291,35 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={updateProfile.isPending}>
-              {updateProfile.isPending ? "Saving..." : "Save Changes"}
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-2 mt-6">
+            {isFirstTimeSetup && (
+              <p className="text-sm text-slate-600 mb-2">
+                Please complete the required fields (*) to continue.
+              </p>
+            )}
+            <div className="flex justify-end space-x-3 w-full">
+              {!isFirstTimeSetup && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button 
+                type="submit" 
+                disabled={updateProfile.isPending || (isFirstTimeSetup && (!jobTitle || !company || !industry))}
+                className={isFirstTimeSetup ? "flex-1 bg-blue-600 hover:bg-blue-700" : ""}
+              >
+                {updateProfile.isPending 
+                  ? "Saving..." 
+                  : isFirstTimeSetup 
+                    ? "Complete Profile & Continue" 
+                    : "Save Changes"
+                }
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

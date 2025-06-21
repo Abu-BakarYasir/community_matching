@@ -270,6 +270,16 @@ Preferred communication style: Simple, everyday language.
 - Added Google Meet Link field to admin settings panel for easy customization
 - Meeting creation now uses configurable Google Meet link from admin settings
 
+### June 21, 2025 - First-Time User Onboarding & Profile Completion Flow
+- Implemented automatic redirect to profile completion for first-time users
+- Users with incomplete profiles (missing name, job title, company, or industry) are redirected to profile page
+- Profile modal automatically opens for new users with mandatory field validation
+- Enhanced profile modal with first-time setup messaging and required field indicators
+- Modal cannot be closed until required fields are completed for new users
+- Improved onboarding experience with welcome messaging and clear completion prompts
+- Added visual indicators for required fields with red asterisks during setup
+- Submit button shows different text and validation for first-time vs. existing users
+
 ### June 21, 2025 - Dashboard Layout Reorganization & Configurable Monthly Goals
 - Reorganized dashboard layout to prioritize current matches and meetings first
 - Changed "Your Matches & Meetings" to "This Round's Matches & Meetings" for clarity
