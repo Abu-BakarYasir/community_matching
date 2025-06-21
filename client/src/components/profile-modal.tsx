@@ -140,7 +140,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={isFirstTimeSetup ? () => {} : onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -298,19 +298,17 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
               </p>
             )}
             <div className="flex justify-end space-x-3 w-full">
-              {!isFirstTimeSetup && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                >
-                  Cancel
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                {isFirstTimeSetup ? "Skip for Now" : "Cancel"}
+              </Button>
               <Button 
                 type="submit" 
                 disabled={updateProfile.isPending || (isFirstTimeSetup && (!jobTitle || !company || !industry))}
-                className={isFirstTimeSetup ? "flex-1 bg-blue-600 hover:bg-blue-700" : ""}
+                className={isFirstTimeSetup ? "bg-blue-600 hover:bg-blue-700" : ""}
               >
                 {updateProfile.isPending 
                   ? "Saving..." 
