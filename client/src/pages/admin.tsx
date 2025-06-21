@@ -553,9 +553,37 @@ export default function Admin() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Matching Settings</CardTitle>
+                  <CardTitle>App Settings</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="appName">Application Name</Label>
+                    <Input
+                      id="appName"
+                      value={settings?.appName || "DAA Matches"}
+                      onChange={(e) => updateSettings.mutate({ appName: e.target.value })}
+                      className="mt-2"
+                      placeholder="Enter application name"
+                    />
+                    <p className="text-sm text-slate-600 mt-1">
+                      Name displayed throughout the application
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="googleMeetLink">Default Google Meet Link</Label>
+                    <Input
+                      id="googleMeetLink"
+                      value={settings?.googleMeetLink || "https://meet.google.com/wnf-cjab-twp"}
+                      onChange={(e) => updateSettings.mutate({ googleMeetLink: e.target.value })}
+                      className="mt-2"
+                      placeholder="Enter Google Meet link"
+                    />
+                    <p className="text-sm text-slate-600 mt-1">
+                      Default meeting link used for all scheduled meetings
+                    </p>
+                  </div>
+
                   <div>
                     <Label htmlFor="matchingDay">Monthly Matching Day</Label>
                     <Select value={matchingDay} onValueChange={setMatchingDay}>
@@ -573,6 +601,33 @@ export default function Admin() {
                     <p className="text-sm text-slate-600 mt-1">
                       The day of each month when automatic matching runs
                     </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Prevent Meeting Overlaps</Label>
+                      <p className="text-sm text-slate-600">Only allow one meeting at a time per user</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => updateSettings.mutate({ preventMeetingOverlap: !settings?.preventMeetingOverlap })}
+                      disabled={updateSettings.isPending}
+                      className={`relative w-16 h-8 rounded-full transition-all duration-300 ease-in-out p-1 ${
+                        settings?.preventMeetingOverlap 
+                          ? "bg-green-500 hover:bg-green-600" 
+                          : "bg-slate-300 hover:bg-slate-400"
+                      }`}
+                    >
+                      <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out ${
+                        settings?.preventMeetingOverlap ? "translate-x-8" : "translate-x-0"
+                      }`}>
+                        <span className={`flex items-center justify-center w-full h-full text-xs font-bold ${
+                          settings?.preventMeetingOverlap ? "text-green-600" : "text-slate-600"
+                        }`}>
+                          {updateSettings.isPending ? "..." : (settings?.preventMeetingOverlap ? "ON" : "OFF")}
+                        </span>
+                      </div>
+                    </Button>
                   </div>
 
                   <Button 

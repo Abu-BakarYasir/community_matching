@@ -395,7 +395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scheduledAt: new Date(meetingData.scheduledAt),
         meetingType: meetingData.meetingType || "video",
         duration: meetingData.duration || 30,
-        meetingLink: meetingData.meetingLink || "https://meet.google.com/wnf-cjab-twp",
+        meetingLink: meetingData.meetingLink || appSettings.googleMeetLink || "https://meet.google.com/wnf-cjab-twp",
         status: meetingData.status || "scheduled"
       };
       
@@ -404,6 +404,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const match = await storage.getMatch(fullMeetingData.matchId);
       if (!match || (match.user1Id !== userId && match.user2Id !== userId)) {
         return res.status(403).json({ message: "Not authorized to schedule this meeting" });
+      }
+
+      // Check for meeting overlap if prevention is enabled
+      if (appSettings.preventMeetingOverlap && fullMeetingData.scheduledAt) {
+        const proposedStart = new Date(fullMeetingData.scheduledAt);
+        const proposedEnd = new Date(proposedStart.getTime() + (fullMeetingData.duration * 60 * 1000));
+        
+        // Get all existing meetings for both users in the match
+        const user1Meetings = await storage.getMeetingsByUser(match.user1Id);
+        const user2Meetings = await storage.getMeetingsByUser(match.user2Id);
+        const allMeetings = [...user1Meetings, ...user2Meetings];
+        
+        // Check for overlaps
+        const hasOverlap = allMeetings.some(existingMeeting => {
+          if (existingMeeting.status !== 'scheduled') return false;
+          
+          const existingStart = new Date(existingMeeting.scheduledAt);
+          const existingEnd = new Date(existingStart.getTime() + (existingMeeting.duration * 60 * 1000));
+          
+          // Check if times overlap
+          return (proposedStart < existingEnd && proposedEnd > existingStart);
+        });
+        
+        if (hasOverlap) {
+          return res.status(409).json({ 
+            message: "Meeting time conflicts with existing meeting. Please choose a different time." 
+          });
+        }
       }
       
       const meeting = await storage.createMeeting(fullMeetingData);
@@ -778,6 +806,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isMatchingEnabled: true,
     lastMatchingRun: null,
     appName: "DAA Matches",
+    preventMeetingOverlap: true,
+    googleMeetLink: "https://meet.google.com/wnf-cjab-twp",
     weights: {
       industry: 35,
       company: 20,
@@ -810,6 +840,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (req.body.weights) {
         appSettings.weights = { ...appSettings.weights, ...req.body.weights };
+      }
+      
+      if (typeof req.body.preventMeetingOverlap === 'boolean') {
+        appSettings.preventMeetingOverlap = req.body.preventMeetingOverlap;
+      }
+      
+      if (req.body.googleMeetLink) {
+        appSettings.googleMeetLink = req.body.googleMeetLink;
       }
       
       res.json(appSettings);

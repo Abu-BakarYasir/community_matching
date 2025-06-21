@@ -259,13 +259,16 @@ Preferred communication style: Simple, everyday language.
 - One-click calendar integration opens Google Calendar in new tab with pre-filled meeting details
 - Improved user experience with direct browser-based calendar integration
 
-### June 21, 2025 - Meeting Overlap Prevention System
+### June 21, 2025 - Meeting Overlap Prevention & Configurable Settings
 - Added admin toggle for "Prevent Meeting Overlaps" to control scheduling algorithm
 - Implemented meeting conflict detection to ensure only one meeting at a time per user
 - Enhanced meeting creation API to check for time conflicts before scheduling
 - Admin dashboard now includes overlap prevention setting with clear description
 - System validates proposed meeting times against existing scheduled meetings
 - Returns user-friendly error message when meeting conflicts are detected
+- Made Google Meet link configurable through admin settings instead of hardcoded
+- Added Google Meet Link field to admin settings panel for easy customization
+- Meeting creation now uses configurable Google Meet link from admin settings
 
 ### June 20, 2025 - Authentication System Completed
 - Implemented simplified email-based authentication without database dependencies
