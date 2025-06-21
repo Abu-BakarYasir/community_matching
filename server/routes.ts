@@ -388,14 +388,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user meetings
-  app.get("/api/meetings", requireAuth, async (req, res) => {
+  app.get("/api/meetings", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId!;
-      const meetings = await storage.getMeetingsByUser(userId);
+      const meetings = await storage.getMeetingsByUser(req.user!.id);
       res.json(meetings);
     } catch (error) {
       console.error("Get meetings error:", error);
       res.status(500).json({ message: "Failed to get meetings" });
+    }
+  });
+
+  // Create new meeting
+  app.post("/api/meetings", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const meetingData = req.body;
+      
+      // Verify the user has access to this match
+      const match = await storage.getMatch(meetingData.matchId);
+      if (!match) {
+        return res.status(404).json({ message: "Match not found" });
+      }
+      
+      // Verify user is part of this match
+      if (match.user1Id !== req.user!.id && match.user2Id !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to schedule meeting for this match" });
+      }
+      
+      const meeting = await storage.createMeeting({
+        matchId: meetingData.matchId,
+        scheduledAt: new Date(meetingData.scheduledAt),
+        meetingType: meetingData.meetingType || "video",
+        duration: meetingData.duration || 30,
+        location: meetingData.location,
+        meetingLink: meetingData.meetingLink,
+        status: "scheduled"
+      });
+      
+      res.json(meeting);
+    } catch (error) {
+      console.error("Create meeting error:", error);
+      res.status(500).json({ message: "Failed to create meeting" });
     }
   });
 
@@ -426,7 +458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get availability
-  app.get("/api/availability", requireAuth, async (req, res) => {
+  app.get("/api/availability", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const { userId } = req.query;
       
@@ -435,16 +467,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userId) {
         // Admin requesting another user's availability
         targetUserId = parseInt(userId as string);
-        console.log("Admin requesting availability for user:", targetUserId);
       } else {
         // User requesting their own availability
-        const email = req.session.userEmail!;
-        const user = await storage.getUserByEmail(email);
-        if (!user) {
-          return res.json([]);
-        }
-        targetUserId = user.id;
-        console.log("User requesting own availability:", targetUserId);
+        targetUserId = req.user!.id;
       }
       
       // Get availability from database

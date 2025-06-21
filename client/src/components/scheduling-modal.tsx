@@ -28,10 +28,7 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
   });
 
   const scheduleMutation = useMutation({
-    mutationFn: (meetingData: any) => apiRequest("/api/meetings", {
-      method: "POST",
-      body: JSON.stringify(meetingData),
-    }),
+    mutationFn: (meetingData: any) => apiRequest("POST", "/api/meetings", meetingData),
     onSuccess: () => {
       toast({
         title: "Meeting Scheduled",
@@ -63,7 +60,7 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
       meetingType,
       duration: 30,
       location: meetingType === "coffee" ? "TBD" : undefined,
-      meetingLink: meetingType === "video" ? "https://zoom.us/j/example" : undefined,
+      meetingLink: meetingType === "video" ? "https://meet.google.com/wnf-cjab-twp" : undefined,
     });
   };
 
