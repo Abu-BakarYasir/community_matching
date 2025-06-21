@@ -13,15 +13,28 @@ export function AdminDebug() {
       // Clear existing token first
       localStorage.removeItem('authToken');
       
-      const response = await apiRequest("POST", "/api/auth/login", {
-        email: "yourmama@gmail.com"
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: "yourmama@gmail.com"
+        }),
+        credentials: 'include'
       });
       
-      if (response.token) {
-        setAuthToken(response.token);
+      if (!response.ok) {
+        throw new Error('Login failed');
       }
       
-      return response;
+      const data = await response.json();
+      
+      if (data.token) {
+        setAuthToken(data.token);
+      }
+      
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries();
@@ -30,7 +43,22 @@ export function AdminDebug() {
   });
 
   const testAdminAccess = useMutation({
-    mutationFn: () => apiRequest("GET", "/api/admin/settings"),
+    mutationFn: async () => {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/admin/settings', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Admin access failed: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     onSuccess: (data) => {
       console.log('Admin access successful:', data);
     },

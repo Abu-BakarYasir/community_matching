@@ -49,14 +49,26 @@ export default function Register() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/auth/login", data);
+    mutationFn: async (userData: { email: string }) => {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+      
       return response.json();
     },
-    onSuccess: async (result) => {
+    onSuccess: async (data) => {
       // Store the JWT token
-      if (result.token) {
-        setAuthToken(result.token);
+      if (data.token) {
+        setAuthToken(data.token);
         
         toast({
           title: "Welcome back!",

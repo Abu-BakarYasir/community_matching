@@ -50,7 +50,14 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res.json();
+  
+  // Check if response has content before trying to parse JSON
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return res.json();
+  }
+  
+  return res;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
