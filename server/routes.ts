@@ -768,12 +768,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const user of users) {
         // Don't delete admin users to prevent lockout
         if (!user.isAdmin) {
-          await storage.deleteUser(user.id);
-          deletedCount++;
+          const success = await storage.deleteUser(user.id);
+          if (success) deletedCount++;
         }
       }
       
-      res.json({ message: `Deleted ${deletedCount} users (admin users preserved)` });
+      console.log(`Admin deleted ${deletedCount} users (admins preserved)`);
+      res.json({ message: `Deleted ${deletedCount} users (admin users preserved)`, deletedCount });
     } catch (error) {
       console.error("Delete all users error:", error);
       res.status(500).json({ message: "Failed to delete users" });
@@ -797,11 +798,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let deletedCount = 0;
       
       for (const match of matches) {
-        await storage.deleteMatch(match.id);
-        deletedCount++;
+        const success = await storage.deleteMatch(match.id);
+        if (success) deletedCount++;
       }
       
-      res.json({ message: `Deleted ${deletedCount} matches` });
+      console.log(`Admin deleted ${deletedCount} matches`);
+      res.json({ message: `Deleted ${deletedCount} matches`, deletedCount });
     } catch (error) {
       console.error("Delete all matches error:", error);
       res.status(500).json({ message: "Failed to delete matches" });

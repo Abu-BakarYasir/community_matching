@@ -152,6 +152,8 @@ export default function Admin() {
     mutationFn: () => apiRequest("DELETE", "/api/admin/users"),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/meetings"] });
       toast({
         title: "Users Deleted",
         description: data.message,
@@ -170,6 +172,7 @@ export default function Admin() {
     mutationFn: () => apiRequest("DELETE", "/api/admin/matches"),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/meetings"] });
       toast({
         title: "Matches Deleted",
         description: data.message,
