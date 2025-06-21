@@ -245,6 +245,7 @@ export default function Dashboard() {
                     if (!otherUser) return null;
                     
                     const hasMeeting = match.meeting && match.meeting.status === 'scheduled';
+                    const meeting = match.meeting;
                     
 
                     
@@ -348,6 +349,46 @@ export default function Dashboard() {
                                 }`}
                               >
                                 {isToday ? 'Join Now' : 'Join'}
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  const startDate = new Date(meeting!.scheduledAt);
+                                  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour meeting
+                                  
+                                  const event = {
+                                    title: `DAA Matches Meeting with ${otherUser.firstName} ${otherUser.lastName}`,
+                                    start: startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''),
+                                    end: endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''),
+                                    description: `Networking meeting scheduled through DAA Matches\\n\\nMeeting Link: ${meeting!.meetingLink}\\nMatch Score: ${match.matchScore}%`,
+                                    location: meeting!.meetingLink
+                                  };
+                                  
+                                  const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//DAA Matches//Meeting//EN
+BEGIN:VEVENT
+UID:${meeting!.id}@daa-matches
+DTSTART:${event.start}
+DTEND:${event.end}
+SUMMARY:${event.title}
+DESCRIPTION:${event.description}
+LOCATION:${event.location}
+END:VEVENT
+END:VCALENDAR`;
+                                  
+                                  const blob = new Blob([icsContent], { type: 'text/calendar' });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `meeting-${otherUser.firstName}-${startDate.toISOString().split('T')[0]}.ics`;
+                                  a.click();
+                                  URL.revokeObjectURL(url);
+                                }}
+                                size="sm"
+                                variant="outline"
+                                className="w-20 text-xs"
+                              >
+                                Calendar
                               </Button>
                               <Button
                                 onClick={() => handleScheduleMatch(match)}
