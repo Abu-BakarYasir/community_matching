@@ -695,6 +695,64 @@ export default function Admin() {
               </Card>
             </div>
           </TabsContent>
+
+          <TabsContent value="emails" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Email Templates</CardTitle>
+                <CardDescription>
+                  Customize email templates for match notifications and meeting reminders.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Match Notification Subject</label>
+                    <input
+                      type="text"
+                      defaultValue="🎯 New Match Found - DAA Monthly Matching"
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Email subject line"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium">Email Content Template</label>
+                    <textarea
+                      rows={12}
+                      defaultValue={`Hi {{firstName}},
+
+Great news! We've found you a networking match based on your professional profile and goals.
+
+Your Match:
+{{partnerName}} - {{partnerTitle}} at {{partnerCompany}}
+Industry: {{partnerIndustry}}
+
+Match Score: {{matchScore}}%
+
+This match was made based on your professional backgrounds, networking goals, and industry compatibility.
+
+Best regards,
+The DAA Monthly Matching Team`}
+                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                      placeholder="Email template content (use {{variables}} for dynamic content)"
+                    />
+                  </div>
+                  
+                  <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded">
+                    <strong>Available Variables:</strong><br/>
+                    {{firstName}}, {{lastName}}, {{partnerName}}, {{partnerTitle}}, {{partnerCompany}}, {{partnerIndustry}}, {{matchScore}}
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <Button>Save Template</Button>
+                    <Button variant="outline">Preview Email</Button>
+                    <Button variant="outline">Send Test Email</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
 
