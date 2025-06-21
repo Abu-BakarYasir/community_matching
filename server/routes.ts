@@ -932,6 +932,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email template endpoints
+  app.get('/api/admin/email-template', async (req, res) => {
+    try {
+      // For now, return the current template structure
+      const template = {
+        subject: '🎯 New Match Found - DAA Monthly Matching',
+        content: `Hi {{firstName}},
+
+Great news! We've found you a networking match based on your professional profile and goals.
+
+Your Match:
+{{partnerName}} - {{partnerTitle}} at {{partnerCompany}}
+Industry: {{partnerIndustry}}
+
+Match Score: {{matchScore}}%
+
+This match was made based on your professional backgrounds, networking goals, and industry compatibility.
+
+Best regards,
+The DAA Monthly Matching Team`
+      };
+      res.json(template);
+    } catch (error) {
+      console.error('Error fetching email template:', error);
+      res.status(500).json({ error: 'Failed to fetch email template' });
+    }
+  });
+
+  app.post('/api/admin/email-template', async (req, res) => {
+    try {
+      const { subject, content } = req.body;
+      console.log('Updating email template:', { subject, content });
+      
+      // Store template (for now just log it, in production you'd save to database)
+      appSettings.emailTemplate = { subject, content };
+      
+      res.json({ message: 'Email template updated successfully' });
+    } catch (error) {
+      console.error('Error updating email template:', error);
+      res.status(500).json({ error: 'Failed to update email template' });
+    }
+  });
+
+  app.post('/api/admin/preview-email', async (req, res) => {
+    try {
+      const { subject, content } = req.body;
+      
+      // Sample data for preview
+      const previewData = {
+        firstName: 'John',
+        lastName: 'Doe', 
+        partnerName: 'Jane Smith',
+        partnerTitle: 'Senior Data Analyst',
+        partnerCompany: 'TechCorp Inc',
+        partnerIndustry: 'Technology',
+        matchScore: '87'
+      };
+      
+      // Replace variables in template
+      let previewSubject = subject;
+      let previewContent = content;
+      
+      Object.entries(previewData).forEach(([key, value]) => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        previewSubject = previewSubject.replace(regex, value);
+        previewContent = previewContent.replace(regex, value);
+      });
+      
+      res.json({ 
+        subject: previewSubject, 
+        content: previewContent,
+        sampleData: previewData
+      });
+    } catch (error) {
+      console.error('Error previewing email:', error);
+      res.status(500).json({ error: 'Failed to preview email' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

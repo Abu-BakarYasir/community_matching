@@ -61,7 +61,7 @@ class EmailService {
             
             <p>This match was made based on your professional backgrounds, networking goals, and industry compatibility.</p>
             
-            <a href="${process.env.APP_URL || 'http://localhost:5000'}/dashboard" 
+            <a href="${process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : process.env.APP_URL || 'https://daa-monthly-matching.replit.app'}/dashboard" 
                style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
               View Match & Schedule Meeting
             </a>
