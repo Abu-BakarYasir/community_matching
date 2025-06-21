@@ -277,6 +277,7 @@ Preferred communication style: Simple, everyday language.
 - Improved information hierarchy with current round activities displayed prominently
 - Enhanced user experience by showing active content before future planning information
 - Restored detailed next round information including status, profile completion, and matching timeline
+- Removed weekly schedule preview section from dashboard per user request
 
 ### June 20, 2025 - Authentication System Completed
 - Implemented simplified email-based authentication without database dependencies

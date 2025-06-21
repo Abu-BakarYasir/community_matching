@@ -432,21 +432,7 @@ Looking forward to connecting!`;
                   </div>
                 </div>
 
-                {/* Weekly Availability Preview */}
-                <div>
-                  <h4 className="text-sm font-medium text-slate-900 mb-3">Weekly Schedule</h4>
-                  <div className="grid grid-cols-7 gap-2">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                      <div key={day} className="text-center">
-                        <div className="text-xs font-medium text-slate-600 mb-1">{day}</div>
-                        <div className="h-8 rounded border bg-slate-50 border-slate-200" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-center mt-3">
-                    <p className="text-sm text-slate-500">Set your schedule to help others book meetings</p>
-                  </div>
-                </div>
+
               </CardContent>
             </Card>
 
