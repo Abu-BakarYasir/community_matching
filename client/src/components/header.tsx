@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Bell, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -15,11 +14,7 @@ export function Header() {
     queryKey: ["/api/auth/me"],
   });
 
-  const { data: notifications = [] } = useQuery({
-    queryKey: ["/api/notifications"],
-  });
-
-  const unreadCount = notifications.filter((n: any) => !n.isRead).length;
+  // Removed notifications functionality
 
   const logoutMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/auth/logout"),
@@ -48,48 +43,6 @@ export function Header() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="relative"
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs notification-badge"
-                    >
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <div className="p-3 border-b">
-                  <h3 className="font-semibold">Notifications</h3>
-                </div>
-                {notifications.length > 0 ? (
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.slice(0, 5).map((notification: any) => (
-                      <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-3">
-                        <div className="font-medium text-sm">{notification.title}</div>
-                        <div className="text-xs text-slate-600 mt-1">{notification.message}</div>
-                        <div className="text-xs text-slate-400 mt-1">
-                          {new Date(notification.createdAt).toLocaleDateString()}
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-3 text-center text-slate-500">
-                    No notifications
-                  </div>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-3 h-auto p-2">

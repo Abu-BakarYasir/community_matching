@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import multer from "multer";
 import { storage } from "./storage";
 import { emailService } from "./services/email";
 import { schedulerService } from "./services/scheduler";
@@ -8,6 +9,20 @@ import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema } f
 import { generateToken, requireAuth, AuthenticatedRequest } from "./auth";
 
 import { z } from "zod";
+
+// Configure multer for file uploads
+const storage_multer = multer.memoryStorage();
+const upload = multer({ 
+  storage: storage_multer,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
 // Extend session data type
 declare module 'express-session' {
@@ -217,34 +232,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Profile image upload endpoint
-  app.post("/api/user/upload-profile-image", requireAuth, async (req: AuthenticatedRequest, res) => {
+  // Profile image upload endpoint with actual file handling
+  app.post("/api/user/upload-profile-image", requireAuth, upload.single('image'), async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user!.id;
+      const file = req.file;
       
-      // Generate a unique avatar using DiceBear API based on user email
+      if (!file) {
+        return res.status(400).json({ message: "No image file provided" });
+      }
+      
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}&backgroundColor=3b82f6&color=ffffff`;
+      // Convert uploaded file to base64 data URL for storage
+      // In production, you'd upload to AWS S3, Cloudinary, etc.
+      const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
       
-      console.log("Updating user profile image:", { userId, avatarUrl });
+      console.log("Updating user profile image:", { userId, fileSize: file.size, mimeType: file.mimetype });
       
       // Update user with new profile image URL
       const updatedUser = await storage.updateUser(userId, { 
-        profileImageUrl: avatarUrl 
+        profileImageUrl: base64Image 
       });
       
-      console.log("Updated user with profile image:", updatedUser);
+      console.log("Updated user with profile image successfully");
       
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
       
       res.json({ 
-        imageUrl: avatarUrl,
+        imageUrl: base64Image,
         user: updatedUser,
         message: "Profile image uploaded successfully" 
       });
@@ -626,41 +647,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get notifications
-  app.get("/api/notifications", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      const notifications = await storage.getNotifications(req.user!.id);
-      // Filter out old notifications and limit to recent ones
-      const recentNotifications = notifications
-        .filter(n => {
-          const daysSinceCreated = (Date.now() - new Date(n.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-          return daysSinceCreated <= 30; // Only show notifications from last 30 days
-        })
-        .slice(0, 10); // Limit to 10 most recent
-      
-      res.json(recentNotifications);
-    } catch (error) {
-      console.error("Get notifications error:", error);
-      res.status(500).json({ message: "Failed to get notifications" });
-    }
-  });
+  // Notifications removed per user request
 
-  // Mark notification as read
-  app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
-    try {
-      const notificationId = parseInt(req.params.id);
-      const success = await storage.markNotificationAsRead(notificationId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Notification not found" });
-      }
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Mark notification read error:", error);
-      res.status(500).json({ message: "Failed to mark notification as read" });
-    }
-  });
+  // Notification endpoints removed per user request
 
   // Dashboard stats
   app.get("/api/dashboard/stats", requireAuth, async (req: AuthenticatedRequest, res) => {
