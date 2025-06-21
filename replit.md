@@ -290,6 +290,14 @@ Preferred communication style: Simple, everyday language.
 - Fixed profile picture saving system to handle actual image files instead of placeholder avatars
 - Removed notifications functionality per user request to simplify interface
 
+### June 21, 2025 - Admin-Configurable Default Names for New Users
+- Added Default First Name and Default Last Name fields to admin settings panel
+- Replaced email-based name extraction with configurable admin defaults
+- Updated user creation logic in both magic link and JWT login to use admin settings
+- New users now get names from admin configuration instead of parsing email addresses
+- Backend stores defaultFirstName and defaultLastName in app settings with API endpoints
+- Admin interface includes input fields with helpful descriptions for name configuration
+
 ### June 21, 2025 - Add to Calendar Feature Implementation
 - Added "Add to Calendar" button to dashboard for scheduled meetings
 - Switched from ICS file downloads to Google Calendar links for better reliability

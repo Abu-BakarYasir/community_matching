@@ -571,6 +571,34 @@ export default function Admin() {
                   </div>
 
                   <div>
+                    <Label htmlFor="defaultFirstName">Default First Name</Label>
+                    <Input
+                      id="defaultFirstName"
+                      value={settings?.defaultFirstName || "User"}
+                      onChange={(e) => updateSettings.mutate({ defaultFirstName: e.target.value })}
+                      className="mt-2"
+                      placeholder="Enter default first name"
+                    />
+                    <p className="text-sm text-slate-600 mt-1">
+                      Default first name for new users (instead of extracting from email)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="defaultLastName">Default Last Name</Label>
+                    <Input
+                      id="defaultLastName"
+                      value={settings?.defaultLastName || ""}
+                      onChange={(e) => updateSettings.mutate({ defaultLastName: e.target.value })}
+                      className="mt-2"
+                      placeholder="Enter default last name (optional)"
+                    />
+                    <p className="text-sm text-slate-600 mt-1">
+                      Default last name for new users (leave empty if not needed)
+                    </p>
+                  </div>
+
+                  <div>
                     <Label htmlFor="googleMeetLink">Default Google Meet Link</Label>
                     <Input
                       id="googleMeetLink"

@@ -99,11 +99,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create user if they don't exist
       if (!user) {
-        const [firstName, lastName] = email.split('@')[0].split('.');
         user = await storage.createUser({
           email,
-          firstName: firstName || "User",
-          lastName: lastName || "",
+          firstName: appSettings.defaultFirstName || "User",
+          lastName: appSettings.defaultLastName || "",
           isActive: true
         });
       }
@@ -171,12 +170,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUserByEmail(email);
       
       if (!user) {
-        // Create new user
-        const [firstName, lastName] = email.split('@')[0].split('.');
+        console.log(`Creating new user for login: ${email} with defaults from settings`);
         user = await storage.createUser({
           email,
-          firstName: firstName || "User",
-          lastName: lastName || "",
+          firstName: appSettings.defaultFirstName || "User",
+          lastName: appSettings.defaultLastName || "",
           isActive: true
         });
       }
@@ -858,6 +856,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     preventMeetingOverlap: true,
     googleMeetLink: "https://meet.google.com/wnf-cjab-twp",
     monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+    defaultFirstName: "User",
+    defaultLastName: "",
     weights: {
       industry: 35,
       company: 20,
@@ -902,6 +902,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (req.body.monthlyGoals && Array.isArray(req.body.monthlyGoals)) {
         appSettings.monthlyGoals = req.body.monthlyGoals;
+      }
+      
+      if (req.body.defaultFirstName !== undefined) {
+        appSettings.defaultFirstName = req.body.defaultFirstName;
+      }
+      
+      if (req.body.defaultLastName !== undefined) {
+        appSettings.defaultLastName = req.body.defaultLastName;
       }
       
       res.json(appSettings);
