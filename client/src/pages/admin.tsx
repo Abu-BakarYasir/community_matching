@@ -368,7 +368,22 @@ export default function Admin() {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>User Management</CardTitle>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm("Are you sure you want to delete ALL users? This will delete all non-admin users and cannot be undone.")) {
+                        deleteAllUsers.mutate();
+                      }
+                    }}
+                    disabled={deleteAllUsers.isPending}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {deleteAllUsers.isPending ? "Deleting..." : "Delete All Users"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -429,17 +444,32 @@ export default function Admin() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Match History</CardTitle>
-                  <Button 
-                    onClick={() => triggerMatching.mutate()}
-                    disabled={triggerMatching.isPending}
-                  >
-                    {triggerMatching.isPending ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Play className="h-4 w-4 mr-2" />
-                    )}
-                    Trigger Matching
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete ALL matches? This will delete all match data and cannot be undone.")) {
+                          deleteAllMatches.mutate();
+                        }
+                      }}
+                      disabled={deleteAllMatches.isPending}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {deleteAllMatches.isPending ? "Deleting..." : "Delete All Matches"}
+                    </Button>
+                    <Button 
+                      onClick={() => triggerMatching.mutate()}
+                      disabled={triggerMatching.isPending}
+                    >
+                      {triggerMatching.isPending ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-2" />
+                      )}
+                      Trigger Matching
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -492,8 +522,25 @@ export default function Admin() {
           <TabsContent value="meetings">
             <div className="rounded-lg border">
               <div className="p-4 border-b">
-                <h3 className="text-lg font-semibold">Meeting Management</h3>
-                <p className="text-sm text-gray-600">Manage all scheduled meetings between matched users</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold">Meeting Management</h3>
+                    <p className="text-sm text-gray-600">Manage all scheduled meetings between matched users</p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm("Are you sure you want to delete ALL meetings? This will delete all scheduled meetings and cannot be undone.")) {
+                        deleteAllMeetings.mutate();
+                      }
+                    }}
+                    disabled={deleteAllMeetings.isPending}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {deleteAllMeetings.isPending ? "Deleting..." : "Delete All Meetings"}
+                  </Button>
+                </div>
               </div>
               
               {meetings && meetings.length > 0 ? (
