@@ -161,18 +161,16 @@ export default function Dashboard() {
                   {user?.isActive ? "You'll be included in matches" : "You won't be matched"}
                 </p>
               </div>
-              <Button
-                variant="ghost"
+              <div
                 onClick={handleOptToggle}
-                disabled={optToggleMutation.isPending}
-                className={`relative w-16 h-8 rounded-full transition-all duration-300 ease-in-out p-0.5 ${
+                className={`relative w-14 h-7 rounded-full transition-all duration-300 ease-in-out cursor-pointer flex items-center ${
                   user?.isActive 
                     ? "bg-green-500 hover:bg-green-600" 
                     : "bg-slate-300 hover:bg-slate-400"
-                }`}
+                } ${optToggleMutation.isPending ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <div className={`w-7 h-7 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out flex items-center justify-center ${
-                  user?.isActive ? "translate-x-8" : "translate-x-0"
+                <div className={`absolute w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ease-in-out flex items-center justify-center ${
+                  user?.isActive ? "translate-x-7" : "translate-x-0.5"
                 }`}>
                   <span className={`text-xs font-bold ${
                     user?.isActive ? "text-green-600" : "text-slate-600"
@@ -180,7 +178,7 @@ export default function Dashboard() {
                     {optToggleMutation.isPending ? "..." : (user?.isActive ? "ON" : "OFF")}
                   </span>
                 </div>
-              </Button>
+              </div>
             </div>
           </div>
         </div>
