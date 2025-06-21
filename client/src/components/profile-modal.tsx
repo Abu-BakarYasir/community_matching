@@ -81,6 +81,9 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
     },
     onSuccess: (data) => {
       setProfileImageUrl(data.profileImageUrl);
+      // Invalidate user data cache to refresh profile picture immediately
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      
       toast({
         title: "Profile picture uploaded",
         description: "Your profile picture has been updated successfully.",
