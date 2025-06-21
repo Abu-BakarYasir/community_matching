@@ -270,6 +270,13 @@ Preferred communication style: Simple, everyday language.
 - Added Google Meet Link field to admin settings panel for easy customization
 - Meeting creation now uses configurable Google Meet link from admin settings
 
+### June 21, 2025 - Dashboard Layout Reorganization
+- Reorganized dashboard layout to prioritize current matches and meetings first
+- Changed "Your Matches & Meetings" to "This Round's Matches & Meetings" for clarity
+- Moved "Next Matching Round" section below current matches per user preference
+- Improved information hierarchy with current round activities displayed prominently
+- Enhanced user experience by showing active content before future planning information
+
 ### June 20, 2025 - Authentication System Completed
 - Implemented simplified email-based authentication without database dependencies
 - Fixed session management with email storage for reliable login functionality
