@@ -131,11 +131,22 @@ export default function Dashboard() {
         {/* Welcome Section with Opt-in Toggle */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-2">
-                Welcome back, {user?.firstName}!
-              </h2>
-              <p className="text-slate-600">Here's your networking activity for this month.</p>
+            <div className="flex items-center space-x-4">
+              {user?.profileImageUrl && (
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200">
+                  <img 
+                    src={user.profileImageUrl} 
+                    alt={`${user.firstName}'s profile`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                  Welcome back, {user?.firstName}!
+                </h2>
+                <p className="text-slate-600">Here's your networking activity for this month.</p>
+              </div>
             </div>
             <div className="flex items-center space-x-3">
               <div className="text-right">

@@ -42,7 +42,7 @@ export function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <h1 className="text-2xl font-bold text-primary cursor-pointer" onClick={() => setLocation("/dashboard")}>
-                NetworkMatch
+                DAA Matches
               </h1>
             </div>
           </div>

@@ -740,11 +740,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     matchingDay: 1,
     isMatchingEnabled: true,
     lastMatchingRun: null,
+    appName: "DAA Matches",
     weights: {
       industry: 35,
       company: 20,
       networkingGoals: 30,
-      jobTitle: 15
+      jobTitle: 15,
     }
   };
 
@@ -764,6 +765,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update settings
       if (req.body.matchingDay) {
         appSettings.matchingDay = req.body.matchingDay;
+      }
+      
+      if (req.body.appName) {
+        appSettings.appName = req.body.appName;
       }
       
       if (req.body.weights) {

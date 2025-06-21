@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Linkedin } from "lucide-react";
+import { Linkedin, Camera, Upload } from "lucide-react";
 
 interface ProfileModalProps {
   open: boolean;
@@ -22,7 +22,9 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   const [industry, setIndustry] = useState("");
   const [bio, setBio] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
   const [networkingGoals, setNetworkingGoals] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,9 +34,32 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
       setIndustry(user.industry || "");
       setBio(user.bio || "");
       setLinkedinUrl(user.linkedinUrl || "");
+      setProfileImageUrl(user.profileImageUrl || "");
       setNetworkingGoals(user.profileQuestions?.networkingGoals || []);
     }
   }, [user]);
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      return apiRequest("POST", "/api/user/upload-profile-image", formData);
+    },
+    onSuccess: (data) => {
+      setProfileImageUrl(data.imageUrl);
+      toast({
+        title: "Profile picture uploaded successfully",
+        description: "Your profile picture has been updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload profile picture. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const updateProfile = useMutation({
     mutationFn: async () => {
@@ -43,7 +68,8 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
         company,
         industry,
         bio,
-        linkedinUrl
+        linkedinUrl,
+        profileImageUrl
       });
       
       return apiRequest("POST", "/api/user/profile-questions", {
@@ -75,6 +101,21 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
     updateProfile.mutate();
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please choose an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      uploadImageMutation.mutate(file);
+    }
+  };
+
   const handleNetworkingGoalToggle = (goal: string) => {
     setNetworkingGoals(prev => 
       prev.includes(goal) 
@@ -94,6 +135,43 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Profile Picture Section */}
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
+                {profileImageUrl ? (
+                  <img 
+                    src={profileImageUrl} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Camera className="w-8 h-8 text-slate-400" />
+                )}
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full p-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadImageMutation.isPending}
+              >
+                <Upload className="w-4 h-4" />
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
+            <p className="text-xs text-slate-500 text-center">
+              Click the upload button to add a profile picture (max 5MB)
+            </p>
+          </div>
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="jobTitle">Job Title</Label>
