@@ -188,48 +188,10 @@ export default function Dashboard() {
 
 
         <div className="space-y-8">
-          {/* Next Matching Round - Top Priority */}
-          <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Next Matching Round</h3>
-                  <p className="text-slate-600 mb-1">Monthly matches are generated on the 1st of each month</p>
-                  <p className="text-sm text-slate-500">
-                    Next round: <span className="font-medium">July 1st, 2025</span>
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">{daysRemaining}</div>
-                  <div className="text-sm text-slate-600">days left</div>
-                </div>
-              </div>
-              {!user?.isActive ? (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-800">
-                    You're currently opted out of matching. Toggle the switch above to participate in the next round.
-                  </p>
-                </div>
-              ) : profileCompletion < 100 ? (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-800">
-                    Complete your profile to participate in the next matching round!
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    You're all set for the next matching round!
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Matches & Meetings - Combined Section */}
+          {/* This Round's Matches & Meetings - Top Priority */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Your Matches & Meetings</CardTitle>
+              <CardTitle className="text-xl">This Round's Matches & Meetings</CardTitle>
             </CardHeader>
             <CardContent>
               {allMatches.length === 0 ? (
