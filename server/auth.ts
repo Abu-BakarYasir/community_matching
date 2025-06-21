@@ -47,7 +47,6 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
   if (!user) {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
-
   req.user = user;
   next();
 }

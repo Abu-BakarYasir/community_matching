@@ -57,16 +57,22 @@ export default function Register() {
       // Store the JWT token
       if (result.token) {
         setAuthToken(result.token);
+        
+        toast({
+          title: "Welcome back!",
+          description: "You have been logged in successfully.",
+        });
+        
+        // Clear auth cache and redirect
+        queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+        window.location.href = '/dashboard';
+      } else {
+        toast({
+          title: "Login Error",
+          description: "Authentication failed. Please try again.",
+          variant: "destructive",
+        });
       }
-      
-      toast({
-        title: "Welcome back!",
-        description: "You have been logged in successfully.",
-      });
-      
-      // Clear auth cache and redirect
-      queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
-      window.location.href = '/dashboard';
     },
     onError: (error: any) => {
       toast({
