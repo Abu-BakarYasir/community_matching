@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Mail, ArrowRight } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, setAuthToken, clearAuthToken } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
@@ -24,16 +24,19 @@ export default function Register() {
       const response = await apiRequest("POST", "/api/auth/register", data);
       return response.json();
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      // Store the JWT token if provided
+      if (result.token) {
+        setAuthToken(result.token);
+      }
+      
       toast({
         title: "Welcome to DAA Monthly Matching!",
         description: "Your account has been created successfully.",
       });
       
-      // Clear any existing auth cache
+      // Clear auth cache and redirect
       queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
-      
-      // Simple page reload works best for authentication
       window.location.href = '/dashboard';
     },
     onError: (error: any) => {
@@ -50,20 +53,20 @@ export default function Register() {
       const response = await apiRequest("POST", "/api/auth/login", data);
       return response.json();
     },
-    onSuccess: async () => {
-      console.log("Login successful, redirecting...");
+    onSuccess: async (result) => {
+      // Store the JWT token
+      if (result.token) {
+        setAuthToken(result.token);
+      }
+      
       toast({
         title: "Welcome back!",
         description: "You have been logged in successfully.",
       });
       
-      // Clear any existing auth cache and force immediate refetch
+      // Clear auth cache and redirect
       queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
-      
-      // Add a small delay to ensure session is set, then reload
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 500);
+      window.location.href = '/dashboard';
     },
     onError: (error: any) => {
       toast({

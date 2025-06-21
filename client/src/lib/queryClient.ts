@@ -7,16 +7,46 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Store JWT token in localStorage
+let authToken: string | null = null;
+
+export function setAuthToken(token: string) {
+  authToken = token;
+  localStorage.setItem('authToken', token);
+}
+
+export function getAuthToken(): string | null {
+  if (!authToken) {
+    authToken = localStorage.getItem('authToken');
+  }
+  return authToken;
+}
+
+export function clearAuthToken() {
+  authToken = null;
+  localStorage.removeItem('authToken');
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const headers: Record<string, string> = {
+    ...(data ? { "Content-Type": "application/json" } : {}),
+  };
+
+  // Add Authorization header if token exists
+  const token = getAuthToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    credentials: "include", // Still include cookies for fallback
   });
 
   await throwIfResNotOk(res);

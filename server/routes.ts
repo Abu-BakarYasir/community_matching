@@ -1,9 +1,10 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { emailService } from "./services/email";
 import { schedulerService } from "./services/scheduler";
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema } from "@shared/schema";
+import { generateToken, requireAuth, AuthenticatedRequest } from "./auth";
 
 import { z } from "zod";
 
@@ -26,14 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize scheduler
   schedulerService.init();
 
-  // Simple auth - just check if we have a user email in the session
-  const requireAuth = (req: any, res: any, next: any) => {
-    console.log("Auth check - Session userEmail:", req.session?.userEmail);
-    if (!req.session?.userEmail) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-    next();
-  };
+  // JWT-based authentication - no sessions needed
 
   // Register user
   app.post("/api/auth/register", async (req, res) => {
@@ -127,36 +121,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simple email-based "login" - no real authentication
+  // JWT-based login
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email } = req.body;
-      console.log("Login request received:", { email, body: req.body });
+      console.log("Login request received:", { email });
       
       if (!email || !email.includes('@')) {
         return res.status(400).json({ message: "Valid email required" });
       }
       
-      // Just store the email in session - no database needed
-      req.session.userEmail = email;
+      // Get or create user in database
+      let user = await storage.getUserByEmail(email);
       
-      // Create a basic user object
-      const [firstName, lastName] = email.split('@')[0].split('.');
-      const user = {
-        id: Date.now(),
-        email,
-        firstName: firstName || "User",
-        lastName: lastName || "",
-        isActive: true,
-        createdAt: new Date(),
-        jobTitle: null,
-        company: null,
-        industry: null,
-        experienceLevel: null
-      };
+      if (!user) {
+        // Create new user
+        const [firstName, lastName] = email.split('@')[0].split('.');
+        user = await storage.createUser({
+          email,
+          firstName: firstName || "User",
+          lastName: lastName || "",
+          isActive: true
+        });
+      }
       
-      console.log(`Simple login successful for ${email}`);
-      res.json(user);
+      // Generate JWT token
+      const token = generateToken({ id: user.id, email: user.email });
+      
+      // Set token as httpOnly cookie for security
+      res.cookie('authToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+      
+      console.log(`JWT login successful for ${email}`);
+      res.json({ 
+        user,
+        token // Also send token for API calls
+      });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });
@@ -165,71 +169,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Logout user
   app.post("/api/auth/logout", (req, res) => {
-    req.session.userEmail = undefined;
+    res.clearCookie('authToken');
     res.json({ message: "Logged out successfully" });
   });
 
-  // Get current user with database persistence
-  app.get("/api/auth/me", requireAuth, async (req, res) => {
+  // Get current authenticated user
+  app.get("/api/auth/me", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const email = req.session.userEmail!;
-      let user = await storage.getUserByEmail(email);
+      const user = await storage.getUser(req.user!.id);
       
-      // Create user if doesn't exist
       if (!user) {
-        const [firstName, lastName] = email.split('@')[0].split('.');
-        user = await storage.createUser({
-          email,
-          firstName: firstName || "User",
-          lastName: lastName || "",
-          isActive: true,
-          jobTitle: req.session.userProfile?.jobTitle || null,
-          company: req.session.userProfile?.company || null,
-          industry: req.session.userProfile?.industry || null,
-        });
-      } else {
-        // Update user with session data if it exists
-        if (req.session.userProfile) {
-          user = await storage.updateUser(user.id, req.session.userProfile) || user;
-        }
+        return res.status(404).json({ message: "User not found" });
       }
 
-      // Get profile questions
+      // Get profile questions from database
       const profileQuestions = await storage.getProfileQuestions(user.id);
-      if (req.session.profileQuestions && !profileQuestions) {
-        await storage.createProfileQuestions({
-          ...req.session.profileQuestions,
-          userId: user.id
-        });
-      }
 
       res.json({
         ...user,
-        profileQuestions: profileQuestions || req.session.profileQuestions || null
+        profileQuestions
       });
     } catch (error) {
       console.error("Get current user error:", error);
-      
-      // Fallback to session-based user for development
-      const email = req.session.userEmail!;
-      const [firstName, lastName] = email.split('@')[0].split('.');
-      
-      const user = {
-        id: Date.now(),
-        email,
-        firstName: firstName || "User",
-        lastName: lastName || "",
-        isActive: true,
-        createdAt: new Date(),
-        jobTitle: req.session.userProfile?.jobTitle || null,
-        company: req.session.userProfile?.company || null,
-        industry: req.session.userProfile?.industry || null,
-        experienceLevel: null,
-        profileQuestions: req.session.profileQuestions || null,
-        availability: []
-      };
-      
-      res.json(user);
+      res.status(500).json({ message: "Failed to get user data" });
     }
   });
 
