@@ -46,13 +46,17 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
       return apiRequest("POST", "/api/user/upload-profile-image", formData);
     },
     onSuccess: (data) => {
+      console.log("Upload successful:", data);
       setProfileImageUrl(data.imageUrl);
+      // Invalidate auth cache to refresh user data
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       toast({
         title: "Profile picture uploaded successfully",
         description: "Your profile picture has been updated.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Upload error:", error);
       toast({
         title: "Upload failed",
         description: "Failed to upload profile picture. Please try again.",

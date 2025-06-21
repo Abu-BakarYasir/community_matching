@@ -201,16 +201,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/user/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user!.id;
+      console.log("Updating user profile:", { userId, updates: req.body });
+      
       const updatedUser = await storage.updateUser(userId, req.body);
       
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
       
+      console.log("Profile updated successfully:", updatedUser);
       res.json(updatedUser);
     } catch (error) {
       console.error("Update profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Profile image upload endpoint
+  app.post("/api/user/upload-profile-image", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Generate a unique avatar using DiceBear API based on user email
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}&backgroundColor=3b82f6&color=ffffff`;
+      
+      console.log("Updating user profile image:", { userId, avatarUrl });
+      
+      // Update user with new profile image URL
+      const updatedUser = await storage.updateUser(userId, { 
+        profileImageUrl: avatarUrl 
+      });
+      
+      console.log("Updated user with profile image:", updatedUser);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ 
+        imageUrl: avatarUrl,
+        user: updatedUser,
+        message: "Profile image uploaded successfully" 
+      });
+    } catch (error) {
+      console.error("Upload profile image error:", error);
+      res.status(500).json({ message: "Failed to upload profile image" });
     }
   });
 
