@@ -386,64 +386,6 @@ Looking forward to connecting!`;
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Combined Profile & Availability */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Profile & Availability</CardTitle>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setProfileOpen(true)}
-                    >
-                      Edit Profile
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setAvailabilityOpen(true)}
-                    >
-                      Set Schedule
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Profile Completion */}
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Profile Completion</span>
-                    <span className="text-sm font-medium text-slate-900">{profileCompletion}%</span>
-                  </div>
-                  <Progress value={profileCompletion} className="h-2" />
-                  <div className="grid grid-cols-1 gap-2 mt-3">
-                    <div className="flex items-center text-sm">
-                      <div className={`w-2 h-2 rounded-full mr-2 ${user?.firstName ? 'bg-green-500' : 'bg-slate-300'}`} />
-                      <span className={user?.firstName ? 'text-slate-600' : 'text-slate-400'}>
-                        Basic info completed
-                      </span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <div className={`w-2 h-2 rounded-full mr-2 ${user?.jobTitle ? 'bg-green-500' : 'bg-slate-300'}`} />
-                      <span className={user?.jobTitle ? 'text-slate-600' : 'text-slate-400'}>
-                        Professional details added
-                      </span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <div className={`w-2 h-2 rounded-full mr-2 ${user?.profileQuestions?.networkingGoals?.length ? 'bg-green-500' : 'bg-slate-300'}`} />
-                      <span className={user?.profileQuestions?.networkingGoals?.length ? 'text-slate-600' : 'text-slate-400'}>
-                        Monthly focus selected
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-
-              </CardContent>
-            </Card>
-
           {/* Next Round's Matches Card */}
           <Card>
             <CardHeader>
@@ -548,7 +490,6 @@ Looking forward to connecting!`;
               </div>
             </CardContent>
           </Card>
-        </div>
         </div>
       </main>
 
