@@ -197,36 +197,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile with database persistence
-  app.patch("/api/user/profile", requireAuth, async (req, res) => {
+  // Profile update endpoint (JWT-based)
+  app.patch("/api/user/profile", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      console.log("Updating user profile:", req.body);
-      const email = req.session.userEmail!;
+      const userId = req.user!.id;
+      const updatedUser = await storage.updateUser(userId, req.body);
       
-      // Try to update in database first
-      try {
-        let user = await storage.getUserByEmail(email);
-        if (user) {
-          const updatedUser = await storage.updateUser(user.id, req.body);
-          console.log("Profile updated in database:", updatedUser);
-          res.json(updatedUser || user);
-          return;
-        }
-      } catch (dbError) {
-        console.log("Database update failed, using session fallback:", dbError);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
       }
       
-      // Fallback to session storage
-      if (!req.session.userProfile) {
-        req.session.userProfile = {};
-      }
-      
-      req.session.userProfile = {
-        ...req.session.userProfile,
-        ...req.body
-      };
-      
-      console.log("Profile updated in session:", req.session.userProfile);
-      res.json({ message: "Profile updated successfully" });
+      res.json(updatedUser);
     } catch (error) {
       console.error("Update profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
@@ -277,33 +258,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user opt-in status
-  app.patch("/api/user/opt-status", requireAuth, async (req, res) => {
+  app.patch("/api/user/opt-status", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      console.log("Updating opt-in status:", req.body);
-      const email = req.session.userEmail!;
       const { isActive } = req.body;
+      const userId = req.user!.id;
       
-      // Try to update in database first
-      try {
-        let user = await storage.getUserByEmail(email);
-        if (user) {
-          user = await storage.updateUser(user.id, { isActive });
-          console.log("Opt-in status updated in database:", user);
-          res.json(user);
-          return;
-        }
-      } catch (dbError) {
-        console.log("Database update failed, using session fallback:", dbError);
+      console.log('Updating opt-in status for user', userId, ':', { isActive });
+      
+      // Update in database
+      const updatedUser = await storage.updateUser(userId, { isActive });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
       }
       
-      // Fallback to session storage
-      if (!req.session.userProfile) {
-        req.session.userProfile = {};
-      }
-      req.session.userProfile.isActive = isActive;
+      console.log('Opt-in status updated successfully in database:', { userId, isActive: updatedUser.isActive });
       
-      console.log("Opt-in status updated in session:", req.session.userProfile);
-      res.json({ message: "Opt-in status updated successfully" });
+      res.json({ 
+        message: "Opt-in status updated successfully", 
+        isActive: updatedUser.isActive,
+        user: updatedUser 
+      });
     } catch (error) {
       console.error("Update opt-in status error:", error);
       res.status(500).json({ message: "Failed to update opt-in status" });

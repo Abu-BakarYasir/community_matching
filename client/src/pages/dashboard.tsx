@@ -50,18 +50,22 @@ export default function Dashboard() {
 
   const optToggleMutation = useMutation({
     mutationFn: async (isActive: boolean) => {
+      console.log('Toggling opt-in status to:', isActive);
       return apiRequest("PATCH", "/api/user/opt-status", { isActive });
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      console.log('Opt-in toggle successful:', data);
+      // Refetch user data to get updated status
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       toast({
-        title: user?.isActive ? "Opted Out" : "Opted In",
-        description: user?.isActive 
-          ? "You won't be included in future matches until you opt back in." 
-          : "You'll be included in the next matching round!",
+        title: variables ? "Opted In" : "Opted Out",
+        description: variables 
+          ? "You'll be included in the next matching round!" 
+          : "You won't be included in future matches until you opt back in.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Opt-in toggle error:', error);
       toast({
         title: "Error",
         description: "Failed to update opt-in status. Please try again.",
@@ -143,23 +147,24 @@ export default function Dashboard() {
                 </p>
               </div>
               <Button
-                variant={user?.isActive ? "default" : "outline"}
+                variant="ghost"
                 onClick={handleOptToggle}
                 disabled={optToggleMutation.isPending}
-                className={`relative w-24 h-12 rounded-full transition-all ${
+                className={`relative w-20 h-10 rounded-full transition-all duration-300 ease-in-out p-1 ${
                   user?.isActive 
-                    ? "bg-green-500 hover:bg-green-600 text-white border-green-500" 
-                    : "bg-slate-200 hover:bg-slate-300 text-slate-600 border-slate-300"
+                    ? "bg-green-500 hover:bg-green-600" 
+                    : "bg-slate-300 hover:bg-slate-400"
                 }`}
               >
-                <div className={`absolute left-1 top-1 w-10 h-10 bg-white rounded-full shadow-md transition-transform ${
-                  user?.isActive ? "translate-x-12" : "translate-x-0"
-                }`} />
-                <span className={`relative z-10 text-xs font-medium ${
-                  user?.isActive ? "text-white" : "text-slate-600"
+                <div className={`w-8 h-8 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out ${
+                  user?.isActive ? "translate-x-10" : "translate-x-0"
                 }`}>
-                  {optToggleMutation.isPending ? "..." : (user?.isActive ? "ON" : "OFF")}
-                </span>
+                  <span className={`flex items-center justify-center w-full h-full text-xs font-bold ${
+                    user?.isActive ? "text-green-600" : "text-slate-600"
+                  }`}>
+                    {optToggleMutation.isPending ? "..." : (user?.isActive ? "ON" : "OFF")}
+                  </span>
+                </div>
               </Button>
             </div>
           </div>

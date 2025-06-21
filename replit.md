@@ -228,13 +228,17 @@ Preferred communication style: Simple, everyday language.
 - Email templates include meeting links and scheduled times with one-click join buttons
 - Complete meeting management workflow: schedule → join → reschedule with email notifications
 
-### June 21, 2025 - JWT Authentication System Implemented
+### June 21, 2025 - JWT Authentication System & Opt-In Toggle Fixed
 - Replaced session-based authentication with robust JWT token system
 - Created JWT authentication module with secure token generation and verification
 - Updated all API endpoints to use Bearer token authentication
 - Added token storage in localStorage with automatic header inclusion
 - Implemented both cookie and Authorization header token support for reliability
 - Authentication now works consistently: login → JWT token → secure API access
+- Fixed opt-in toggle to properly update database instead of using session storage
+- Opt-in toggle now provides real-time visual feedback and persists state correctly
+- Enhanced toggle UI with smooth animations and clear ON/OFF indicators
+- Database persistence working: users can control participation in monthly matching rounds
 
 ### June 20, 2025 - Authentication System Completed
 - Implemented simplified email-based authentication without database dependencies
