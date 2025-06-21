@@ -630,7 +630,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notifications", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const notifications = await storage.getNotifications(req.user!.id);
-      res.json(notifications);
+      // Filter out old notifications and limit to recent ones
+      const recentNotifications = notifications
+        .filter(n => {
+          const daysSinceCreated = (Date.now() - new Date(n.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+          return daysSinceCreated <= 30; // Only show notifications from last 30 days
+        })
+        .slice(0, 10); // Limit to 10 most recent
+      
+      res.json(recentNotifications);
     } catch (error) {
       console.error("Get notifications error:", error);
       res.status(500).json({ message: "Failed to get notifications" });

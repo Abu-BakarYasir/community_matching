@@ -36,6 +36,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
       setLinkedinUrl(user.linkedinUrl || "");
       setProfileImageUrl(user.profileImageUrl || "");
       setNetworkingGoals(user.profileQuestions?.networkingGoals || []);
+      console.log("Profile modal user data:", { profileImageUrl: user.profileImageUrl });
     }
   }, [user]);
 
@@ -48,8 +49,9 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
     onSuccess: (data) => {
       console.log("Upload successful:", data);
       setProfileImageUrl(data.imageUrl);
-      // Invalidate auth cache to refresh user data
+      // Invalidate auth cache to refresh user data everywhere
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({
         title: "Profile picture uploaded successfully",
         description: "Your profile picture has been updated.",

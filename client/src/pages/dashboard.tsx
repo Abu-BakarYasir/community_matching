@@ -132,15 +132,19 @@ export default function Dashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              {user?.profileImageUrl && (
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200">
+                {user?.profileImageUrl ? (
                   <img 
                     src={user.profileImageUrl} 
                     alt={`${user.firstName}'s profile`}
                     className="w-full h-full object-cover"
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                    {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                  </div>
+                )}
+              </div>
               <div>
                 <h2 className="text-3xl font-bold text-slate-900 mb-2">
                   Welcome back, {user?.firstName}!
