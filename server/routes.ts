@@ -311,10 +311,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user matches
-  app.get("/api/matches", requireAuth, async (req, res) => {
+  app.get("/api/matches", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId!;
-      const matches = await storage.getMatchesByUser(userId);
+      const matches = await storage.getMatchesByUser(req.user!.id);
       res.json(matches);
     } catch (error) {
       console.error("Get matches error:", error);
@@ -342,12 +341,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Schedule meeting
-  app.post("/api/meetings", requireAuth, async (req, res) => {
+  app.post("/api/meetings", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const meetingData = insertMeetingSchema.parse(req.body);
       
       // Verify the user is part of this match
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const match = await storage.getMatch(meetingData.matchId!);
       if (!match || (match.user1Id !== userId && match.user2Id !== userId)) {
         return res.status(403).json({ message: "Not authorized to schedule this meeting" });
@@ -467,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Meeting not found" });
       }
       
-      const userId = req.session.userId!;
+      const userId = req.user!.id;
       const match = await storage.getMatch(meeting.matchId!);
       if (!match || (match.user1Id !== userId && match.user2Id !== userId)) {
         return res.status(403).json({ message: "Not authorized to update this meeting" });
@@ -591,10 +590,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get notifications
-  app.get("/api/notifications", requireAuth, async (req, res) => {
+  app.get("/api/notifications", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId!;
-      const notifications = await storage.getNotifications(userId);
+      const notifications = await storage.getNotifications(req.user!.id);
       res.json(notifications);
     } catch (error) {
       console.error("Get notifications error:", error);
@@ -620,12 +618,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard stats
-  app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
+  app.get("/api/dashboard/stats", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.session.userId!;
-      const matches = await storage.getMatchesByUser(userId);
-      const meetings = await storage.getMeetingsByUser(userId);
-      const notifications = await storage.getNotifications(userId);
+      const matches = await storage.getMatchesByUser(req.user!.id);
+      const meetings = await storage.getMeetingsByUser(req.user!.id);
+      const notifications = await storage.getNotifications(req.user!.id);
       
       const stats = {
         totalMatches: matches.length,
