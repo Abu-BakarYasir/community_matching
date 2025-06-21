@@ -26,6 +26,10 @@ export default function Dashboard() {
     queryKey: ["/api/auth/me"],
   });
 
+  const { data: userAvailability } = useQuery({
+    queryKey: ["/api/availability"],
+  });
+
   const { data: stats } = useQuery({
     queryKey: ["/api/dashboard/stats"],
   });
