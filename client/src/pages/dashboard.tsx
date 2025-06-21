@@ -152,7 +152,7 @@ export default function Dashboard() {
                 <p className="text-slate-600">Here's your networking activity for this month.</p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-col items-end space-y-2">
               <div className="text-right">
                 <p className="text-sm font-medium text-slate-900">
                   {user?.isActive ? "Opted In" : "Opted Out"}
@@ -219,7 +219,7 @@ export default function Dashboard() {
                     return (
                       <div
                         key={match.id}
-                        className={`flex items-center space-x-4 p-4 rounded-lg border transition-colors ${
+                        className={`p-4 rounded-lg border transition-colors ${
                           isToday 
                             ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700' 
                             : hasMeeting && isUpcoming
@@ -227,84 +227,89 @@ export default function Dashboard() {
                             : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                         }`}
                       >
-                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                          isToday 
-                            ? 'bg-blue-100 dark:bg-blue-800' 
-                            : hasMeeting 
-                            ? 'bg-green-100 dark:bg-green-800' 
-                            : 'bg-blue-100 dark:bg-blue-900'
-                        }`}>
-                          {hasMeeting ? (
-                            match.meeting?.meetingType === 'video' ? (
-                              <Video className={`h-5 w-5 ${isToday ? 'text-blue-600' : 'text-green-600'}`} />
+                        {/* Main content area */}
+                        <div className="flex items-center space-x-4">
+                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                            isToday 
+                              ? 'bg-blue-100 dark:bg-blue-800' 
+                              : hasMeeting 
+                              ? 'bg-green-100 dark:bg-green-800' 
+                              : 'bg-blue-100 dark:bg-blue-900'
+                          }`}>
+                            {hasMeeting ? (
+                              match.meeting?.meetingType === 'video' ? (
+                                <Video className={`h-5 w-5 ${isToday ? 'text-blue-600' : 'text-green-600'}`} />
+                              ) : (
+                                <Coffee className={`h-5 w-5 ${isToday ? 'text-blue-600' : 'text-green-600'}`} />
+                              )
                             ) : (
-                              <Coffee className={`h-5 w-5 ${isToday ? 'text-blue-600' : 'text-green-600'}`} />
-                            )
-                          ) : (
-                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                              {otherUser.firstName.charAt(0)}{otherUser.lastName.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <p className="font-medium text-slate-900 dark:text-slate-100">
-                              {otherUser.firstName} {otherUser.lastName}
-                            </p>
-                            <Badge variant="outline" className="text-xs">
-                              {match.matchScore}% Match
-                            </Badge>
-                            {hasMeeting && (
-                              <Badge 
-                                variant="secondary" 
-                                className={
-                                  isToday 
-                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" 
-                                    : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                }
-                              >
-                                {isToday ? 'Today' : 'Scheduled'}
-                              </Badge>
+                              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                {otherUser.firstName.charAt(0)}{otherUser.lastName.charAt(0)}
+                              </div>
                             )}
                           </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {otherUser.jobTitle || 'Professional'} {otherUser.company ? `at ${otherUser.company}` : ''}
-                          </p>
-                          {hasMeeting && meetingDate && (
-                            <div className="mt-2 space-y-1">
-                              <p className={`text-sm font-medium ${
-                                isToday 
-                                  ? 'text-blue-700 dark:text-blue-300' 
-                                  : 'text-green-700 dark:text-green-300'
-                              }`}>
-                                Meeting Scheduled: {isToday ? 'Today' : meetingDate.toLocaleDateString()} at {meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <p className="font-medium text-slate-900 dark:text-slate-100">
+                                {otherUser.firstName} {otherUser.lastName}
                               </p>
-                              <p className="text-xs text-slate-500">
-                                Duration: {match.meeting?.duration}min • Type: {match.meeting?.meetingType === 'video' ? 'Video Call' : 'Coffee Chat'}
-                              </p>
-                              {match.meeting?.meetingLink && (
-                                <p className="text-xs">
-                                  <span className="text-slate-500">Link: </span>
-                                  <a 
-                                    href={match.meeting.meetingLink} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 underline"
-                                  >
-                                    {match.meeting.meetingLink.includes('meet.google.com') ? 'Google Meet' : 'Meeting Link'}
-                                  </a>
-                                </p>
+                              <Badge variant="outline" className="text-xs">
+                                {match.matchScore}% Match
+                              </Badge>
+                              {hasMeeting && (
+                                <Badge 
+                                  variant="secondary" 
+                                  className={
+                                    isToday 
+                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" 
+                                      : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                  }
+                                >
+                                  {isToday ? 'Today' : 'Scheduled'}
+                                </Badge>
                               )}
                             </div>
-                          )}
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                              {otherUser.jobTitle || 'Professional'} {otherUser.company ? `at ${otherUser.company}` : ''}
+                            </p>
+                            {hasMeeting && meetingDate && (
+                              <div className="mt-2 space-y-1">
+                                <p className={`text-sm font-medium ${
+                                  isToday 
+                                    ? 'text-blue-700 dark:text-blue-300' 
+                                    : 'text-green-700 dark:text-green-300'
+                                }`}>
+                                  Meeting Scheduled: {isToday ? 'Today' : meetingDate.toLocaleDateString()} at {meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  Duration: {match.meeting?.duration}min • Type: {match.meeting?.meetingType === 'video' ? 'Video Call' : 'Coffee Chat'}
+                                </p>
+                                {match.meeting?.meetingLink && (
+                                  <p className="text-xs">
+                                    <span className="text-slate-500">Link: </span>
+                                    <a 
+                                      href={match.meeting.meetingLink} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 underline"
+                                    >
+                                      {match.meeting.meetingLink.includes('meet.google.com') ? 'Google Meet' : 'Meeting Link'}
+                                    </a>
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex flex-col space-y-2">
+                        
+                        {/* Action buttons below content */}
+                        <div className="flex justify-end space-x-2 mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
                           {hasMeeting ? (
                             <>
                               <Button
                                 onClick={() => window.open(match.meeting?.meetingLink, '_blank')}
                                 size="sm"
-                                className={`w-20 ${
+                                className={`${
                                   isToday 
                                     ? "bg-blue-600 hover:bg-blue-700" 
                                     : "bg-green-600 hover:bg-green-700"
@@ -347,7 +352,6 @@ Looking forward to connecting!`;
                                 }}
                                 size="sm"
                                 variant="outline"
-                                className="w-20 text-xs"
                               >
                                 Add to Calendar
                               </Button>
@@ -355,7 +359,6 @@ Looking forward to connecting!`;
                                 onClick={() => handleScheduleMatch(match)}
                                 size="sm"
                                 variant="outline"
-                                className="w-20 text-xs"
                               >
                                 Edit
                               </Button>
@@ -364,9 +367,9 @@ Looking forward to connecting!`;
                             <Button
                               onClick={() => handleScheduleMatch(match)}
                               size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 w-20"
+                              className="bg-blue-600 hover:bg-blue-700"
                             >
-                              Schedule
+                              Schedule Meeting
                             </Button>
                           )}
                         </div>
