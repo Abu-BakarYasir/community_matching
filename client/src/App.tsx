@@ -11,9 +11,17 @@ import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function AdminRoute() {
-  const { data: user } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/me"],
   });
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   
   return user?.isAdmin ? <Admin /> : <NotFound />;
 }

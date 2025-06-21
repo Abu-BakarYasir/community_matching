@@ -7,6 +7,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
+
 export function Header() {
   const [, setLocation] = useLocation();
   
@@ -67,7 +68,7 @@ export function Header() {
                 </DropdownMenuItem>
                 {user?.isAdmin && (
                   <DropdownMenuItem onClick={() => setLocation("/admin")}>
-                    Admin
+                    Admin Panel
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem 
