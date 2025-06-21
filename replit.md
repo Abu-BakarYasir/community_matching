@@ -218,10 +218,11 @@ Preferred communication style: Simple, everyday language.
 - Created sample meeting data for testing and demonstration
 - Enhanced API endpoints with admin-specific meeting operations
 
-### June 21, 2025 - Enhanced Email Templates & Meeting Management
+### June 21, 2025 - Unified Dashboard & Enhanced Email Templates
+- Combined matches and meetings into single unified "Your Matches & Meetings" section for cleaner UX
+- Enhanced visual hierarchy with color-coded meeting states (today=blue, scheduled=green, pending=gray)
 - Updated email templates to include meeting links and scheduled times with one-click join buttons
 - Added meeting reschedule functionality with email notifications to both users
-- Enhanced dashboard to show meeting status (scheduled/pending) with Join and Reschedule buttons
 - Implemented meeting edit capabilities - users can update existing meeting times
 - Added current meeting display in scheduling modal for better context
 - Email templates now show auto-scheduled meetings with alternative time suggestions
