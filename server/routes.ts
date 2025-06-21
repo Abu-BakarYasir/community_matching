@@ -40,8 +40,28 @@ declare module 'express-session' {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize scheduler
-  schedulerService.init();
+  // Test database connection before starting
+  try {
+    const { testConnection } = await import("./db");
+    const dbConnected = await testConnection();
+    
+    if (!dbConnected) {
+      console.warn('Database connection failed, continuing with limited functionality');
+    } else {
+      console.log('Database connection verified');
+    }
+  } catch (error) {
+    console.error('Database test failed:', error);
+    console.warn('Continuing without database verification');
+  }
+  
+  // Initialize scheduler with error handling
+  try {
+    schedulerService.init();
+    console.log('Scheduler initialized successfully');
+  } catch (error) {
+    console.error('Scheduler initialization failed:', error);
+  }
 
   // JWT-based authentication - no sessions needed
 

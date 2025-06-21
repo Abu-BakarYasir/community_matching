@@ -59,41 +59,61 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user || undefined;
+    } catch (error) {
+      console.error('Error getting user:', error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
+    try {
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      return user || undefined;
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      return undefined;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
+    try {
+      const [user] = await db
+        .insert(users)
+        .values(insertUser)
+        .returning();
+      return user;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw new Error('Failed to create user');
+    }
   }
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
-    // Clean updates to avoid timestamp issues
-    const cleanUpdates = { ...updates };
-    
-    // Remove fields that shouldn't be updated or cause timestamp issues
-    delete cleanUpdates.id;
-    delete cleanUpdates.createdAt;
-    delete cleanUpdates.updatedAt;
-    
-    const [user] = await db
-      .update(users)
-      .set({
-        ...cleanUpdates,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, id))
-      .returning();
-    return user || undefined;
+    try {
+      // Clean updates to avoid timestamp issues
+      const cleanUpdates = { ...updates };
+      
+      // Remove fields that shouldn't be updated or cause timestamp issues
+      delete cleanUpdates.id;
+      delete cleanUpdates.createdAt;
+      delete cleanUpdates.updatedAt;
+      
+      const [user] = await db
+        .update(users)
+        .set({
+          ...cleanUpdates,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, id))
+        .returning();
+      return user || undefined;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      return undefined;
+    }
   }
 
   async deleteUser(id: number): Promise<boolean> {
@@ -107,12 +127,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    try {
+      return await db.select().from(users);
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      return [];
+    }
   }
 
   async getProfileQuestions(userId: number): Promise<ProfileQuestions | undefined> {
-    const [questions] = await db.select().from(profileQuestions).where(eq(profileQuestions.userId, userId));
-    return questions || undefined;
+    try {
+      const [questions] = await db.select().from(profileQuestions).where(eq(profileQuestions.userId, userId));
+      return questions || undefined;
+    } catch (error) {
+      console.error('Error getting profile questions:', error);
+      return undefined;
+    }
   }
 
   async createProfileQuestions(questions: InsertProfileQuestions): Promise<ProfileQuestions> {
