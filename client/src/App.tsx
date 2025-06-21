@@ -16,9 +16,10 @@ function Login() {
 }
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/auth/me"],
     retry: false,
+    refetchOnMount: true,
   });
 
   if (isLoading) {
@@ -29,7 +30,8 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
+  // If there's an error or no user data, show login
+  if (error || !user) {
     return <Login />;
   }
 

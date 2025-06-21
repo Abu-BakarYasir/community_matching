@@ -24,13 +24,22 @@ export default function Register() {
       const response = await apiRequest("POST", "/api/auth/register", data);
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    onSuccess: async () => {
+      // Force refetch user data immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
       toast({
         title: "Welcome to DAA Monthly Matching!",
         description: "Your account has been created successfully.",
       });
-      setLocation("/dashboard");
+      // For deployed version, force page reload to ensure proper state
+      if (window.location.hostname !== 'localhost') {
+        window.location.href = '/dashboard';
+      } else {
+        // Development version uses client-side routing
+        setTimeout(() => {
+          setLocation("/dashboard");
+        }, 100);
+      }
     },
     onError: (error: any) => {
       toast({
@@ -46,13 +55,22 @@ export default function Register() {
       const response = await apiRequest("POST", "/api/auth/login", data);
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    onSuccess: async () => {
+      // Force refetch user data immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/me"] });
       toast({
         title: "Welcome back!",
         description: "You have been logged in successfully.",
       });
-      setLocation("/");
+      // For deployed version, force page reload to ensure proper state
+      if (window.location.hostname !== 'localhost') {
+        window.location.href = '/dashboard';
+      } else {
+        // Development version uses client-side routing
+        setTimeout(() => {
+          setLocation("/dashboard");
+        }, 100);
+      }
     },
     onError: (error: any) => {
       toast({
