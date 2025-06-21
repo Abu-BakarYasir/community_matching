@@ -144,6 +144,26 @@ class MatchingService {
       status: 'pending'
     });
     
+    // Auto-schedule a meeting 7 days from now at 2 PM
+    try {
+      const suggestedDate = new Date();
+      suggestedDate.setDate(suggestedDate.getDate() + 7);
+      suggestedDate.setHours(14, 0, 0, 0); // 2 PM
+
+      await storage.createMeeting({
+        matchId: match.id,
+        scheduledAt: suggestedDate,
+        meetingType: "video",
+        duration: 30,
+        meetingLink: "https://meet.google.com/wnf-cjab-twp",
+        status: "scheduled"
+      });
+
+      console.log(`Auto-scheduled meeting for match ${match.id} on ${suggestedDate.toISOString()}`);
+    } catch (meetingError) {
+      console.log('Could not auto-schedule meeting:', meetingError);
+    }
+    
     // Send email notifications
     try {
       await emailService.sendMatchNotification(user1, user2, matchScore);
@@ -157,14 +177,14 @@ class MatchingService {
         userId: user1.id,
         type: 'match_found',
         title: 'New Match Found!',
-        message: `You have a new ${matchScore}% match with ${user2.firstName} ${user2.lastName}`
+        message: `You have a new ${matchScore}% match with ${user2.firstName} ${user2.lastName}. Meeting auto-scheduled for next week.`
       });
       
       await storage.createNotification({
         userId: user2.id,
         type: 'match_found',
         title: 'New Match Found!',
-        message: `You have a new ${matchScore}% match with ${user1.firstName} ${user1.lastName}`
+        message: `You have a new ${matchScore}% match with ${user1.firstName} ${user1.lastName}. Meeting auto-scheduled for next week.`
       });
     } catch (error) {
       console.log('Notification creation failed:', error);

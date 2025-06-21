@@ -48,11 +48,19 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
   });
 
   const handleScheduleMeeting = () => {
-    if (!selectedDate || !selectedTime || !match) return;
+    if (!match) return;
 
-    const scheduledDateTime = new Date(selectedDate);
-    const [hours, minutes] = selectedTime.split(':').map(Number);
-    scheduledDateTime.setHours(hours, minutes);
+    // Auto-schedule for next week at 2 PM if no time selected
+    let scheduledDateTime;
+    if (selectedDate && selectedTime) {
+      scheduledDateTime = new Date(selectedDate);
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      scheduledDateTime.setHours(hours, minutes, 0, 0);
+    } else {
+      scheduledDateTime = new Date();
+      scheduledDateTime.setDate(scheduledDateTime.getDate() + 7);
+      scheduledDateTime.setHours(14, 0, 0, 0); // 2 PM next week
+    }
 
     scheduleMutation.mutate({
       matchId: match.id,
@@ -61,6 +69,7 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
       duration: 30,
       location: meetingType === "coffee" ? "TBD" : undefined,
       meetingLink: meetingType === "video" ? "https://meet.google.com/wnf-cjab-twp" : undefined,
+      status: "scheduled"
     });
   };
 
@@ -231,6 +240,13 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
             )}
           </div>
 
+          {/* Auto-Schedule Info */}
+          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <strong>Auto-Schedule:</strong> Click "Auto-Schedule Meeting" to automatically set up a meeting for next week at 2 PM, or select a specific time above.
+            </p>
+          </div>
+
           {/* Confirm Button */}
           <div className="flex justify-end space-x-3 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -238,10 +254,10 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
             </Button>
             <Button
               onClick={handleScheduleMeeting}
-              disabled={!selectedDate || !selectedTime || scheduleMutation.isPending}
-              className="min-w-[120px]"
+              disabled={scheduleMutation.isPending}
+              className="min-w-[140px] bg-blue-600 hover:bg-blue-700"
             >
-              {scheduleMutation.isPending ? "Scheduling..." : "Confirm Meeting"}
+              {scheduleMutation.isPending ? "Scheduling..." : selectedDate && selectedTime ? "Confirm Meeting" : "Auto-Schedule Meeting"}
             </Button>
           </div>
         </div>

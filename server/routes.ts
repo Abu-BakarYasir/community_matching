@@ -343,37 +343,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Schedule meeting
   app.post("/api/meetings", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
-      const meetingData = insertMeetingSchema.parse(req.body);
+      const meetingData = req.body;
+      
+      // Auto-select optimal time if not provided
+      if (!meetingData.scheduledAt) {
+        const suggestedDate = new Date();
+        suggestedDate.setDate(suggestedDate.getDate() + 7);
+        suggestedDate.setHours(14, 0, 0, 0); // Default to 2 PM next week
+        meetingData.scheduledAt = suggestedDate.toISOString();
+      }
+
+      // Set default values for required fields
+      const fullMeetingData = {
+        matchId: meetingData.matchId,
+        scheduledAt: new Date(meetingData.scheduledAt),
+        meetingType: meetingData.meetingType || "video",
+        duration: meetingData.duration || 30,
+        meetingLink: meetingData.meetingLink || "https://meet.google.com/wnf-cjab-twp",
+        status: meetingData.status || "scheduled"
+      };
       
       // Verify the user is part of this match
       const userId = req.user!.id;
-      const match = await storage.getMatch(meetingData.matchId!);
+      const match = await storage.getMatch(fullMeetingData.matchId);
       if (!match || (match.user1Id !== userId && match.user2Id !== userId)) {
         return res.status(403).json({ message: "Not authorized to schedule this meeting" });
       }
       
-      const meeting = await storage.createMeeting(meetingData);
+      const meeting = await storage.createMeeting(fullMeetingData);
       
       // Update match status
-      await storage.updateMatch(meetingData.matchId!, { status: "meeting_scheduled" });
+      await storage.updateMatch(fullMeetingData.matchId, { status: "meeting_scheduled" });
       
       // Get users for email notification
-      const user1 = await storage.getUser(match.user1Id!);
-      const user2 = await storage.getUser(match.user2Id!);
+      const user1 = await storage.getUser(match.user1Id);
+      const user2 = await storage.getUser(match.user2Id);
       
       if (user1 && user2) {
-        await emailService.sendMeetingScheduledNotification(user1, user2, meeting);
+        try {
+          await emailService.sendMeetingScheduledNotification(user1, user2, meeting);
+        } catch (emailError) {
+          console.error('Failed to send meeting scheduled emails:', emailError);
+        }
         
         // Create notifications
         await storage.createNotification({
-          userId: match.user1Id!,
+          userId: match.user1Id,
           type: 'meeting_scheduled',
           title: 'Meeting Scheduled',
           message: `Your meeting with ${user2.firstName} ${user2.lastName} has been scheduled`
         });
         
         await storage.createNotification({
-          userId: match.user2Id!,
+          userId: match.user2Id,
           type: 'meeting_scheduled',
           title: 'Meeting Scheduled',
           message: `Your meeting with ${user1.firstName} ${user1.lastName} has been scheduled`
