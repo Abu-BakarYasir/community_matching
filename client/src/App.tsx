@@ -36,8 +36,8 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     return <Login />;
   }
 
-  // Check if this is a first-time user (incomplete profile)
-  const isProfileIncomplete = !user.firstName || !user.lastName || !user.jobTitle || !user.company || !user.industry;
+  // Check if this is a first-time user (missing required fields only)
+  const isProfileIncomplete = !user.jobTitle || !user.company || !user.industry;
   
   if (isProfileIncomplete) {
     return <Profile />;

@@ -18,7 +18,7 @@ interface ProfileModalProps {
 
 export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   // Check if this is a first-time user completing their profile
-  const isFirstTimeSetup = !user?.firstName || !user?.lastName || !user?.jobTitle || !user?.company || !user?.industry;
+  const isFirstTimeSetup = !user?.jobTitle || !user?.company || !user?.industry;
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");
   const [industry, setIndustry] = useState("");

@@ -18,7 +18,7 @@ export default function Profile() {
   // Check if this is a first-time user and automatically open profile modal
   useEffect(() => {
     if (user) {
-      const isProfileIncomplete = !user.firstName || !user.lastName || !user.jobTitle || !user.company || !user.industry;
+      const isProfileIncomplete = !user.jobTitle || !user.company || !user.industry;
       if (isProfileIncomplete) {
         setProfileModalOpen(true);
       }
@@ -36,7 +36,7 @@ export default function Profile() {
     );
   }
 
-  const isProfileIncomplete = !user.firstName || !user.lastName || !user.jobTitle || !user.company || !user.industry;
+  const isProfileIncomplete = !user.jobTitle || !user.company || !user.industry;
 
   return (
     <div className="min-h-screen bg-slate-50">
