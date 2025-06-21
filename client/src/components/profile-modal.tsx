@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Linkedin, Camera, Upload } from "lucide-react";
@@ -26,6 +26,11 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   const [networkingGoals, setNetworkingGoals] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Get admin settings to load monthly goals options
+  const { data: adminSettings } = useQuery({
+    queryKey: ["/api/admin/settings"],
+  });
 
   useEffect(() => {
     if (user) {
@@ -248,29 +253,22 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
             <div>
               <Label>Monthly Focus Goals</Label>
               <p className="text-sm text-slate-600 mb-3">
-                What are you hoping to achieve this month? (Select all that apply)
+                Select what you're focusing on this month (choose all that apply)
               </p>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { value: "learning_technical_skills", label: "Learning Technical Skills" },
-                  { value: "building-data-projects", label: "Building Data Projects" },
-                  { value: "job_hunting", label: "Job Hunting" },
-                  { value: "networking", label: "General Networking" },
-                  { value: "business_opportunities", label: "Business Opportunities" },
-                  { value: "mentorship", label: "Finding Mentorship" }
-                ].map((goal) => (
-                  <div key={goal.value} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={goal.value}
-                      checked={networkingGoals.includes(goal.value)}
-                      onChange={() => handleNetworkingGoalToggle(goal.value)}
-                      className="rounded border-slate-300"
-                    />
-                    <Label htmlFor={goal.value} className="text-sm font-normal">
-                      {goal.label}
-                    </Label>
-                  </div>
+              <div className="flex flex-wrap gap-2">
+                {(adminSettings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]).map((goal) => (
+                  <button
+                    key={goal}
+                    type="button"
+                    onClick={() => handleNetworkingGoalToggle(goal)}
+                    className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                      networkingGoals.includes(goal)
+                        ? "bg-blue-100 border-blue-300 text-blue-700"
+                        : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    {goal}
+                  </button>
                 ))}
               </div>
             </div>
