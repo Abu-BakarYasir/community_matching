@@ -169,14 +169,19 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
         <div className="space-y-6">
           {/* Current Meeting Info (if exists) */}
           {match?.meeting && (
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-              <h3 className="font-semibold text-yellow-800 mb-2">Current Meeting</h3>
-              <p className="text-sm text-yellow-700">
-                <strong>Scheduled:</strong> {new Date(match.meeting.scheduledAt).toLocaleDateString()} at {new Date(match.meeting.scheduledAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-              </p>
-              <p className="text-sm text-yellow-700">
-                <strong>Link:</strong> <a href={match.meeting.meetingLink} target="_blank" rel="noopener noreferrer" className="underline">{match.meeting.meetingLink}</a>
-              </p>
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+              <h3 className="font-semibold text-blue-800 mb-2">Current Meeting Details</h3>
+              <div className="space-y-2 text-sm text-blue-700">
+                <p><strong>Date & Time:</strong> {new Date(match.meeting.scheduledAt).toLocaleDateString()} at {new Date(match.meeting.scheduledAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                <p><strong>Duration:</strong> {match.meeting.duration} minutes</p>
+                <p><strong>Type:</strong> {match.meeting.meetingType === 'video' ? 'Video Call' : 'Coffee Chat'}</p>
+                {match.meeting.meetingLink && (
+                  <p><strong>Link:</strong> <a href={match.meeting.meetingLink} target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">{match.meeting.meetingLink}</a></p>
+                )}
+              </div>
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <p className="text-xs text-blue-600">Use the form below to update the meeting time and details</p>
+              </div>
             </div>
           )}
 

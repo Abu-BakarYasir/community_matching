@@ -284,26 +284,44 @@ export default function Dashboard() {
                             {otherUser.jobTitle || 'Professional'} {otherUser.company ? `at ${otherUser.company}` : ''}
                           </p>
                           {hasMeeting && meetingDate && (
-                            <p className={`text-xs mt-1 ${
-                              isToday 
-                                ? 'text-blue-700 dark:text-blue-300 font-medium' 
-                                : 'text-slate-500 dark:text-slate-400'
-                            }`}>
-                              {isToday ? 'Today' : meetingDate.toLocaleDateString()} at {meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • {match.meeting?.duration}min
-                            </p>
+                            <div className="mt-2 space-y-1">
+                              <p className={`text-sm font-medium ${
+                                isToday 
+                                  ? 'text-blue-700 dark:text-blue-300' 
+                                  : 'text-green-700 dark:text-green-300'
+                              }`}>
+                                Meeting Scheduled: {isToday ? 'Today' : meetingDate.toLocaleDateString()} at {meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                Duration: {match.meeting?.duration}min • Type: {match.meeting?.meetingType === 'video' ? 'Video Call' : 'Coffee Chat'}
+                              </p>
+                              {match.meeting?.meetingLink && (
+                                <p className="text-xs">
+                                  <span className="text-slate-500">Link: </span>
+                                  <a 
+                                    href={match.meeting.meetingLink} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 underline"
+                                  >
+                                    {match.meeting.meetingLink.includes('meet.google.com') ? 'Google Meet' : 'Meeting Link'}
+                                  </a>
+                                </p>
+                              )}
+                            </div>
                           )}
                         </div>
-                        <div className="flex space-x-2">
+                        <div className="flex flex-col space-y-2">
                           {hasMeeting ? (
                             <>
                               <Button
                                 onClick={() => window.open(match.meeting?.meetingLink, '_blank')}
                                 size="sm"
-                                className={
+                                className={`w-20 ${
                                   isToday 
                                     ? "bg-blue-600 hover:bg-blue-700" 
                                     : "bg-green-600 hover:bg-green-700"
-                                }
+                                }`}
                               >
                                 {isToday ? 'Join Now' : 'Join'}
                               </Button>
@@ -311,16 +329,16 @@ export default function Dashboard() {
                                 onClick={() => handleScheduleMatch(match)}
                                 size="sm"
                                 variant="outline"
-                                className="text-xs"
+                                className="w-20 text-xs"
                               >
-                                Reschedule
+                                Edit
                               </Button>
                             </>
                           ) : (
                             <Button
                               onClick={() => handleScheduleMatch(match)}
                               size="sm"
-                              className="bg-blue-600 hover:bg-blue-700"
+                              className="bg-blue-600 hover:bg-blue-700 w-20"
                             >
                               Schedule
                             </Button>
