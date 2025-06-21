@@ -75,9 +75,9 @@ export default function Register() {
           description: "You have been logged in successfully.",
         });
         
-        // Clear auth cache and redirect
+        // Clear auth cache and redirect based on admin status
         queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
-        window.location.href = '/dashboard';
+        window.location.href = data.user.isAdmin ? '/admin' : '/dashboard';
       } else {
         toast({
           title: "Login Error",

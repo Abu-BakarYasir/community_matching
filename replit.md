@@ -307,6 +307,12 @@ Preferred communication style: Simple, everyday language.
 - All delete operations include loading states and success/error toast notifications
 - Bulk deletion endpoints return count of deleted items for user feedback
 
+### June 21, 2025 - Admin Panel as Default for Admin Users
+- Modified application routing to redirect admin users to admin panel by default
+- Updated login flow to send admin users to /admin instead of /dashboard
+- Admin users now land on admin panel immediately after login for better workflow
+- Regular users continue to be redirected to dashboard as before
+
 ### June 21, 2025 - Add to Calendar Feature Implementation
 - Added "Add to Calendar" button to dashboard for scheduled meetings
 - Switched from ICS file downloads to Google Calendar links for better reliability
