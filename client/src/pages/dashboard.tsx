@@ -116,6 +116,9 @@ export default function Dashboard() {
 
   const daysRemaining = getDaysUntilNextMatching();
 
+  // Get all matches (they now include meeting info)
+  const allMatches = matches || [];
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -203,63 +206,126 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Upcoming Meetings - Second Priority */}
+          {/* Matches & Meetings - Combined Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Upcoming Meetings</CardTitle>
+              <CardTitle className="text-xl">Your Matches & Meetings</CardTitle>
             </CardHeader>
             <CardContent>
-              {upcomingMeetings.length === 0 ? (
+              {allMatches.length === 0 ? (
                 <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">No meetings scheduled</p>
-                  <p className="text-sm text-slate-400 mt-1">Schedule meetings with your matches!</p>
+                  <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">No matches yet</p>
+                  <p className="text-sm text-slate-400 mt-1">Complete your profile to get matched with other professionals!</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {upcomingMeetings.map((meeting: MeetingWithMatch) => {
-                    const otherUser = getOtherUser(meeting.match);
+                  {allMatches.map((match: MatchWithUsers) => {
+                    const otherUser = getOtherUser(match);
                     if (!otherUser) return null;
                     
-                    const meetingDate = new Date(meeting.scheduledAt);
-                    const isToday = meetingDate.toDateString() === new Date().toDateString();
+                    const hasMeeting = match.meeting && match.meeting.status === 'scheduled';
+                    const meetingDate = hasMeeting ? new Date(match.meeting.scheduledAt) : null;
+                    const isToday = meetingDate ? meetingDate.toDateString() === new Date().toDateString() : false;
+                    const isUpcoming = meetingDate ? meetingDate > new Date() : false;
                     
                     return (
                       <div
-                        key={meeting.id}
-                        className={`flex items-center space-x-4 p-4 rounded-lg border ${
-                          isToday ? 'bg-primary/5 border-primary/20' : 'bg-slate-50 border-slate-200'
+                        key={match.id}
+                        className={`flex items-center space-x-4 p-4 rounded-lg border transition-colors ${
+                          isToday 
+                            ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700' 
+                            : hasMeeting && isUpcoming
+                            ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700'
+                            : 'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                         }`}
                       >
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                          isToday ? 'bg-primary/10' : 'bg-slate-200'
+                          isToday 
+                            ? 'bg-blue-100 dark:bg-blue-800' 
+                            : hasMeeting 
+                            ? 'bg-green-100 dark:bg-green-800' 
+                            : 'bg-blue-100 dark:bg-blue-900'
                         }`}>
-                          {meeting.meetingType === 'video' ? (
-                            <Video className={`h-5 w-5 ${isToday ? 'text-primary' : 'text-slate-600'}`} />
+                          {hasMeeting ? (
+                            match.meeting?.meetingType === 'video' ? (
+                              <Video className={`h-5 w-5 ${isToday ? 'text-blue-600' : 'text-green-600'}`} />
+                            ) : (
+                              <Coffee className={`h-5 w-5 ${isToday ? 'text-blue-600' : 'text-green-600'}`} />
+                            )
                           ) : (
-                            <Coffee className={`h-5 w-5 ${isToday ? 'text-primary' : 'text-slate-600'}`} />
+                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                              {otherUser.firstName.charAt(0)}{otherUser.lastName.charAt(0)}
+                            </div>
                           )}
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium text-slate-900">
-                            {otherUser.firstName} {otherUser.lastName}
+                          <div className="flex items-center space-x-2">
+                            <p className="font-medium text-slate-900 dark:text-slate-100">
+                              {otherUser.firstName} {otherUser.lastName}
+                            </p>
+                            <Badge variant="outline" className="text-xs">
+                              {match.matchScore}% Match
+                            </Badge>
+                            {hasMeeting && (
+                              <Badge 
+                                variant="secondary" 
+                                className={
+                                  isToday 
+                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" 
+                                    : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                }
+                              >
+                                {isToday ? 'Today' : 'Scheduled'}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {otherUser.jobTitle || 'Professional'} {otherUser.company ? `at ${otherUser.company}` : ''}
                           </p>
-                          <p className="text-sm text-slate-600">
-                            {isToday ? 'Today' : 'Tomorrow'}, {meetingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                          <p className={`text-xs ${isToday ? 'text-primary' : 'text-slate-500'}`}>
-                            {meeting.meetingType === 'video' ? 'Video Call' : 'Coffee Chat'}
-                          </p>
+                          {hasMeeting && meetingDate && (
+                            <p className={`text-xs mt-1 ${
+                              isToday 
+                                ? 'text-blue-700 dark:text-blue-300 font-medium' 
+                                : 'text-slate-500 dark:text-slate-400'
+                            }`}>
+                              {isToday ? 'Today' : meetingDate.toLocaleDateString()} at {meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • {match.meeting?.duration}min
+                            </p>
+                          )}
                         </div>
-                        {meeting.meetingLink && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => window.open(meeting.meetingLink, '_blank')}
-                          >
-                            Join Meeting
-                          </Button>
-                        )}
+                        <div className="flex space-x-2">
+                          {hasMeeting ? (
+                            <>
+                              <Button
+                                onClick={() => window.open(match.meeting?.meetingLink, '_blank')}
+                                size="sm"
+                                className={
+                                  isToday 
+                                    ? "bg-blue-600 hover:bg-blue-700" 
+                                    : "bg-green-600 hover:bg-green-700"
+                                }
+                              >
+                                {isToday ? 'Join Now' : 'Join'}
+                              </Button>
+                              <Button
+                                onClick={() => handleScheduleMatch(match)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                Reschedule
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              onClick={() => handleScheduleMatch(match)}
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Schedule
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -340,60 +406,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Recent Matches */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Recent Matches</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {matches.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-500">No matches yet</p>
-                    <p className="text-sm text-slate-400 mt-1">Complete your profile to get matched!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {recentMatches.map((match: MatchWithUsers) => {
-                      const otherUser = getOtherUser(match);
-                      if (!otherUser) return null;
-                      return (
-                        <div
-                          key={match.id}
-                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={otherUser.profileImageUrl} />
-                              <AvatarFallback>
-                                {getInitials(otherUser.firstName, otherUser.lastName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-slate-900">
-                                {otherUser.firstName} {otherUser.lastName}
-                              </p>
-                              <p className="text-sm text-slate-500">{otherUser.jobTitle}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="secondary">{match.matchScore}% match</Badge>
-                            {match.status === 'pending' && (
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleScheduleMatch(match)}
-                              >
-                                Schedule
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+
           </div>
         </div>
       </main>
