@@ -225,6 +225,10 @@ export default function Dashboard() {
                     if (!otherUser) return null;
                     
                     const hasMeeting = match.meeting && match.meeting.status === 'scheduled';
+                    
+
+                    
+
                     const meetingDate = hasMeeting ? new Date(match.meeting.scheduledAt) : null;
                     const isToday = meetingDate ? meetingDate.toDateString() === new Date().toDateString() : false;
                     const isUpcoming = meetingDate ? meetingDate > new Date() : false;

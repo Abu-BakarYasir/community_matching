@@ -154,15 +154,23 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(matches.user1Id, users.id))
       .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
 
-    // We need to get both users for each match
+    // We need to get both users and meetings for each match
     const matchesWithUsers: MatchWithUsers[] = [];
     
     for (const match of userMatches) {
       const user1 = await this.getUser(match.user1Id!);
       const user2 = await this.getUser(match.user2Id!);
       
+      // Get meeting for this match
+      const [meeting] = await db
+        .select()
+        .from(meetings)
+        .where(eq(meetings.matchId, match.id!));
+      
+
+      
       if (user1 && user2) {
-        matchesWithUsers.push({
+        const matchWithUsers: MatchWithUsers = {
           id: match.id,
           user1Id: match.user1Id,
           user2Id: match.user2Id,
@@ -172,7 +180,14 @@ export class DatabaseStorage implements IStorage {
           createdAt: match.createdAt,
           user1,
           user2
-        });
+        };
+        
+        // Add meeting if it exists
+        if (meeting) {
+          matchWithUsers.meeting = meeting;
+        }
+        
+        matchesWithUsers.push(matchWithUsers);
       }
     }
     
