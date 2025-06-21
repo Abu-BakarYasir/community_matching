@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { emailService } from "./services/email";
 import { schedulerService } from "./services/scheduler";
+import { timeSlotService } from "./services/timeSlots";
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema } from "@shared/schema";
 import { generateToken, requireAuth, AuthenticatedRequest } from "./auth";
 
@@ -428,6 +429,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Create meeting error:", error);
       res.status(500).json({ message: "Failed to create meeting" });
+    }
+  });
+
+  // Get suggested meeting times for a match
+  app.get("/api/matches/:matchId/suggested-times", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const matchId = parseInt(req.params.matchId);
+      const match = await storage.getMatch(matchId);
+      
+      if (!match) {
+        return res.status(404).json({ message: "Match not found" });
+      }
+      
+      // Verify user is part of this match
+      if (match.user1Id !== req.user!.id && match.user2Id !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to view this match" });
+      }
+      
+      const suggestedTimes = await timeSlotService.getSuggestedMeetingTimes(match.user1Id, match.user2Id);
+      res.json(suggestedTimes);
+    } catch (error) {
+      console.error("Get suggested times error:", error);
+      res.status(500).json({ message: "Failed to get suggested times" });
     }
   });
 

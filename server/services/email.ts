@@ -1,5 +1,6 @@
 import { MailService } from '@sendgrid/mail';
 import type { User, Meeting } from '@shared/schema';
+import { timeSlotService } from './timeSlots';
 
 class EmailService {
   private mailService: MailService;
