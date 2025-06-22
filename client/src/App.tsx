@@ -9,6 +9,7 @@ import SuperAdmin from "@/pages/super-admin";
 import Profile from "@/pages/profile";
 import Landing from "@/pages/landing";
 import Signup from "@/pages/signup";
+import TestRoles from "@/pages/test-roles";
 import { queryClient } from "@/lib/queryClient";
 
 function AdminRoute() {

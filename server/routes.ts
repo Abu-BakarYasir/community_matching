@@ -27,6 +27,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Replit authentication
   await setupAuth(app);
 
+  // Testing endpoints for role switching (development only)
+  if (process.env.NODE_ENV === 'development') {
+    app.post('/api/test/switch-user', async (req, res) => {
+      try {
+        const testUser = req.body;
+        // Store test user in session for development testing
+        (req.session as any).testUser = testUser;
+        res.json({ message: 'Test user set', user: testUser });
+      } catch (error) {
+        res.status(500).json({ message: 'Failed to switch user' });
+      }
+    });
+
+    app.post('/api/test/clear-user', async (req, res) => {
+      try {
+        delete (req.session as any).testUser;
+        res.json({ message: 'Test mode cleared' });
+      } catch (error) {
+        res.status(500).json({ message: 'Failed to clear test mode' });
+      }
+    });
+  }
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
