@@ -74,7 +74,12 @@ export function Header() {
                 </DropdownMenuItem>
                 {user?.isAdmin && (
                   <DropdownMenuItem onClick={() => setLocation("/admin")}>
-                    Admin Panel
+                    Community Admin
+                  </DropdownMenuItem>
+                )}
+                {user?.isSuperAdmin && (
+                  <DropdownMenuItem onClick={() => setLocation("/super-admin")}>
+                    Super Admin
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem 

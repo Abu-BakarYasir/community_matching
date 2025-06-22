@@ -313,6 +313,60 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
+  // Super Admin API endpoints
+  app.get('/api/super-admin/organizations', isAuthenticated, async (req: any, res) => {
+    try {
+      // For now, return empty array as we'll add organization storage later
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      res.status(500).json({ message: "Failed to fetch organizations" });
+    }
+  });
+
+  app.get('/api/super-admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get('/api/super-admin/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const stats = {
+        totalUsers: users.length,
+        activeUsers: users.filter(u => u.isActive).length,
+        adminUsers: users.filter(u => u.isAdmin).length,
+        superAdminUsers: users.filter(u => u.isSuperAdmin).length,
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching platform stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.patch('/api/super-admin/users/:userId/super-admin', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { isSuperAdmin } = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, { isSuperAdmin });
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating super admin status:", error);
+      res.status(500).json({ message: "Failed to update super admin status" });
+    }
+  });
+
   // Admin trigger matching endpoint
   app.post('/api/admin/trigger-matching', isAuthenticated, async (req: any, res) => {
     try {

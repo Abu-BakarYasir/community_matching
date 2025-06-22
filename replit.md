@@ -122,6 +122,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### June 22, 2025 - Multi-Tenant SaaS Architecture & Super Admin System
+- Restructured application for multi-tenant SaaS architecture
+- Added organizations table to support multiple communities
+- Created super admin role separate from community admin role
+- Built comprehensive Super Admin dashboard for platform management
+- Added organization management, user role control, and platform statistics
+- Updated authentication system to support super admin privileges
+- Separated community admin (manages one community) from super admin (manages entire platform)
+- Added super admin routes and navigation in header dropdown menu
+- Enhanced user schema with organizationId and isSuperAdmin fields
+
 ### June 22, 2025 - Replit Auth Integration & Availability System Fixed
 - Implemented complete Replit Auth integration with session-based authentication
 - Fixed availability time slot adding functionality with proper API endpoints

@@ -9,10 +9,12 @@ export interface AuthenticatedRequest extends Request {
     id: number;
     email: string;
     isAdmin?: boolean;
+    isSuperAdmin?: boolean;
+    organizationId?: number;
   };
 }
 
-export function generateToken(user: { id: number; email: string; isAdmin?: boolean }): string {
+export function generateToken(user: { id: number; email: string; isAdmin?: boolean; isSuperAdmin?: boolean; organizationId?: number }): string {
   return jwt.sign(
     { 
       id: user.id, 
@@ -26,7 +28,7 @@ export function generateToken(user: { id: number; email: string; isAdmin?: boole
   );
 }
 
-export function verifyToken(token: string): { id: number; email: string; isAdmin?: boolean } | null {
+export function verifyToken(token: string): { id: number; email: string; isAdmin?: boolean; isSuperAdmin?: boolean; organizationId?: number } | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: number; email: string; isAdmin?: boolean };
     return decoded;
@@ -60,6 +62,18 @@ export function requireAdmin(req: AuthenticatedRequest, res: Response, next: Nex
   
   if (!req.user.isAdmin) {
     return res.status(403).json({ message: "Admin access required" });
+  }
+  
+  next();
+}
+
+export function requireSuperAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  
+  if (!req.user.isSuperAdmin) {
+    return res.status(403).json({ message: "Super admin access required" });
   }
   
   next();

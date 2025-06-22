@@ -165,7 +165,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id: string, updates: Partial<InsertUser & { isSuperAdmin?: boolean; organizationId?: number }>): Promise<User | undefined> {
     const [user] = await db
       .update(users)
       .set(updates)

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
+import SuperAdmin from "@/pages/super-admin";
 import Profile from "@/pages/profile";
 import Landing from "@/pages/landing";
 import { queryClient } from "@/lib/queryClient";
@@ -25,6 +26,24 @@ function AdminRoute() {
   }
 
   return <Admin />;
+}
+
+function SuperAdminRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg">Loading...</div>
+    </div>;
+  }
+
+  if (!user || !user.isSuperAdmin) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg text-red-600">Super admin access required</div>
+    </div>;
+  }
+
+  return <SuperAdmin />;
 }
 
 function Router() {
@@ -50,6 +69,9 @@ function Router() {
       </Route>
       <Route path="/admin">
         <AdminRoute />
+      </Route>
+      <Route path="/super-admin">
+        <SuperAdminRoute />
       </Route>
       <Route path="/profile">
         {isAuthenticated ? <Profile /> : <Landing />}

@@ -24,6 +24,18 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Organizations/Communities table
+export const organizations = pgTable("organizations", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  slug: varchar("slug", { length: 100 }).unique().notNull(),
+  description: text("description"),
+  settings: jsonb("settings").default({}), // Community-specific settings
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User storage table for Replit Auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(), // Replit user ID (string)
@@ -36,8 +48,10 @@ export const users = pgTable("users", {
   industry: varchar("industry", { length: 100 }),
   bio: text("bio"),
   linkedinUrl: varchar("linkedin_url", { length: 500 }),
+  organizationId: integer("organization_id").references(() => organizations.id),
   isActive: boolean("is_active").default(true),
-  isAdmin: boolean("is_admin").default(false),
+  isAdmin: boolean("is_admin").default(false), // Community admin
+  isSuperAdmin: boolean("is_super_admin").default(false), // SaaS platform admin
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -119,7 +133,16 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+export const insertOrganizationSchema = createInsertSchema(organizations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
+export type Organization = typeof organizations.$inferSelect;
+export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
