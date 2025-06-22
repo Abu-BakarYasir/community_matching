@@ -277,6 +277,37 @@ app.get('/api/settings/public', async (req, res) => {
   }
 });
 
+  // Get organization details by slug for signup page
+  app.get('/api/organizations/:slug', async (req: any, res) => {
+    try {
+      const { slug } = req.params;
+      
+      const organizations = await storage.getAllOrganizations();
+      const organization = organizations.find(org => 
+        (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
+        org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase()
+      );
+      
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+      
+      // Return public organization info (no sensitive data)
+      res.json({
+        id: organization.id,
+        name: organization.name,
+        domain: organization.domain,
+        isActive: organization.isActive,
+        settings: {
+          appName: organization.settings?.appName || organization.name
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching organization:", error);
+      res.status(500).json({ message: "Failed to fetch organization" });
+    }
+  });
+
   app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
