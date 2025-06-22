@@ -1,12 +1,26 @@
-import type { 
-  User, InsertUser, 
-  ProfileQuestions, InsertProfileQuestions,
-  Match, InsertMatch, MatchWithUsers,
-  Meeting, InsertMeeting, MeetingWithMatch,
-  Availability, InsertAvailability,
-  Notification, InsertNotification
+import {
+  users,
+  profileQuestions,
+  matches,
+  meetings,
+  availability,
+  notifications,
+  type User,
+  type UpsertUser,
+  type InsertUser,
+  type ProfileQuestions,
+  type InsertProfileQuestions,
+  type Match,
+  type InsertMatch,
+  type MatchWithUsers,
+  type Meeting,
+  type InsertMeeting,
+  type MeetingWithMatch,
+  type Availability,
+  type InsertAvailability,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
-import { users, profileQuestions, matches, meetings, availability, notifications } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or } from "drizzle-orm";
 
@@ -61,68 +75,53 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getUser(id: number): Promise<User | undefined> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.id, id));
-      return user || undefined;
-    } catch (error) {
-      console.error('Error getting user:', error);
-      return undefined;
-    }
+  // User operations (mandatory for Replit Auth)
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.email, email));
-      return user || undefined;
-    } catch (error) {
-      console.error('Error getting user by email:', error);
-      return undefined;
-    }
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    try {
-      const [user] = await db
-        .insert(users)
-        .values(insertUser)
-        .returning();
-      return user;
-    } catch (error) {
-      console.error('Error creating user:', error);
-      throw new Error('Failed to create user');
-    }
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
   }
 
-  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
-    try {
-      // Clean updates to avoid timestamp issues
-      const cleanUpdates = { ...updates };
-      
-      // Remove fields that shouldn't be updated or cause timestamp issues
-      delete cleanUpdates.id;
-      delete cleanUpdates.createdAt;
-      delete cleanUpdates.updatedAt;
-      
-      const [user] = await db
-        .update(users)
-        .set({
-          ...cleanUpdates,
-          updatedAt: new Date()
-        })
-        .where(eq(users.id, id))
-        .returning();
-      return user || undefined;
-    } catch (error) {
-      console.error('Error updating user:', error);
-      return undefined;
-    }
+  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
   }
 
-  async deleteUser(id: number): Promise<boolean> {
+  async deleteUser(id: string): Promise<boolean> {
     try {
       const result = await db.delete(users).where(eq(users.id, id));
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error('Error deleting user:', error);
       return false;
@@ -130,39 +129,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    try {
-      return await db.select().from(users);
-    } catch (error) {
-      console.error('Error getting all users:', error);
-      return [];
-    }
+    return await db.select().from(users);
   }
 
-  async getProfileQuestions(userId: number): Promise<ProfileQuestions | undefined> {
-    try {
-      const [questions] = await db.select().from(profileQuestions).where(eq(profileQuestions.userId, userId));
-      return questions || undefined;
-    } catch (error) {
-      console.error('Error getting profile questions:', error);
-      return undefined;
-    }
+  async getProfileQuestions(userId: string): Promise<ProfileQuestions | undefined> {
+    const [questions] = await db.select().from(profileQuestions).where(eq(profileQuestions.userId, userId));
+    return questions || undefined;
   }
 
   async createProfileQuestions(questions: InsertProfileQuestions): Promise<ProfileQuestions> {
-    const [profileQuestion] = await db
+    const [result] = await db
       .insert(profileQuestions)
       .values(questions)
       .returning();
-    return profileQuestion;
+    return result;
   }
 
-  async updateProfileQuestions(userId: number, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined> {
-    const [updated] = await db
+  async updateProfileQuestions(userId: string, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined> {
+    const [result] = await db
       .update(profileQuestions)
       .set(updates)
       .where(eq(profileQuestions.userId, userId))
       .returning();
-    return updated || undefined;
+    return result || undefined;
   }
 
   async getMatch(id: number): Promise<Match | undefined> {
@@ -170,85 +159,46 @@ export class DatabaseStorage implements IStorage {
     return match || undefined;
   }
 
-  async getMatchesByUser(userId: number): Promise<MatchWithUsers[]> {
-    const userMatches = await db
-      .select({
-        id: matches.id,
-        user1Id: matches.user1Id,
-        user2Id: matches.user2Id,
-        matchScore: matches.matchScore,
-        status: matches.status,
-        monthYear: matches.monthYear,
-        createdAt: matches.createdAt,
-        user1: users,
-        user2: users
-      })
-      .from(matches)
-      .leftJoin(users, eq(matches.user1Id, users.id))
-      .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
+  async getMatchesByUser(userId: string): Promise<MatchWithUsers[]> {
+    const userMatches = await db.select({
+      match: matches,
+      user1: users,
+      user2: users,
+      meeting: meetings
+    })
+    .from(matches)
+    .leftJoin(meetings, eq(matches.id, meetings.matchId))
+    .innerJoin(users, eq(matches.user1Id, users.id))
+    .innerJoin(users, eq(matches.user2Id, users.id))
+    .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
 
-    // We need to get both users and meetings for each match
-    const matchesWithUsers: MatchWithUsers[] = [];
-    
-    for (const match of userMatches) {
-      const user1 = await this.getUser(match.user1Id!);
-      const user2 = await this.getUser(match.user2Id!);
-      
-      // Get meeting for this match
-      const [meeting] = await db
-        .select()
-        .from(meetings)
-        .where(eq(meetings.matchId, match.id!));
-      
-
-      
-      if (user1 && user2) {
-        const matchWithUsers: MatchWithUsers = {
-          id: match.id,
-          user1Id: match.user1Id,
-          user2Id: match.user2Id,
-          matchScore: match.matchScore,
-          status: match.status,
-          monthYear: match.monthYear,
-          createdAt: match.createdAt,
-          user1,
-          user2
-        };
-        
-        // Add meeting if it exists
-        if (meeting) {
-          matchWithUsers.meeting = meeting;
-        }
-        
-        matchesWithUsers.push(matchWithUsers);
-      }
-    }
-    
-    return matchesWithUsers;
+    return userMatches.map(row => ({
+      ...row.match,
+      user1: row.user1,
+      user2: row.user2,
+      meeting: row.meeting || undefined
+    }));
   }
 
   async getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]> {
-    const monthMatches = await db
-      .select()
-      .from(matches)
-      .where(eq(matches.monthYear, monthYear));
+    const monthMatches = await db.select({
+      match: matches,
+      user1: users,
+      user2: users,
+      meeting: meetings
+    })
+    .from(matches)
+    .leftJoin(meetings, eq(matches.id, meetings.matchId))
+    .innerJoin(users, eq(matches.user1Id, users.id))
+    .innerJoin(users, eq(matches.user2Id, users.id))
+    .where(eq(matches.monthYear, monthYear));
 
-    const matchesWithUsers: MatchWithUsers[] = [];
-    
-    for (const match of monthMatches) {
-      const user1 = await this.getUser(match.user1Id!);
-      const user2 = await this.getUser(match.user2Id!);
-      
-      if (user1 && user2) {
-        matchesWithUsers.push({
-          ...match,
-          user1,
-          user2
-        });
-      }
-    }
-    
-    return matchesWithUsers;
+    return monthMatches.map(row => ({
+      ...row.match,
+      user1: row.user1,
+      user2: row.user2,
+      meeting: row.meeting || undefined
+    }));
   }
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
@@ -269,34 +219,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllMatches(): Promise<MatchWithUsers[]> {
-    try {
-      const allMatches = await db.select().from(matches);
-      const matchesWithUsers: MatchWithUsers[] = [];
-      
-      for (const match of allMatches) {
-        const user1 = await this.getUser(match.user1Id!);
-        const user2 = await this.getUser(match.user2Id!);
-        
-        if (user1 && user2) {
-          matchesWithUsers.push({
-            ...match,
-            user1,
-            user2
-          });
-        }
-      }
-      
-      return matchesWithUsers;
-    } catch (error) {
-      console.error("Error getting all matches:", error);
-      return [];
-    }
+    const allMatches = await db.select({
+      match: matches,
+      user1: users,
+      user2: users,
+      meeting: meetings
+    })
+    .from(matches)
+    .leftJoin(meetings, eq(matches.id, meetings.matchId))
+    .innerJoin(users, eq(matches.user1Id, users.id))
+    .innerJoin(users, eq(matches.user2Id, users.id));
+
+    return allMatches.map(row => ({
+      ...row.match,
+      user1: row.user1,
+      user2: row.user2,
+      meeting: row.meeting || undefined
+    }));
   }
 
   async deleteMatch(id: number): Promise<boolean> {
     try {
       const result = await db.delete(matches).where(eq(matches.id, id));
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error('Error deleting match:', error);
       return false;
@@ -308,35 +253,28 @@ export class DatabaseStorage implements IStorage {
     return meeting || undefined;
   }
 
-  async getMeetingsByUser(userId: number): Promise<MeetingWithMatch[]> {
-    const userMeetings = await db
-      .select({
-        meeting: meetings,
-        match: matches
-      })
-      .from(meetings)
-      .innerJoin(matches, eq(meetings.matchId, matches.id))
-      .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
+  async getMeetingsByUser(userId: string): Promise<MeetingWithMatch[]> {
+    const userMeetings = await db.select({
+      meeting: meetings,
+      match: matches,
+      user1: users,
+      user2: users
+    })
+    .from(meetings)
+    .innerJoin(matches, eq(meetings.matchId, matches.id))
+    .innerJoin(users, eq(matches.user1Id, users.id))
+    .innerJoin(users, eq(matches.user2Id, users.id))
+    .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
 
-    const meetingsWithMatch: MeetingWithMatch[] = [];
-    
-    for (const result of userMeetings) {
-      const user1 = await this.getUser(result.match.user1Id!);
-      const user2 = await this.getUser(result.match.user2Id!);
-      
-      if (user1 && user2) {
-        meetingsWithMatch.push({
-          ...result.meeting,
-          match: {
-            ...result.match,
-            user1,
-            user2
-          }
-        });
+    return userMeetings.map(row => ({
+      ...row.meeting,
+      match: {
+        ...row.match,
+        user1: row.user1,
+        user2: row.user2,
+        meeting: row.meeting
       }
-    }
-    
-    return meetingsWithMatch;
+    }));
   }
 
   async createMeeting(insertMeeting: InsertMeeting): Promise<Meeting> {
@@ -356,40 +294,39 @@ export class DatabaseStorage implements IStorage {
     return meeting || undefined;
   }
 
-  async getAvailability(userId: number): Promise<Availability[]> {
+  async getAvailability(userId: string): Promise<Availability[]> {
     return await db.select().from(availability).where(eq(availability.userId, userId));
   }
 
   async createAvailability(insertAvailability: InsertAvailability): Promise<Availability> {
-    const [avail] = await db
+    const [availabilityRecord] = await db
       .insert(availability)
       .values(insertAvailability)
       .returning();
-    return avail;
+    return availabilityRecord;
   }
 
   async updateAvailability(id: number, updates: Partial<InsertAvailability>): Promise<Availability | undefined> {
-    const [avail] = await db
+    const [availabilityRecord] = await db
       .update(availability)
       .set(updates)
       .where(eq(availability.id, id))
       .returning();
-    return avail || undefined;
+    return availabilityRecord || undefined;
   }
 
   async deleteAvailability(id: number): Promise<boolean> {
-    console.log("DatabaseStorage.deleteAvailability ID:", id);
-    const result = await db.delete(availability).where(eq(availability.id, id));
-    console.log("DatabaseStorage delete result rowCount:", result.rowCount);
-    return result.rowCount > 0;
+    try {
+      const result = await db.delete(availability).where(eq(availability.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error deleting availability:', error);
+      return false;
+    }
   }
 
-  async getNotifications(userId: number): Promise<Notification[]> {
-    return await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(notifications.createdAt);
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return await db.select().from(notifications).where(eq(notifications.userId, userId));
   }
 
   async createNotification(insertNotification: InsertNotification): Promise<Notification> {
@@ -401,32 +338,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markNotificationAsRead(id: number): Promise<boolean> {
-    const result = await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(eq(notifications.id, id));
-    return result.rowCount > 0;
+    try {
+      const result = await db
+        .update(notifications)
+        .set({ isRead: true })
+        .where(eq(notifications.id, id));
+      return (result.rowCount ?? 0) > 0;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      return false;
+    }
   }
 
   async getAllMeetings(): Promise<Meeting[]> {
-    try {
-      const result = await db.select().from(meetings);
-      console.log(`getAllMeetings found ${result.length} meetings`);
-      return result;
-    } catch (error) {
-      console.error("Error getting all meetings:", error);
-      return [];
-    }
+    return await db.select().from(meetings);
   }
 
   async deleteMeeting(id: number): Promise<boolean> {
     try {
-      console.log(`Attempting to delete meeting ${id}`);
       const result = await db.delete(meetings).where(eq(meetings.id, id));
-      console.log(`Delete meeting ${id} result:`, result.rowCount);
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } catch (error) {
-      console.error("Error deleting meeting:", error);
+      console.error('Error deleting meeting:', error);
       return false;
     }
   }
@@ -434,29 +367,19 @@ export class DatabaseStorage implements IStorage {
   async deleteNotification(id: number): Promise<boolean> {
     try {
       const result = await db.delete(notifications).where(eq(notifications.id, id));
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error('Error deleting notification:', error);
       return false;
     }
   }
 
-  async deleteProfileQuestions(userId: number): Promise<boolean> {
+  async deleteProfileQuestions(userId: string): Promise<boolean> {
     try {
       const result = await db.delete(profileQuestions).where(eq(profileQuestions.userId, userId));
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error('Error deleting profile questions:', error);
-      return false;
-    }
-  }
-
-  async deleteMeeting(id: number): Promise<boolean> {
-    try {
-      const result = await db.delete(meetings).where(eq(meetings.id, id));
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error('Error deleting meeting:', error);
       return false;
     }
   }

@@ -1,92 +1,45 @@
+import React from "react";
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
-import Register from "@/pages/register";
-import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
-import NotFound from "@/pages/not-found";
+import Landing from "@/pages/landing";
+import { queryClient } from "@/lib/queryClient";
 
 function AdminRoute() {
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/auth/me"],
-  });
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-  
-  return user?.isAdmin ? <Admin /> : <NotFound />;
-}
-
-// Create a separate Login component that defaults to login mode
-function Login() {
-  return <Register />;
-}
-
-function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const { data: user, isLoading, error } = useQuery({
-    queryKey: ["/api/auth/me"],
-    retry: false,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-  });
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg">Loading...</div>
+    </div>;
   }
 
-  // If there's an error or no user data, show login
-  if (error || !user) {
-    return <Login />;
+  if (!user || !user.isAdmin) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg text-red-600">Admin access required</div>
+    </div>;
   }
 
-  // Check if this is a first-time user (missing required fields only)
-  const isProfileIncomplete = !user.jobTitle || !user.company || !user.industry;
-  
-  if (isProfileIncomplete) {
-    return <Profile />;
-  }
-
-  return <>{children}</>;
+  return <Admin />;
 }
 
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
   return (
     <Switch>
-      <Route path="/" component={() => (
-        <AuthWrapper>
-          <Dashboard />
-        </AuthWrapper>
-      )} />
-      <Route path="/dashboard" component={() => (
-        <AuthWrapper>
-          <Dashboard />
-        </AuthWrapper>
-      )} />
-      <Route path="/profile" component={() => (
-        <AuthWrapper>
-          <Profile />
-        </AuthWrapper>
-      )} />
-      <Route path="/admin" component={() => (
-        <AuthWrapper>
-          <AdminRoute />
-        </AuthWrapper>
-      )} />
-      <Route path="/register" component={Register} />
-      <Route component={NotFound} />
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <>
+          <Route path="/" component={Dashboard} />
+          <Route path="/admin" component={AdminRoute} />
+        </>
+      )}
+      <Route component={() => <div>404 - Page not found</div>} />
     </Switch>
   );
 }
@@ -94,10 +47,8 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <Toaster />
+      <Router />
     </QueryClientProvider>
   );
 }

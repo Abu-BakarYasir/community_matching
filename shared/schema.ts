@@ -1,71 +1,93 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  varchar,
+  timestamp,
+  boolean,
+  integer,
+  decimal,
+  serial,
+  index,
+  jsonb,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table for Replit Auth
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  jobTitle: text("job_title"),
-  company: text("company"),
-  industry: text("industry"),
-  profileImageUrl: text("profile_image_url"),
+  id: varchar("id").primaryKey().notNull(), // Replit user ID (string)
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  jobTitle: varchar("job_title", { length: 200 }),
+  company: varchar("company", { length: 200 }),
+  industry: varchar("industry", { length: 100 }),
   bio: text("bio"),
-  linkedinUrl: text("linkedin_url"),
-  isAdmin: boolean("is_admin").default(false),
+  linkedinUrl: varchar("linkedin_url", { length: 500 }),
   isActive: boolean("is_active").default(true),
+  isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const profileQuestions = pgTable("profile_questions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  networkingGoals: json("networking_goals").$type<string[]>(), // ["career_advancement", "knowledge_sharing", etc.]
-  availabilityPreferences: json("availability_preferences").$type<string[]>(), // ["weekday_mornings", etc.]
-  interests: json("interests").$type<string[]>(),
-  lookingFor: text("looking_for"), // what they want from networking
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  networkingGoals: text("networking_goals").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const matches = pgTable("matches", {
   id: serial("id").primaryKey(),
-  user1Id: integer("user1_id").references(() => users.id),
-  user2Id: integer("user2_id").references(() => users.id),
-  matchScore: integer("match_score"), // percentage
-  status: text("status").default("pending"), // "pending", "accepted", "declined", "meeting_scheduled"
-  createdAt: timestamp("created_at").defaultNow(),
-  monthYear: text("month_year"), // "2024-12" for tracking monthly matches
+  user1Id: varchar("user1_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  user2Id: varchar("user2_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  matchScore: decimal("match_score", { precision: 5, scale: 2 }).notNull(),
+  status: varchar("status", { length: 50 }).default("active"),
+  monthYear: varchar("month_year", { length: 7 }).notNull(), // Format: YYYY-MM
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 export const meetings = pgTable("meetings", {
   id: serial("id").primaryKey(),
-  matchId: integer("match_id").references(() => matches.id),
+  matchId: integer("match_id").references(() => matches.id, { onDelete: "cascade" }).notNull(),
   scheduledAt: timestamp("scheduled_at"),
   duration: integer("duration").default(30), // minutes
-  meetingType: text("meeting_type"), // "video", "coffee", "lunch"
-  status: text("status").default("scheduled"), // "scheduled", "completed", "cancelled", "no_show"
-  meetingLink: text("meeting_link"),
-  location: text("location"),
-  notes: text("notes"),
+  meetingLink: varchar("meeting_link", { length: 500 }),
+  status: varchar("status", { length: 50 }).default("scheduled"),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 export const availability = pgTable("availability", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  dayOfWeek: integer("day_of_week"), // 0-6, Sunday = 0
-  startTime: text("start_time"), // "09:00"
-  endTime: text("end_time"), // "17:00"
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday, 1 = Monday, etc.
+  startTime: varchar("start_time", { length: 5 }).notNull(), // HH:MM format
+  endTime: varchar("end_time", { length: 5 }).notNull(), // HH:MM format
   isAvailable: boolean("is_available").default(true),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  type: text("type"), // "match_found", "meeting_scheduled", "meeting_reminder"
-  title: text("title"),
-  message: text("message"),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message").notNull(),
   isRead: boolean("is_read").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Insert schemas
