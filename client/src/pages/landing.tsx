@@ -19,7 +19,7 @@ export default function Landing() {
           </div>
           <Button 
             className="w-full" 
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => window.location.href = '/dev-login'}
           >
             Sign In to Get Started
           </Button>

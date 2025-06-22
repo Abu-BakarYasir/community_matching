@@ -12,19 +12,23 @@ let authToken: string | null = null;
 
 export function setAuthToken(token: string) {
   authToken = token;
-  localStorage.setItem('authToken', token);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('auth_token', token);
+  }
 }
 
 export function getAuthToken(): string | null {
-  if (!authToken) {
-    authToken = localStorage.getItem('authToken');
+  if (!authToken && typeof window !== 'undefined') {
+    authToken = localStorage.getItem('auth_token');
   }
   return authToken;
 }
 
 export function clearAuthToken() {
   authToken = null;
-  localStorage.removeItem('authToken');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth_token');
+  }
 }
 
 export async function apiRequest(

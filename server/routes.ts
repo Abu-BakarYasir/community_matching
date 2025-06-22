@@ -26,6 +26,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup development authentication
   await setupDevAuth(app);
 
+  // Redirect /api/login to dev login page
+  app.get("/api/login", (req, res) => {
+    res.redirect("/dev-login");
+  });
+
   // Test endpoint
   app.get("/api/test", authenticateToken, async (req: any, res) => {
     res.json({ message: "Authentication working", userId: req.userId });
