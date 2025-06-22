@@ -249,6 +249,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API endpoints
+  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get('/api/admin/matches', isAuthenticated, async (req: any, res) => {
+    try {
+      const matches = await storage.getAllMatches();
+      res.json(matches);
+    } catch (error) {
+      console.error("Error fetching admin matches:", error);
+      res.status(500).json({ message: "Failed to fetch matches" });
+    }
+  });
+
+  app.get('/api/admin/meetings', isAuthenticated, async (req: any, res) => {
+    try {
+      const meetings = await storage.getAllMeetings();
+      res.json(meetings);
+    } catch (error) {
+      console.error("Error fetching admin meetings:", error);
+      res.status(500).json({ message: "Failed to fetch meetings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
