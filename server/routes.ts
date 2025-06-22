@@ -30,11 +30,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
       
       if (!user) {
-        console.log("User not found in database:", userId);
-        return res.status(404).json({ message: "User not found" });
+        console.log("User not found in database, creating:", userId, req.user.claims.email);
+        // Create user if not found (should have been created in callback, but fallback)
+        const claims = req.user.claims;
+        await storage.upsertUser({
+          id: claims.sub,
+          email: claims.email,
+          firstName: claims.first_name || claims.email.split('@')[0],
+          lastName: claims.last_name || "Member",
+          profileImageUrl: claims.profile_image_url,
+        });
+        user = await storage.getUser(userId);
+      }
+      
+      if (!user) {
+        console.error("Still no user found after creation attempt:", userId);
+        return res.status(500).json({ message: "Failed to create or retrieve user" });
       }
       
       console.log("Returning user data:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
@@ -49,11 +63,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/me', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
       
       if (!user) {
-        console.log("User not found in database:", userId);
-        return res.status(404).json({ message: "User not found" });
+        console.log("User not found in database, creating:", userId, req.user.claims.email);
+        // Create user if not found
+        const claims = req.user.claims;
+        await storage.upsertUser({
+          id: claims.sub,
+          email: claims.email,
+          firstName: claims.first_name || claims.email.split('@')[0],
+          lastName: claims.last_name || "Member",
+          profileImageUrl: claims.profile_image_url,
+        });
+        user = await storage.getUser(userId);
+      }
+      
+      if (!user) {
+        console.error("Still no user found after creation attempt:", userId);
+        return res.status(500).json({ message: "Failed to create or retrieve user" });
       }
       
       console.log("Returning user data via /me:", { id: user.id, email: user.email, isAdmin: user.isAdmin });

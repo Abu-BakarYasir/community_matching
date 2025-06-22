@@ -117,22 +117,32 @@ export async function setupAuth(app: Express) {
   app.get("/api/callback", (req, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, async (err, user) => {
       if (err || !user) {
+        console.error("Authentication callback error:", err);
         return res.redirect("/api/login");
       }
       
       req.logIn(user, async (loginErr) => {
         if (loginErr) {
+          console.error("Login error:", loginErr);
           return res.redirect("/api/login");
         }
         
-        // Check if user is admin and redirect accordingly
+        // Ensure user exists in database before redirecting
         try {
           const userId = user.claims.sub;
+          console.log("Processing callback for user:", userId, user.claims.email);
+          
+          // Use upsertUser to ensure user exists in database
+          await upsertUser(user.claims);
+          
+          // Check if user is admin and redirect accordingly
           const dbUser = await storage.getUser(userId);
           const redirectPath = dbUser?.isAdmin ? "/admin" : "/dashboard";
+          console.log("Redirecting authenticated user to:", redirectPath);
           res.redirect(redirectPath);
         } catch (error) {
-          console.error("Error checking admin status:", error);
+          console.error("Error ensuring user exists in database:", error);
+          // Even if database operations fail, redirect to dashboard
           res.redirect("/dashboard");
         }
       });

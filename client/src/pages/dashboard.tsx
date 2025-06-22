@@ -42,10 +42,10 @@ export default function Dashboard() {
     queryKey: ["/api/meetings"],
   });
 
-  const recentMatches = matches.slice(0, 3);
-  const upcomingMeetings = meetings
-    .filter((m: MeetingWithMatch) => m.status === 'scheduled' && new Date(m.scheduledAt) > new Date())
-    .slice(0, 2);
+  const recentMatches = Array.isArray(matches) ? matches.slice(0, 3) : [];
+  const upcomingMeetings = Array.isArray(meetings) 
+    ? meetings.filter((m: MeetingWithMatch) => m.status === 'scheduled' && new Date(m.scheduledAt) > new Date()).slice(0, 2)
+    : [];
 
   const handleScheduleMatch = (match: MatchWithUsers) => {
     setSelectedMatch(match);
@@ -127,7 +127,7 @@ export default function Dashboard() {
   const daysRemaining = getDaysUntilNextMatching();
 
   // Get all matches (they now include meeting info)
-  const allMatches = matches || [];
+  const allMatches = Array.isArray(matches) ? matches : [];
 
   return (
     <div className="min-h-screen bg-slate-50">

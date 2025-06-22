@@ -87,12 +87,11 @@ export class DatabaseStorage implements IStorage {
       const existingUserByEmail = userData.email ? await this.getUserByEmail(userData.email) : null;
       
       if (existingUserByEmail) {
-        // Update existing user found by email using their existing ID
+        // Update existing user found by email, updating the ID to match Replit Auth
         const [user] = await db
           .update(users)
           .set({
             ...userData,
-            id: existingUserByEmail.id, // Preserve existing ID
             updatedAt: new Date(),
           })
           .where(eq(users.email, userData.email!))

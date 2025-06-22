@@ -55,7 +55,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   }, [user]);
 
   useEffect(() => {
-    if (userAvailability && userAvailability.length > 0) {
+    if (Array.isArray(userAvailability) && userAvailability.length > 0) {
       setAvailability(userAvailability);
     }
   }, [userAvailability]);
@@ -174,7 +174,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
 
   const handleAvailabilityToggle = (dayOfWeek: number) => {
     setAvailability(prev => {
-      const existing = prev.find(a => a.dayOfWeek === dayOfWeek);
+      const existing = Array.isArray(prev) ? prev.find(a => a.dayOfWeek === dayOfWeek) : undefined;
       if (existing) {
         return prev.filter(a => a.dayOfWeek !== dayOfWeek);
       } else {
@@ -389,7 +389,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
                     { value: 6, label: "Saturday" },
                     { value: 0, label: "Sunday" }
                   ].map((day) => {
-                    const dayAvailability = availability.find(a => a.dayOfWeek === day.value);
+                    const dayAvailability = Array.isArray(availability) ? availability.find(a => a.dayOfWeek === day.value) : undefined;
                     const isAvailable = !!dayAvailability;
                     
                     return (
