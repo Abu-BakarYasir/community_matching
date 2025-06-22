@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
+import Profile from "@/pages/profile";
 import Landing from "@/pages/landing";
 import { queryClient } from "@/lib/queryClient";
 
@@ -49,6 +50,9 @@ function Router() {
       </Route>
       <Route path="/admin">
         <AdminRoute />
+      </Route>
+      <Route path="/profile">
+        {isAuthenticated ? <Profile /> : <Landing />}
       </Route>
       <Route path="/register">
         <Landing />
