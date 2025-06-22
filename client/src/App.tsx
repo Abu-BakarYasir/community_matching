@@ -81,6 +81,9 @@ function Router() {
       <Route path="/profile">
         {isAuthenticated ? <Profile /> : <Landing />}
       </Route>
+      <Route path="/test-roles">
+        {isAuthenticated ? <TestRoles /> : <Landing />}
+      </Route>
       <Route path="/register">
         <Landing />
       </Route>
