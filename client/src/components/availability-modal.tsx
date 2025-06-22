@@ -96,32 +96,40 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
   });
 
   useEffect(() => {
-    if (safeExistingAvailability.length > 0 && open) {
-      // Convert existing availability to our format
-      const groupedByDay = DAYS.map(day => ({
-        dayOfWeek: day.value,
-        timeSlots: safeExistingAvailability
-          .filter((avail: Availability) => avail.dayOfWeek === day.value)
-          .map((avail: Availability) => ({
-            startTime: avail.startTime || "09:00",
-            endTime: avail.endTime || "17:00",
-            isAvailable: avail.isAvailable ?? true,
-          }))
-      }));
-      
-      setWeeklyAvailability(groupedByDay);
-    } else if (open && !isLoading) {
-      // Initialize with empty availability for each day
-      setWeeklyAvailability(DAYS.map(day => ({
-        dayOfWeek: day.value,
-        timeSlots: []
-      })));
+    if (open) {
+      if (safeExistingAvailability.length > 0) {
+        // Convert existing availability to our format
+        const groupedByDay = DAYS.map(day => ({
+          dayOfWeek: day.value,
+          timeSlots: safeExistingAvailability
+            .filter((avail: Availability) => avail.dayOfWeek === day.value)
+            .map((avail: Availability) => ({
+              startTime: avail.startTime || "09:00",
+              endTime: avail.endTime || "17:00",
+              isAvailable: avail.isAvailable ?? true,
+            }))
+        }));
+        
+        setWeeklyAvailability(groupedByDay);
+      } else if (!isLoading) {
+        // Initialize with empty availability for each day
+        setWeeklyAvailability(DAYS.map(day => ({
+          dayOfWeek: day.value,
+          timeSlots: []
+        })));
+      }
     }
   }, [safeExistingAvailability, open, isLoading]);
 
   const addTimeSlot = (dayOfWeek: number) => {
-    setWeeklyAvailability(prev => 
-      prev.map(day => 
+    setWeeklyAvailability(prev => {
+      // Ensure we have an entry for every day
+      const completeAvailability = DAYS.map(day => {
+        const existing = prev.find(d => d.dayOfWeek === day.value);
+        return existing || { dayOfWeek: day.value, timeSlots: [] };
+      });
+      
+      return completeAvailability.map(day => 
         day.dayOfWeek === dayOfWeek
           ? {
               ...day,
@@ -131,8 +139,8 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
               ]
             }
           : day
-      )
-    );
+      );
+    });
   };
 
   const removeTimeSlot = (dayOfWeek: number, index: number) => {
@@ -264,7 +272,7 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
             <Label className="text-base font-semibold mb-4 block">Weekly Schedule</Label>
             <div className="grid gap-4">
               {DAYS.map(day => {
-                const dayAvailability = weeklyAvailability.find(d => d.dayOfWeek === day.value);
+                const dayAvailability = weeklyAvailability.find(d => d.dayOfWeek === day.value) || { dayOfWeek: day.value, timeSlots: [] };
                 
                 return (
                   <div key={day.value} className="border rounded-lg p-4">
