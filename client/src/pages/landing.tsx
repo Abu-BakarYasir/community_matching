@@ -21,6 +21,51 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-blue-100">
+      {/* Header Navigation */}
+      <header className="w-full py-4 px-4 bg-white/80 backdrop-blur-sm border-b border-white/20">
+        <div className="container mx-auto flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 flex items-center justify-center relative">
+              {/* Network nodes representing the logo */}
+              <div className="relative w-8 h-6">
+                <div className="absolute w-2 h-2 rounded-full" style={{ backgroundColor: '#2563eb', top: '0px', left: '0px' }}></div>
+                <div className="absolute w-2 h-2 rounded-full" style={{ backgroundColor: '#f97316', top: '0px', right: '0px' }}></div>
+                <div className="absolute w-2 h-2 rounded-full" style={{ backgroundColor: '#0891b2', bottom: '0px', left: '6px' }}></div>
+                <div className="absolute w-2 h-2 rounded-full" style={{ backgroundColor: '#2563eb', bottom: '0px', right: '6px' }}></div>
+                <div className="absolute w-2 h-2 rounded-full" style={{ backgroundColor: '#f97316', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}></div>
+                {/* Connection lines */}
+                <svg className="absolute inset-0 w-full h-full" style={{ zIndex: -1 }}>
+                  <line x1="4" y1="4" x2="12" y2="12" stroke="#e2e8f0" strokeWidth="1"/>
+                  <line x1="20" y1="4" x2="12" y2="12" stroke="#e2e8f0" strokeWidth="1"/>
+                  <line x1="12" y1="20" x2="12" y2="12" stroke="#e2e8f0" strokeWidth="1"/>
+                  <line x1="20" y1="20" x2="12" y2="12" stroke="#e2e8f0" strokeWidth="1"/>
+                </svg>
+              </div>
+            </div>
+            <span className="text-xl font-bold" style={{ color: '#1e293b' }}>Matches.Community</span>
+          </div>
+          
+          {/* Navigation */}
+          <div className="flex items-center space-x-4">
+            <Button 
+              className="text-white font-semibold px-6 py-2 hover:opacity-90 transition-opacity"
+              style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }}
+              onClick={() => document.getElementById('signup')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Get Started
+            </Button>
+            <button 
+              className="text-sm font-medium hover:opacity-70 transition-opacity"
+              style={{ color: '#2563eb' }}
+              onClick={() => window.location.href = '/api/login'}
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <div className="container mx-auto px-4 pt-16 pb-24">
         <div className="text-center mb-16">
