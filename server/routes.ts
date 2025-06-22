@@ -32,10 +32,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     app.post('/api/test/switch-user', async (req, res) => {
       try {
         const testUser = req.body;
+        
         // Store test user in session for development testing
         (req.session as any).testUser = testUser;
+        
+        // Create/update the test user in database with proper roles
+        const testUserData = {
+          id: testUser.id,
+          email: testUser.email,
+          firstName: testUser.firstName,
+          lastName: testUser.lastName,
+          profileImageUrl: null,
+        };
+        
+        // Set organization and admin status based on test user type
+        if (testUser.id === 'test-super-admin') {
+          testUserData.isSuperAdmin = true;
+          testUserData.organizationId = null;
+        } else if (testUser.id === 'test-daa-admin') {
+          testUserData.isAdmin = true;
+          testUserData.organizationId = 2; // DAA organization
+        } else if (testUser.id.startsWith('test-daa-user')) {
+          testUserData.organizationId = 2; // DAA organization
+        }
+        
+        await storage.upsertUser(testUserData);
+        
         res.json({ message: 'Test user set', user: testUser });
       } catch (error) {
+        console.error('Error switching user:', error);
         res.status(500).json({ message: 'Failed to switch user' });
       }
     });

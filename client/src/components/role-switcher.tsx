@@ -89,8 +89,14 @@ export function RoleSwitcher() {
         title: "User Switched",
         description: `Now testing as ${user.firstName} ${user.lastName} (${getRoleLabel(user)})`,
       });
-      // Refresh the page to update the UI completely
-      setTimeout(() => window.location.reload(), 500);
+      // Navigate to appropriate page based on role
+      if (user.isSuperAdmin) {
+        setTimeout(() => window.location.href = "/super-admin", 1000);
+      } else if (user.isAdmin) {
+        setTimeout(() => window.location.href = "/admin", 1000);
+      } else {
+        setTimeout(() => window.location.href = "/dashboard", 1000);
+      }
     },
     onError: (error) => {
       toast({
