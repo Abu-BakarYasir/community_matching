@@ -53,6 +53,9 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
     enabled: open,
   });
 
+  // Ensure existingAvailability is always an array
+  const safeExistingAvailability = Array.isArray(existingAvailability) ? existingAvailability : [];
+
   const saveAvailabilityMutation = useMutation({
     mutationFn: async (availabilityData: any) => {
       console.log("Saving availability data:", availabilityData);
@@ -93,11 +96,11 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
   });
 
   useEffect(() => {
-    if (existingAvailability && open) {
+    if (safeExistingAvailability.length > 0 && open) {
       // Convert existing availability to our format
       const groupedByDay = DAYS.map(day => ({
         dayOfWeek: day.value,
-        timeSlots: existingAvailability
+        timeSlots: safeExistingAvailability
           .filter((avail: Availability) => avail.dayOfWeek === day.value)
           .map((avail: Availability) => ({
             startTime: avail.startTime || "09:00",
@@ -114,7 +117,7 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
         timeSlots: []
       })));
     }
-  }, [existingAvailability, open, isLoading]);
+  }, [safeExistingAvailability, open, isLoading]);
 
   const addTimeSlot = (dayOfWeek: number) => {
     setWeeklyAvailability(prev => 
