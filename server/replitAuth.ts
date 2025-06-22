@@ -29,19 +29,20 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true, // Allow creating sessions table
     ttl: sessionTtl,
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET || 'dev-session-secret-key',
+    secret: process.env.SESSION_SECRET || 'dev-session-secret-key-replit-auth',
     store: sessionStore,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Save uninitialized sessions for Replit Auth
     cookie: {
       httpOnly: true,
       secure: false, // Set to false for development
       maxAge: sessionTtl,
+      sameSite: 'lax', // Important for cross-site auth
     },
   });
 }
@@ -151,30 +152,42 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user.expires_at) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
   try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
+    const user = req.user as any;
+
+    // Check if user is authenticated and has claims
+    if (!req.isAuthenticated() || !user || !user.claims) {
+      console.log("Authentication failed: no user or claims");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Check if token is expired
+    const now = Math.floor(Date.now() / 1000);
+    if (user.expires_at && now > user.expires_at) {
+      // Try to refresh the token
+      const refreshToken = user.refresh_token;
+      if (!refreshToken) {
+        console.log("Authentication failed: token expired, no refresh token");
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      try {
+        const config = await getOidcConfig();
+        const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+        updateUserSession(user, tokenResponse);
+        console.log("Token refreshed successfully");
+        return next();
+      } catch (error) {
+        console.log("Token refresh failed:", error);
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+    }
+
+    // User is authenticated and token is valid
+    console.log("User authenticated:", { sub: user.claims.sub, email: user.claims.email });
     return next();
   } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
+    console.error("Authentication error:", error);
+    return res.status(401).json({ message: "Unauthorized" });
   }
 };

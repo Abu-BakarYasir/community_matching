@@ -36,7 +36,11 @@ export async function apiRequest(
   // Check if response has content before trying to parse JSON
   const contentType = res.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    return res.json();
+    const text = await res.text();
+    if (text.trim()) {
+      return JSON.parse(text);
+    }
+    return null;
   }
   
   return res;
@@ -57,7 +61,15 @@ export const getQueryFn: <T>(options: {
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await res.text();
+      if (text.trim()) {
+        return JSON.parse(text);
+      }
+      return null;
+    }
+    return await res.text();
   };
 
 export const queryClient = new QueryClient({
@@ -65,8 +77,8 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: 5000, // 5 seconds
+      refetchOnWindowFocus: true, // Enable refetch on focus for auth state
+      staleTime: 0, // Don't cache auth state
       retry: false,
     },
     mutations: {

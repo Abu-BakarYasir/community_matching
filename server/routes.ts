@@ -31,6 +31,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      
+      if (!user) {
+        console.log("User not found in database:", userId);
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      console.log("Returning user data:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -43,6 +50,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      
+      if (!user) {
+        console.log("User not found in database:", userId);
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      console.log("Returning user data via /me:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);

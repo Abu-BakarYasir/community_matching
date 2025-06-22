@@ -27,40 +27,31 @@ function AdminRoute() {
 }
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Router state:', { isAuthenticated, isLoading, user });
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <Switch>
       <Route path="/dashboard">
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-lg">Loading...</div>
-          </div>
-        ) : isAuthenticated ? (
-          <Dashboard />
-        ) : (
-          <Landing />
-        )}
+        {isAuthenticated ? <Dashboard /> : <Landing />}
       </Route>
       <Route path="/admin">
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-lg">Loading...</div>
-          </div>
-        ) : (
-          <AdminRoute />
-        )}
+        <AdminRoute />
       </Route>
       <Route path="/">
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-lg">Loading...</div>
-          </div>
-        ) : isAuthenticated ? (
-          <Dashboard />
-        ) : (
-          <Landing />
-        )}
+        {isAuthenticated ? <Dashboard /> : <Landing />}
       </Route>
       <Route component={() => <div>404 - Page not found</div>} />
     </Switch>
