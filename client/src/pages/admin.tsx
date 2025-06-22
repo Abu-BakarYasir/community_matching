@@ -11,13 +11,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Calendar, Heart, Settings, Play, RefreshCw, Trash2, Edit } from "lucide-react";
+import { Users, Calendar, Heart, Settings, Play, RefreshCw, Trash2, Edit, Copy, Link } from "lucide-react";
 
 export default function Admin() {
+  const { user } = useAuth();
   const [matchingDay, setMatchingDay] = useState("1");
   const [editingUser, setEditingUser] = useState<any>(null);
   const [userAvailability, setUserAvailability] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [copiedLink, setCopiedLink] = useState(false);
   const { toast } = useToast();
 
   const { data: users = [] } = useQuery({
@@ -309,13 +311,44 @@ export default function Admin() {
     }) + ' MT';
   };
 
+  const getOrganizationSlug = () => {
+    // Get organization slug from user data or settings
+    return user?.organizationName?.toLowerCase() || 'daa';
+  };
+
+  const getInviteLink = () => {
+    const slug = getOrganizationSlug();
+    return `${window.location.origin}/signup/${slug}`;
+  };
+
+  const copyInviteLink = async () => {
+    const inviteLink = getInviteLink();
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopiedLink(true);
+      toast({
+        title: "Link Copied",
+        description: "Community invite link copied to clipboard",
+      });
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch (err) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy link. Please copy manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">Admin Dashboard</h2>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">
+            {user?.organizationName || "Community"} Dashboard
+          </h2>
           <p className="text-slate-600">Manage users, matches, and system settings.</p>
         </div>
 
