@@ -92,7 +92,6 @@ export const notifications = pgTable("notifications", {
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
   createdAt: true,
 }).extend({
   linkedinUrl: z.string().url().optional().or(z.literal(""))
