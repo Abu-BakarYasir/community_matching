@@ -24,149 +24,299 @@ export default function Landing() {
       {/* Hero Section */}
       <div className="container mx-auto px-4 pt-16 pb-24">
         <div className="text-center mb-16">
-          <Badge className="mb-6 bg-orange-100 text-orange-700 hover:bg-orange-200" style={{ backgroundColor: '#fed7aa', color: '#f97316' }}>
-            <Sparkles className="w-4 h-4 mr-2" />
-            Give Your Community Life
-          </Badge>
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight" style={{ color: '#1e293b' }}>
-            Transform Your Community Into a
+            Bring your community
             <span className="text-transparent bg-clip-text bg-gradient-to-r block" style={{ backgroundImage: 'linear-gradient(to right, #2563eb, #0891b2)' }}>
-              Connected Network
+              to life
             </span>
           </h1>
-          <p className="text-xl max-w-3xl mx-auto mb-8 leading-relaxed" style={{ color: '#6b7280' }}>
-            No effort on your end. No headaches. Just magical moments as your community members 
-            naturally connect, expand their networks, and build meaningful relationships.
+          <p className="text-2xl font-medium max-w-4xl mx-auto mb-6 leading-relaxed" style={{ color: '#2563eb' }}>
+            Watch your community transform as members discover each other through magical 1:1 conversations – completely automatically.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 text-sm" style={{ color: '#6b7280' }}>
-            <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 mr-2" style={{ color: '#f97316' }} />
-              Zero setup required
-            </div>
-            <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 mr-2" style={{ color: '#f97316' }} />
-              Automated matching
-            </div>
-            <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 mr-2" style={{ color: '#f97316' }} />
-              Instant community value
-            </div>
-          </div>
+          <p className="text-xl max-w-3xl mx-auto mb-8 leading-relaxed" style={{ color: '#6b7280' }}>
+            No scheduling headaches. No awkward outreach. Just meaningful connections happening naturally while you focus on what matters most.
+          </p>
+          <Button 
+            className="text-white font-semibold px-8 py-4 text-lg hover:opacity-90 transition-opacity"
+            style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }}
+            onClick={() => document.getElementById('signup')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            Spark the magic in your community
+            <Sparkles className="w-5 h-5 ml-2" />
+          </Button>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
-            <CardHeader className="text-center pb-4">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }}>
-                <Heart className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Community Members Feel Connected</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center" style={{ color: '#6b7280' }}>
-                Watch as your community transforms from passive observers to active participants, 
-                forming genuine connections and supporting each other's growth.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
-            <CardHeader className="text-center pb-4">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(to right, #2563eb, #3b82f6)' }}>
-                <Network className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Expand Their Networks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center" style={{ color: '#6b7280' }}>
-                Every member discovers new opportunities, mentors, collaborators, and friends 
-                they never would have met otherwise. Professional growth happens naturally.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
-            <CardHeader className="text-center pb-4">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(to right, #0891b2, #06b6d4)' }}>
-                <Sparkles className="w-8 h-8 text-white" />
-              </div>
-              <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Create Magical Moments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center" style={{ color: '#6b7280' }}>
-                Those serendipitous conversations that lead to life-changing opportunities, 
-                partnerships, and friendships. Your community becomes a catalyst for success.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Value Proposition */}
+        {/* Problem/Solution Section */}
         <div className="rounded-3xl p-8 md:p-12 mb-16 border" style={{ backgroundColor: '#fefefe', borderColor: '#e2e8f0' }}>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-8" style={{ color: '#1e293b' }}>
+              Your community has incredible people. They just don't know each other yet.
+            </h2>
+          </div>
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6" style={{ color: '#1e293b' }}>
-                The Perfect Community Add-On
-              </h2>
-              <div className="space-y-4">
+              <h3 className="text-2xl font-semibold mb-4" style={{ color: '#1e293b' }}>The reality:</h3>
+              <p className="text-lg mb-6" style={{ color: '#6b7280' }}>
+                Your members scroll past each other in channels. They attend group events but leave without making real connections. 
+                Amazing people with shared interests remain strangers.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-2xl font-semibold mb-4" style={{ color: '#2563eb' }}>The magic:</h3>
+              <p className="text-lg" style={{ color: '#6b7280' }}>
+                Matches.Community quietly works behind the scenes, creating serendipitous coffee chats, meaningful collaborations, 
+                and genuine friendships. Your community transforms from a place people visit to a place they belong.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Benefits Section */}
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4" style={{ color: '#1e293b' }}>
+              From quiet community to thriving network
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center mb-4">
+                  <span className="text-2xl mr-3">🌟</span>
+                  <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Members Feel the Magic</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p style={{ color: '#6b7280' }}>
+                  Instead of wondering "who should I talk to?" your members receive delightful calendar invites for coffee chats 
+                  with fascinating people they never would have met otherwise.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center mb-4">
+                  <span className="text-2xl mr-3">🚀</span>
+                  <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Networks Expand Naturally</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p style={{ color: '#6b7280' }}>
+                  Watch introverted members blossom into connectors. See new collaborations emerge. Your community becomes 
+                  the catalyst for career changes, friendships, and breakthrough ideas.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center mb-4">
+                  <span className="text-2xl mr-3">✨</span>
+                  <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Serendipity at Scale</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p style={{ color: '#6b7280' }}>
+                  That magical moment when two perfect strangers realize they're working on complementary projects? 
+                  We create hundreds of these moments, automatically.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
+              <CardHeader className="pb-4">
+                <div className="flex items-center mb-4">
+                  <span className="text-2xl mr-3">💫</span>
+                  <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Zero Effort, Maximum Impact</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p style={{ color: '#6b7280' }}>
+                  Set it up once, then watch your community come alive. No manual matching. No scheduling coordination. 
+                  No awkward introductions. Just pure connection magic.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* How It Works Section */}
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4" style={{ color: '#1e293b' }}>
+              Three steps to a thriving community
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#2563eb' }}>
+                  <span className="text-2xl font-bold text-white">1</span>
+                </div>
+                <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Connect & Configure</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-center" style={{ color: '#6b7280' }}>
+                  Link your existing community platform (Slack, Discord, or custom). Set preferences for matching frequency and conversation prompts.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f97316' }}>
+                  <span className="text-2xl font-bold text-white">2</span>
+                </div>
+                <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Magic Happens</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-center" style={{ color: '#6b7280' }}>
+                  Our intelligent system pairs members based on interests, availability, and connection goals. Calendar invites appear automatically.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#fefefe' }}>
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#0891b2' }}>
+                  <span className="text-2xl font-bold text-white">3</span>
+                </div>
+                <CardTitle className="text-xl" style={{ color: '#1e293b' }}>Watch the Transformation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-center" style={{ color: '#6b7280' }}>
+                  Members start having those "How did we not meet sooner?" conversations. Your community feels electric with new energy and excitement.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Social Proof Section */}
+        <div className="rounded-3xl p-8 md:p-12 mb-16 border" style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0' }}>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4" style={{ color: '#1e293b' }}>
+              Communities come alive with Matches
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="border-0 shadow-lg backdrop-blur-sm" style={{ backgroundColor: '#fefefe' }}>
+              <CardContent className="p-6">
+                <p className="text-lg mb-4" style={{ color: '#6b7280' }}>
+                  "Our Slack went from silent to buzzing with new collaborations. Members are genuinely excited to be part of our community again."
+                </p>
+                <div className="text-sm">
+                  <p className="font-semibold" style={{ color: '#1e293b' }}>Sarah Chen</p>
+                  <p style={{ color: '#6b7280' }}>Head of Community at TechFlow</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg backdrop-blur-sm" style={{ backgroundColor: '#fefefe' }}>
+              <CardContent className="p-6">
+                <p className="text-lg mb-4" style={{ color: '#6b7280' }}>
+                  "We've seen introverted engineers become community champions. The connections are so natural, people think it's magic."
+                </p>
+                <div className="text-sm">
+                  <p className="font-semibold" style={{ color: '#1e293b' }}>Marcus Rodriguez</p>
+                  <p style={{ color: '#6b7280' }}>Developer Relations Lead</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg backdrop-blur-sm" style={{ backgroundColor: '#fefefe' }}>
+              <CardContent className="p-6">
+                <p className="text-lg mb-4" style={{ color: '#6b7280' }}>
+                  "Three months in, and we have members organizing meetups, starting side projects together, and genuinely caring about each other's success."
+                </p>
+                <div className="text-sm">
+                  <p className="font-semibold" style={{ color: '#1e293b' }}>Lisa Park</p>
+                  <p style={{ color: '#6b7280' }}>Community Manager at GrowthCorp</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Transformation Section */}
+        <div className="rounded-3xl p-8 md:p-12 mb-16 border" style={{ backgroundColor: '#fefefe', borderColor: '#e2e8f0' }}>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4" style={{ color: '#1e293b' }}>
+              From dormant to electric
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-12">
+            <div>
+              <h3 className="text-2xl font-semibold mb-6" style={{ color: '#6b7280' }}>Before Matches.Community:</h3>
+              <div className="space-y-3">
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="w-6 h-6 mt-1 flex-shrink-0" style={{ color: '#f97316' }} />
-                  <div>
-                    <h3 className="font-semibold" style={{ color: '#1e293b' }}>Zero Effort Setup</h3>
-                    <p style={{ color: '#6b7280' }}>Integrate in minutes. We handle everything from matching algorithms to meeting scheduling.</p>
-                  </div>
+                  <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#6b7280' }}></div>
+                  <p style={{ color: '#6b7280' }}>Members lurk in channels without engaging</p>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="w-6 h-6 mt-1 flex-shrink-0" style={{ color: '#f97316' }} />
-                  <div>
-                    <h3 className="font-semibold" style={{ color: '#1e293b' }}>No Management Headaches</h3>
-                    <p style={{ color: '#6b7280' }}>Automated monthly matching, email notifications, and calendar integration. Set it and forget it.</p>
-                  </div>
+                  <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#6b7280' }}></div>
+                  <p style={{ color: '#6b7280' }}>Great people remain isolated in their corners</p>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <CheckCircle className="w-6 h-6 mt-1 flex-shrink-0" style={{ color: '#f97316' }} />
-                  <div>
-                    <h3 className="font-semibold" style={{ color: '#1e293b' }}>Instant Community Value</h3>
-                    <p style={{ color: '#6b7280' }}>Members immediately see the benefit of being part of your community. Retention and engagement skyrocket.</p>
-                  </div>
+                  <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#6b7280' }}></div>
+                  <p style={{ color: '#6b7280' }}>Group events feel surface-level and transactional</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#6b7280' }}></div>
+                  <p style={{ color: '#6b7280' }}>You constantly worry about member retention</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: '#6b7280' }}></div>
+                  <p style={{ color: '#6b7280' }}>Energy feels flat despite your best efforts</p>
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-6 rounded-2xl text-center" style={{ background: 'linear-gradient(to bottom right, #dbeafe, #bfdbfe)' }}>
-                <Coffee className="w-8 h-8 mx-auto mb-2" style={{ color: '#2563eb' }} />
-                <p className="font-semibold" style={{ color: '#1e293b' }}>1-on-1 Meetings</p>
-                <p className="text-sm" style={{ color: '#6b7280' }}>Meaningful connections</p>
-              </div>
-              <div className="p-6 rounded-2xl text-center" style={{ background: 'linear-gradient(to bottom right, #fed7aa, #fb923c20)' }}>
-                <MessageCircle className="w-8 h-8 mx-auto mb-2" style={{ color: '#f97316' }} />
-                <p className="font-semibold" style={{ color: '#1e293b' }}>Smart Matching</p>
-                <p className="text-sm" style={{ color: '#6b7280' }}>AI-powered compatibility</p>
-              </div>
-              <div className="p-6 rounded-2xl text-center" style={{ background: 'linear-gradient(to bottom right, #cffafe, #a5f3fc)' }}>
-                <Users className="w-8 h-8 mx-auto mb-2" style={{ color: '#0891b2' }} />
-                <p className="font-semibold" style={{ color: '#1e293b' }}>Community Growth</p>
-                <p className="text-sm" style={{ color: '#6b7280' }}>Stronger together</p>
-              </div>
-              <div className="p-6 rounded-2xl text-center" style={{ background: 'linear-gradient(to bottom right, #fed7aa, #fb923c20)' }}>
-                <Star className="w-8 h-8 mx-auto mb-2" style={{ color: '#f97316' }} />
-                <p className="font-semibold" style={{ color: '#1e293b' }}>Member Delight</p>
-                <p className="text-sm" style={{ color: '#6b7280' }}>Unexpected value</p>
+            <div>
+              <h3 className="text-2xl font-semibold mb-6" style={{ color: '#2563eb' }}>After Matches.Community:</h3>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#f97316' }} />
+                  <p style={{ color: '#1e293b' }}>Spontaneous conversations spark collaborations</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#f97316' }} />
+                  <p style={{ color: '#1e293b' }}>Members actively introduce friends to the community</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#f97316' }} />
+                  <p style={{ color: '#1e293b' }}>Events become reunions for existing connections</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#f97316' }} />
+                  <p style={{ color: '#1e293b' }}>Retention improves as members feel truly connected</p>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#f97316' }} />
+                  <p style={{ color: '#1e293b' }}>Your community buzzes with authentic excitement</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sign Up Form */}
-        <Card className="max-w-2xl mx-auto border-0 shadow-2xl" style={{ backgroundColor: '#fefefe' }}>
+        {/* Final CTA Section */}
+        <Card id="signup" className="max-w-4xl mx-auto border-0 shadow-2xl" style={{ backgroundColor: '#fefefe' }}>
           <CardHeader className="text-center pb-6">
-            <CardTitle className="text-3xl font-bold mb-2" style={{ color: '#1e293b' }}>
-              Ready to Give Your Community Life?
+            <CardTitle className="text-4xl font-bold mb-4" style={{ color: '#1e293b' }}>
+              Ready to watch your community come alive?
             </CardTitle>
-            <CardDescription className="text-lg" style={{ color: '#6b7280' }}>
-              Join forward-thinking community managers who are creating magical networking experiences
+            <CardDescription className="text-xl mb-6" style={{ color: '#6b7280' }}>
+              Join hundreds of community leaders who've discovered the magic of effortless connections.
             </CardDescription>
+            <div className="max-w-3xl mx-auto space-y-4">
+              <p className="text-lg" style={{ color: '#6b7280' }}>
+                Your members are waiting to meet each other. They just need a little help finding their way.
+              </p>
+              <p className="text-lg" style={{ color: '#6b7280' }}>
+                The conversations that will change careers, spark friendships, and create breakthrough collaborations are one click away.
+              </p>
+            </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -223,32 +373,23 @@ export default function Landing() {
                 />
               </div>
 
-              <Button 
-                type="submit"
-                className="w-full text-white font-semibold py-3 text-lg hover:opacity-90 transition-opacity"
-                style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }}
-              >
-                Get Started - Transform Your Community
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-              
-              <p className="text-sm text-center" style={{ color: '#6b7280' }}>
-                No credit card required • Setup in under 10 minutes • Cancel anytime
-              </p>
+              <div className="text-center">
+                <Button 
+                  type="submit"
+                  className="text-white font-semibold px-12 py-4 text-xl hover:opacity-90 transition-opacity"
+                  style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }}
+                >
+                  Start the magic today
+                  <Sparkles className="w-6 h-6 ml-2" />
+                </Button>
+                
+                <p className="text-lg mt-4" style={{ color: '#2563eb' }}>
+                  30-day free trial. See the transformation yourself.
+                </p>
+              </div>
             </form>
           </CardContent>
         </Card>
-
-        {/* Social Proof */}
-        <div className="text-center mt-16">
-          <p className="mb-6" style={{ color: '#6b7280' }}>Trusted by community managers at</p>
-          <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            <div className="px-6 py-3 rounded-lg font-semibold" style={{ backgroundColor: '#f1f5f9', color: '#1e293b' }}>TechCommunity</div>
-            <div className="px-6 py-3 rounded-lg font-semibold" style={{ backgroundColor: '#f1f5f9', color: '#1e293b' }}>DesignersUnited</div>
-            <div className="px-6 py-3 rounded-lg font-semibold" style={{ backgroundColor: '#f1f5f9', color: '#1e293b' }}>StartupNetwork</div>
-            <div className="px-6 py-3 rounded-lg font-semibold" style={{ backgroundColor: '#f1f5f9', color: '#1e293b' }}>DataProfessionals</div>
-          </div>
-        </div>
       </div>
     </div>
   );
