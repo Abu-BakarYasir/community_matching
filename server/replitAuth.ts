@@ -135,9 +135,14 @@ export async function setupAuth(app: Express) {
           // Use upsertUser to ensure user exists in database
           await upsertUser(user.claims);
           
-          // Check if user is admin and redirect accordingly
+          // Check if user is super admin, admin, or regular user and redirect accordingly
           const dbUser = await storage.getUser(userId);
-          const redirectPath = dbUser?.isAdmin ? "/admin" : "/dashboard";
+          let redirectPath = "/dashboard";
+          if (dbUser?.isSuperAdmin) {
+            redirectPath = "/super-admin";
+          } else if (dbUser?.isAdmin) {
+            redirectPath = "/admin";
+          }
           console.log("Redirecting authenticated user to:", redirectPath);
           res.redirect(redirectPath);
         } catch (error) {
