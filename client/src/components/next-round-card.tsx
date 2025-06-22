@@ -26,11 +26,13 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
           return response.json();
         }
         // Fallback if endpoint doesn't exist
-        return { monthlyMatchingDay: 1 };
+        return { matchingDay: 1 };
       } catch {
-        return { monthlyMatchingDay: 1 };
+        return { matchingDay: 1 };
       }
-    }
+    },
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always fetch fresh data
   });
 
   // Calculate next matching date based on admin settings
@@ -76,7 +78,7 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
     const interval = setInterval(updateCountdown, 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [adminSettings?.matchingDay]); // Re-run when matching day changes
 
   const nextMatchingDate = getNextMatchingDate();
   const formatDate = (date: Date) => {
@@ -182,7 +184,7 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
           </span>
         </div>
         <Progress 
-          value={Math.max(0, 100 - ((timeRemaining.days * 24 + timeRemaining.hours) / (31 * 24)) * 100)} 
+          value={Math.max(0, 100 - ((timeRemaining.days * 24 + timeRemaining.hours) / (30 * 24)) * 100)} 
           className="h-2"
         />
       </div>
@@ -191,7 +193,7 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
       <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
         <Users className="h-4 w-4" />
         <span>
-          Matches are created on the {adminSettings?.matchingDay || "1st"} of each month
+          Matches are created on the {adminSettings?.matchingDay || 1}{getOrdinalSuffix(adminSettings?.matchingDay || 1)} of each month
         </span>
       </div>
     </div>
