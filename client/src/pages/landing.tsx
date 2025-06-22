@@ -11,7 +11,6 @@ export default function Landing() {
   const [email, setEmail] = useState("");
   const [communityName, setCommunityName] = useState("");
   const [communitySize, setCommunitySize] = useState("");
-  const [challenges, setChallenges] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -400,20 +399,6 @@ export default function Landing() {
                   value={communitySize}
                   onChange={(e) => setCommunitySize(e.target.value)}
                   placeholder="e.g., 50-200 members"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="challenges" className="text-sm font-medium" style={{ color: '#1e293b' }}>
-                  What's your biggest community engagement challenge?
-                </Label>
-                <Textarea
-                  id="challenges"
-                  value={challenges}
-                  onChange={(e) => setChallenges(e.target.value)}
-                  placeholder="Tell us what you'd love to solve..."
-                  rows={3}
                   className="mt-1"
                 />
               </div>
