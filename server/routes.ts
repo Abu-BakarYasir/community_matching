@@ -51,9 +51,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Still no user found after creation attempt:", userId);
         return res.status(500).json({ message: "Failed to create or retrieve user" });
       }
+
+      // Get organization name for header display
+      let organizationName = "Community";
+      if (user.organizationId) {
+        const organization = await storage.getOrganization(user.organizationId);
+        if (organization) {
+          organizationName = organization.name;
+        }
+      }
       
       console.log("Returning user data:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
-      res.json(user);
+      res.json({
+        ...user,
+        organizationName
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -84,9 +96,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Still no user found after creation attempt:", userId);
         return res.status(500).json({ message: "Failed to create or retrieve user" });
       }
+
+      // Get organization name for header display
+      let organizationName = "Community";
+      if (user.organizationId) {
+        const organization = await storage.getOrganization(user.organizationId);
+        if (organization) {
+          organizationName = organization.name;
+        }
+      }
       
       console.log("Returning user data via /me:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
-      res.json(user);
+      res.json({
+        ...user,
+        organizationName
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -255,7 +279,29 @@ app.get('/api/settings/public', async (req, res) => {
 
   app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
     try {
-      res.json(adminSettings);
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.organizationId) {
+        return res.json(adminSettings); // Fallback to default settings
+      }
+
+      const organization = await storage.getOrganization(user.organizationId);
+      if (!organization) {
+        return res.json(adminSettings); // Fallback to default settings
+      }
+
+      // Return organization settings
+      const settings = {
+        appName: organization.settings?.appName || organization.name,
+        nextMatchingDate: "2025-07-01",
+        matchingDay: organization.settings?.matchingDay || 1,
+        monthlyGoals: organization.settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+        googleMeetLink: organization.settings?.googleMeetLink || "https://meet.google.com/new",
+        preventMeetingOverlap: organization.settings?.preventMeetingOverlap || true,
+        weights: organization.settings?.weights || { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
+      };
+      res.json(settings);
     } catch (error) {
       console.error("Error fetching admin settings:", error);
       res.status(500).json({ message: "Failed to fetch admin settings" });
@@ -317,8 +363,8 @@ app.get('/api/settings/public', async (req, res) => {
   // Super Admin API endpoints
   app.get('/api/super-admin/organizations', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
     try {
-      // For now, return empty array as we'll add organization storage later
-      res.json([]);
+      const organizations = await storage.getAllOrganizations();
+      res.json(organizations);
     } catch (error) {
       console.error("Error fetching organizations:", error);
       res.status(500).json({ message: "Failed to fetch organizations" });
@@ -338,11 +384,14 @@ app.get('/api/settings/public', async (req, res) => {
   app.get('/api/super-admin/stats', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
+      const organizations = await storage.getAllOrganizations();
       const stats = {
         totalUsers: users.length,
         activeUsers: users.filter(u => u.isActive).length,
         adminUsers: users.filter(u => u.isAdmin).length,
         superAdminUsers: users.filter(u => u.isSuperAdmin).length,
+        totalOrganizations: organizations.length,
+        activeOrganizations: organizations.filter(o => o.isActive).length,
       };
       res.json(stats);
     } catch (error) {

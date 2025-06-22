@@ -60,17 +60,57 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  // Extract email to generate default names if needed
-  const email = claims["email"] || "";
-  const emailPrefix = email.split('@')[0] || 'User';
+  console.log("Upserting user:", claims["email"], claims);
   
-  await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"] || emailPrefix,
-    lastName: claims["last_name"] || "Member",
-    profileImageUrl: claims["profile_image_url"],
-  });
+  try {
+    const email = claims["email"] || "";
+    const existingUser = await storage.getUserByEmail(email);
+    
+    if (existingUser) {
+      console.log("User exists, updating:", existingUser.id);
+      await storage.updateUser(existingUser.id, {
+        email: claims["email"],
+        firstName: claims["first_name"] || existingUser.firstName,
+        lastName: claims["last_name"] || existingUser.lastName,
+        profileImageUrl: claims["profile_image_url"] || existingUser.profileImageUrl,
+      });
+    } else {
+      console.log("Creating new user for:", email);
+      
+      // First create the user
+      const newUser = await storage.createUser({
+        id: claims["sub"],
+        email: claims["email"],
+        firstName: claims["first_name"] || email.split('@')[0],
+        lastName: claims["last_name"] || "Member",
+        profileImageUrl: claims["profile_image_url"],
+        isActive: true,
+        isAdmin: true, // New users are admins of their own organization
+      });
+
+      // Then create an organization for this user
+      const organizationName = `${newUser.firstName}'s Community`;
+      const organization = await storage.createOrganization({
+        name: organizationName,
+        adminId: newUser.id,
+        domain: email.split('@')[1], // Use email domain
+        settings: {
+          appName: organizationName,
+          matchingDay: 1,
+          monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+          googleMeetLink: "https://meet.google.com/new",
+          preventMeetingOverlap: true,
+          weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
+        }
+      });
+
+      // Update user with organization ID
+      await storage.updateUser(newUser.id, { organizationId: organization.id });
+    }
+  } catch (error) {
+    console.error("Error upserting user:", error);
+    throw error;
+  }
 }
 
 export async function setupAuth(app: Express) {

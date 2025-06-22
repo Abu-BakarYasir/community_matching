@@ -73,6 +73,13 @@ export interface IStorage {
   
   // Meeting operations
   deleteMeeting?(id: number): Promise<boolean>;
+
+  // Organization operations
+  getOrganization(id: number): Promise<Organization | undefined>;
+  getOrganizationByAdminId(adminId: string): Promise<Organization | undefined>;
+  createOrganization(organization: InsertOrganization): Promise<Organization>;
+  updateOrganization(id: number, updates: Partial<InsertOrganization>): Promise<Organization | undefined>;
+  getAllOrganizations(): Promise<Organization[]>;
 }
 
 export class DatabaseStorage implements IStorage {
