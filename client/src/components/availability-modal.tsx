@@ -289,11 +289,11 @@ export function AvailabilityModal({ open, onOpenChange }: AvailabilityModalProps
                       </Button>
                     </div>
                     
-                    {dayAvailability?.timeSlots.length === 0 ? (
+                    {(!dayAvailability || dayAvailability.timeSlots.length === 0) ? (
                       <p className="text-slate-500 text-sm italic">No availability set</p>
                     ) : (
                       <div className="space-y-2">
-                        {dayAvailability?.timeSlots.map((slot, index) => (
+                        {dayAvailability.timeSlots.map((slot, index) => (
                           <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                             <div className="flex items-center gap-2">
                               <Select
