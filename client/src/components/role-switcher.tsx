@@ -67,11 +67,19 @@ export function RoleSwitcher() {
 
   const switchUserMutation = useMutation({
     mutationFn: async (user: TestUser) => {
-      const response = await apiRequest(`/api/test/switch-user`, {
+      const response = await fetch(`/api/test/switch-user`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(user)
       });
-      return response;
+      
+      if (!response.ok) {
+        throw new Error(`Failed to switch user: ${response.statusText}`);
+      }
+      
+      return response.json();
     },
     onSuccess: (data, user) => {
       setCurrentUser(user);
@@ -95,7 +103,18 @@ export function RoleSwitcher() {
 
   const clearTestMode = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/test/clear-user`, { method: "POST" });
+      const response = await fetch(`/api/test/clear-user`, { 
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to clear test mode: ${response.statusText}`);
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       setCurrentUser(null);
