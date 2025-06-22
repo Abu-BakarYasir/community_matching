@@ -57,11 +57,15 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  // Extract email to generate default names if needed
+  const email = claims["email"] || "";
+  const emailPrefix = email.split('@')[0] || 'User';
+  
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
+    firstName: claims["first_name"] || emailPrefix,
+    lastName: claims["last_name"] || "Member",
     profileImageUrl: claims["profile_image_url"],
   });
 }
