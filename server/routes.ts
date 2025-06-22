@@ -235,14 +235,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // In-memory settings storage for demo (in production, this would be in database)
+  let adminSettings = {
+    appName: "DAA Monthly Matching",
+    nextMatchingDate: "2025-07-01",
+    matchingDay: 1,
+    monthlyFocusGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+    googleMeetLink: "https://meet.google.com/wnf-cjab-twp",
+    preventMeetingOverlap: true,
+    weights: {
+      industry: 35,
+      company: 20,
+      goals: 30,
+      jobTitle: 15
+    }
+  };
+
   app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
     try {
-      res.json({
-        appName: "DAA Monthly Matching",
-        nextMatchingDate: "2025-07-01",
-        matchingDay: 1,
-        monthlyFocusGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]
-      });
+      res.json(adminSettings);
     } catch (error) {
       console.error("Error fetching admin settings:", error);
       res.status(500).json({ message: "Failed to fetch admin settings" });
@@ -277,6 +288,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin meetings:", error);
       res.status(500).json({ message: "Failed to fetch meetings" });
+    }
+  });
+
+  // Admin settings update endpoint
+  app.patch('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const updates = req.body;
+      console.log("Admin settings update request:", updates);
+      
+      // Update the in-memory settings
+      adminSettings = { ...adminSettings, ...updates };
+      
+      console.log("Updated admin settings:", adminSettings);
+      
+      res.json({ 
+        message: "Settings updated successfully",
+        settings: adminSettings
+      });
+    } catch (error) {
+      console.error("Error updating admin settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
+    }
+  });
+
+  // Admin trigger matching endpoint
+  app.post('/api/admin/trigger-matching', isAuthenticated, async (req: any, res) => {
+    try {
+      // For now, just simulate matching process
+      console.log("Manual matching triggered by admin");
+      
+      res.json({ 
+        message: "Matching process started successfully",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error triggering matching:", error);
+      res.status(500).json({ message: "Failed to trigger matching" });
     }
   });
 

@@ -67,14 +67,17 @@ export default function Admin() {
 
   const updateSettings = useMutation({
     mutationFn: (data: any) => apiRequest("PATCH", "/api/admin/settings", data),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log("Settings update response:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/public"] });
       toast({
         title: "Settings Updated",
         description: "Matching settings have been updated successfully.",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Settings update error:", error);
       toast({
         title: "Update Failed",
         description: "Failed to update settings. Please try again.",
@@ -815,12 +818,20 @@ export default function Admin() {
                     <p className="text-sm text-slate-600 mt-1">Options users can select for their monthly networking focus</p>
                   </div>
 
-                  <Button 
-                    onClick={handleUpdateMatchingDay}
-                    disabled={updateSettings.isPending}
-                  >
-                    {updateSettings.isPending ? "Updating..." : "Update Settings"}
-                  </Button>
+                  <div className="flex items-center space-x-3">
+                    <Button 
+                      onClick={handleUpdateMatchingDay}
+                      disabled={updateSettings.isPending}
+                    >
+                      {updateSettings.isPending ? "Updating..." : "Save Matching Day"}
+                    </Button>
+                    {updateSettings.isPending && (
+                      <div className="text-sm text-blue-600">Saving settings...</div>
+                    )}
+                  </div>
+                  <p className="text-sm text-green-600 mt-2">
+                    Current matching day: {settings?.matchingDay || matchingDay}
+                  </p>
                 </CardContent>
               </Card>
 
