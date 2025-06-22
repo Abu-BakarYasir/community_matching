@@ -21,7 +21,13 @@ export function Header() {
     mutationFn: () => apiRequest("POST", "/api/auth/logout"),
     onSuccess: () => {
       queryClient.clear();
-      setLocation("/register");
+      window.location.href = "/";
+    },
+    onError: (error) => {
+      console.error("Logout error:", error);
+      // Clear cache and redirect anyway
+      queryClient.clear();
+      window.location.href = "/";
     },
   });
 

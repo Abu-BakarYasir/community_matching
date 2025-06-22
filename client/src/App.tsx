@@ -50,6 +50,9 @@ function Router() {
       <Route path="/admin">
         <AdminRoute />
       </Route>
+      <Route path="/register">
+        <Landing />
+      </Route>
       <Route path="/">
         {isAuthenticated ? <Dashboard /> : <Landing />}
       </Route>

@@ -159,6 +159,13 @@ export async function setupAuth(app: Express) {
       );
     });
   });
+
+  // Add POST logout endpoint for API calls
+  app.post("/api/auth/logout", (req, res) => {
+    req.logout(() => {
+      res.json({ success: true, message: "Logged out successfully" });
+    });
+  });
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
