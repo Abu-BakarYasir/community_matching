@@ -9,6 +9,12 @@ async function throwIfResNotOk(res: Response) {
 
 // Replit Auth uses session-based authentication, no tokens needed
 
+// Export setAuthToken for compatibility (no-op for session-based auth)
+export function setAuthToken(token: string | null) {
+  // No-op for session-based authentication
+  console.log('setAuthToken called but using session-based auth');
+}
+
 export async function apiRequest(
   method: string,
   url: string,
