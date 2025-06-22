@@ -101,6 +101,25 @@ The application uses PostgreSQL with Drizzle ORM and five main entities:
 
 Preferred communication style: Simple, everyday language.
 
+## Brand Guidelines - Matches.Community
+
+### Primary Colors:
+- **Community Blue**: #2563eb - Main brand color for trust and professionalism (60% of design)
+- **Connection Orange**: #f97316 - Energy/action color for warmth and connection (20% of design)
+
+### Supporting Colors:
+- **Deep Navy**: #1e293b - Connecting lines, secondary text, professional accents (15% of design)
+- **Soft Gray**: #6b7280 - Supporting text, subtle backgrounds, secondary information
+- **Warm White**: #fefefe - Clean backgrounds, card surfaces
+- **Teal Accent**: #0891b2 - Additional variety in network visualizations (5% of design)
+
+### Usage Guidelines:
+- Blue for primary UI elements, headers, main text
+- Orange for CTAs, highlights, and connection moments
+- Navy/Gray for structure and text
+- Teal for accents and visual interest (use sparingly)
+- The blue + orange combination provides both trust and warmth - perfect for a professional but approachable community platform
+
 ## Recent Changes
 
 ### June 22, 2025 - Replit Auth Integration & Availability System Fixed
