@@ -221,35 +221,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Settings endpoints
-  app.get('/api/settings/public', async (req, res) => {
-    try {
-      res.json({
-        appName: "DAA Monthly Matching",
-        nextMatchingDate: "2025-07-01",
-        matchingDay: 1
-      });
-    } catch (error) {
-      console.error("Error fetching public settings:", error);
-      res.status(500).json({ message: "Failed to fetch settings" });
-    }
-  });
+// In-memory settings storage for demo (in production, this would be in database)
+let adminSettings = {
+  appName: "DAA Monthly Matching",
+  nextMatchingDate: "2025-07-01",
+  matchingDay: 1,
+  monthlyFocusGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+  googleMeetLink: "https://meet.google.com/wnf-cjab-twp",
+  preventMeetingOverlap: true,
+  weights: {
+    industry: 35,
+    company: 20,
+    goals: 30,
+    jobTitle: 15
+  }
+};
 
-  // In-memory settings storage for demo (in production, this would be in database)
-  let adminSettings = {
-    appName: "DAA Monthly Matching",
-    nextMatchingDate: "2025-07-01",
-    matchingDay: 1,
-    monthlyFocusGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-    googleMeetLink: "https://meet.google.com/wnf-cjab-twp",
-    preventMeetingOverlap: true,
-    weights: {
-      industry: 35,
-      company: 20,
-      goals: 30,
-      jobTitle: 15
-    }
-  };
+// Settings endpoints
+app.get('/api/settings/public', async (req, res) => {
+  try {
+    console.log("Public settings request - current adminSettings:", adminSettings);
+    res.json({
+      appName: adminSettings.appName,
+      nextMatchingDate: adminSettings.nextMatchingDate,
+      matchingDay: adminSettings.matchingDay
+    });
+  } catch (error) {
+    console.error("Error fetching public settings:", error);
+    res.status(500).json({ message: "Failed to fetch settings" });
+  }
+});
 
   app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
     try {

@@ -36,7 +36,7 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
   // Calculate next matching date based on admin settings
   const getNextMatchingDate = () => {
     const now = new Date();
-    const matchingDay = adminSettings?.monthlyMatchingDay || 1; // Default to 1st if not set
+    const matchingDay = adminSettings?.matchingDay || 1; // Default to 1st if not set
     
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -86,6 +86,16 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  const getOrdinalSuffix = (day: number) => {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
   };
 
   const isOptedIn = user?.isActive;
@@ -181,7 +191,7 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
       <div className="flex items-center justify-center gap-2 text-sm text-slate-600">
         <Users className="h-4 w-4" />
         <span>
-          Matches are created on the {adminSettings?.monthlyMatchingDay || "1st"} of each month
+          Matches are created on the {adminSettings?.matchingDay || "1st"} of each month
         </span>
       </div>
     </div>
