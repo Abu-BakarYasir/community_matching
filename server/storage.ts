@@ -11,22 +11,23 @@ import { db } from "./db";
 import { eq, and, or } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations
-  getUser(id: number): Promise<User | undefined>;
+  // User operations (mandatory for Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
-  deleteUser(id: number): Promise<boolean>;
+  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
   getAllUsers(): Promise<User[]>;
 
   // Profile questions operations
-  getProfileQuestions(userId: number): Promise<ProfileQuestions | undefined>;
+  getProfileQuestions(userId: string): Promise<ProfileQuestions | undefined>;
   createProfileQuestions(questions: InsertProfileQuestions): Promise<ProfileQuestions>;
-  updateProfileQuestions(userId: number, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined>;
+  updateProfileQuestions(userId: string, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined>;
 
   // Match operations
   getMatch(id: number): Promise<Match | undefined>;
-  getMatchesByUser(userId: number): Promise<MatchWithUsers[]>;
+  getMatchesByUser(userId: string): Promise<MatchWithUsers[]>;
   getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]>;
   getAllMatches(): Promise<MatchWithUsers[]>;
   createMatch(match: InsertMatch): Promise<Match>;
@@ -35,25 +36,25 @@ export interface IStorage {
 
   // Meeting operations
   getMeeting(id: number): Promise<Meeting | undefined>;
-  getMeetingsByUser(userId: number): Promise<MeetingWithMatch[]>;
+  getMeetingsByUser(userId: string): Promise<MeetingWithMatch[]>;
   getAllMeetings(): Promise<Meeting[]>;
   createMeeting(meeting: InsertMeeting): Promise<Meeting>;
   updateMeeting(id: number, updates: Partial<InsertMeeting>): Promise<Meeting | undefined>;
 
   // Availability operations
-  getAvailability(userId: number): Promise<Availability[]>;
+  getAvailability(userId: string): Promise<Availability[]>;
   createAvailability(availability: InsertAvailability): Promise<Availability>;
   updateAvailability(id: number, updates: Partial<InsertAvailability>): Promise<Availability | undefined>;
   deleteAvailability(id: number): Promise<boolean>;
 
   // Notification operations
-  getNotifications(userId: number): Promise<Notification[]>;
+  getNotifications(userId: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: number): Promise<boolean>;
   deleteNotification?(id: number): Promise<boolean>;
   
   // Profile operations
-  deleteProfileQuestions?(userId: number): Promise<boolean>;
+  deleteProfileQuestions?(userId: string): Promise<boolean>;
   
   // Meeting operations
   deleteMeeting?(id: number): Promise<boolean>;
