@@ -5,6 +5,7 @@ import {
   meetings,
   availability,
   notifications,
+  organizations,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -20,6 +21,8 @@ import {
   type InsertAvailability,
   type Notification,
   type InsertNotification,
+  type Organization,
+  type InsertOrganization,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc } from "drizzle-orm";

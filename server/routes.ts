@@ -281,15 +281,18 @@ app.get('/api/settings/public', async (req, res) => {
   app.get('/api/organizations/:slug', async (req: any, res) => {
     try {
       const { slug } = req.params;
+      console.log("Looking for organization with slug:", slug);
       
       const organizations = await storage.getAllOrganizations();
+      console.log("Available organizations:", organizations.map(o => ({ id: o.id, name: o.name, slug: o.slug })));
+      
       const organization = organizations.find(org => 
         (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
         org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase()
       );
       
       if (!organization) {
-        return res.status(404).json({ message: "Organization not found" });
+        return res.status(404).json({ message: "Organization not found", availableOrgs: organizations.map(o => o.slug || o.name.toLowerCase().replace(/[^a-z0-9]/g, '')) });
       }
       
       // Return public organization info (no sensitive data)
