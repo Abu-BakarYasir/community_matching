@@ -17,6 +17,7 @@ export default function Admin() {
   const [matchingDay, setMatchingDay] = useState("1");
   const [editingUser, setEditingUser] = useState<any>(null);
   const [userAvailability, setUserAvailability] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   const { data: users = [] } = useQuery({
@@ -34,6 +35,17 @@ export default function Admin() {
   const { data: settings } = useQuery({
     queryKey: ["/api/admin/settings"],
   });
+
+  // Ensure all data is arrays
+  const safeUsers = Array.isArray(users) ? users : [];
+  const safeMatches = Array.isArray(matches) ? matches : [];
+  const safeMeetings = Array.isArray(meetings) ? meetings : [];
+
+  const filteredUsers = safeUsers.filter((user: any) => 
+    user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const triggerMatching = useMutation({
     mutationFn: () => apiRequest("POST", "/api/admin/trigger-matching"),
