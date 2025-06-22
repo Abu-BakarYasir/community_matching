@@ -148,6 +148,12 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    // Store organization context in session if provided
+    const orgSlug = req.query.org as string;
+    if (orgSlug) {
+      req.session.orgSlug = orgSlug;
+    }
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -167,28 +173,66 @@ export async function setupAuth(app: Express) {
           return res.redirect("/api/login");
         }
         
-        // Ensure user exists in database before redirecting
         try {
           const userId = user.claims.sub;
-          console.log("Processing callback for user:", userId, user.claims.email);
-          
-          // Use upsertUser to ensure user exists in database
-          await upsertUser(user.claims);
-          
-          // Check if user is super admin, admin, or regular user and redirect accordingly
-          const dbUser = await storage.getUser(userId);
-          let redirectPath = "/dashboard";
-          if (dbUser?.isSuperAdmin) {
-            redirectPath = "/super-admin";
-          } else if (dbUser?.isAdmin) {
-            redirectPath = "/admin";
+          const email = user.claims.email;
+          const orgSlug = req.session.orgSlug;
+          console.log("Processing callback for user:", userId, email, "orgSlug:", orgSlug);
+
+          // If signing up through organization link, handle as regular user
+          if (orgSlug) {
+            // Find organization by slug
+            const organizations = await storage.getAllOrganizations();
+            const organization = organizations.find(org => 
+              (org.slug && org.slug.toLowerCase() === orgSlug.toLowerCase()) ||
+              org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === orgSlug.toLowerCase()
+            );
+            
+            if (organization) {
+              // Create/update user as regular community member (not admin)
+              const existingUser = await storage.getUserByEmail(email);
+              
+              if (!existingUser) {
+                await storage.createUser({
+                  id: userId,
+                  email: email,
+                  firstName: user.claims.first_name || email.split('@')[0],
+                  lastName: user.claims.last_name || "Member",
+                  profileImageUrl: user.claims.profile_image_url,
+                  isActive: true,
+                  isAdmin: false, // Regular community members are not admins
+                  organizationId: organization.id
+                });
+              } else {
+                // Update existing user to belong to this organization
+                await storage.updateUser(existingUser.id, { 
+                  organizationId: organization.id 
+                });
+              }
+              
+              // Clear organization context
+              delete req.session.orgSlug;
+              return res.redirect("/dashboard");
+            }
           }
-          console.log("Redirecting authenticated user to:", redirectPath);
-          res.redirect(redirectPath);
+
+          // Regular admin/super admin login flow
+          await upsertUser(user.claims);
+          const dbUser = await storage.getUser(userId);
+          
+          if (dbUser?.isSuperAdmin) {
+            console.log("Redirecting super admin user to super admin panel");
+            return res.redirect("/super-admin");
+          } else if (dbUser?.isAdmin) {
+            console.log("Redirecting admin user to admin panel");
+            return res.redirect("/admin");
+          } else {
+            console.log("Redirecting regular user to dashboard");
+            return res.redirect("/dashboard");
+          }
         } catch (error) {
-          console.error("Error ensuring user exists in database:", error);
-          // Even if database operations fail, redirect to dashboard
-          res.redirect("/dashboard");
+          console.error("Error in callback processing:", error);
+          return res.redirect("/dashboard");
         }
       });
     })(req, res, next);

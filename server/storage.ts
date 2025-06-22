@@ -381,6 +381,56 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Organization operations
+  async getOrganization(id: number): Promise<Organization | undefined> {
+    try {
+      const [organization] = await db.select().from(organizations).where(eq(organizations.id, id));
+      return organization;
+    } catch (error) {
+      console.error("Error fetching organization:", error);
+      return undefined;
+    }
+  }
+
+  async getOrganizationByAdminId(adminId: string): Promise<Organization | undefined> {
+    try {
+      const [organization] = await db.select().from(organizations).where(eq(organizations.adminId, adminId));
+      return organization;
+    } catch (error) {
+      console.error("Error fetching organization by admin ID:", error);
+      return undefined;
+    }
+  }
+
+  async createOrganization(insertOrganization: InsertOrganization): Promise<Organization> {
+    try {
+      const [organization] = await db.insert(organizations).values(insertOrganization).returning();
+      return organization;
+    } catch (error) {
+      console.error("Error creating organization:", error);
+      throw error;
+    }
+  }
+
+  async updateOrganization(id: number, updates: Partial<InsertOrganization>): Promise<Organization | undefined> {
+    try {
+      const [organization] = await db.update(organizations).set({ ...updates, updatedAt: new Date() }).where(eq(organizations.id, id)).returning();
+      return organization;
+    } catch (error) {
+      console.error("Error updating organization:", error);
+      return undefined;
+    }
+  }
+
+  async getAllOrganizations(): Promise<Organization[]> {
+    try {
+      return await db.select().from(organizations).orderBy(organizations.createdAt);
+    } catch (error) {
+      console.error("Error fetching all organizations:", error);
+      return [];
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

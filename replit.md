@@ -122,7 +122,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### June 22, 2025 - Multi-Tenant SaaS Architecture & Super Admin System  
+### June 22, 2025 - Multi-Tenant SaaS Architecture & Community Signup System
 - Restructured application for multi-tenant SaaS architecture
 - Added organizations table to support multiple communities
 - Created super admin role separate from community admin role
@@ -136,6 +136,12 @@ Preferred communication style: Simple, everyday language.
 - Added proper super admin authentication protection to all super admin API endpoints
 - Updated authentication endpoints to return isSuperAdmin status for proper access control
 - Made Settings tab the first tab and default open in admin dashboard (most useful for community managers)
+- Created unique signup pages for each organization (/signup/[orgslug])
+- Implemented organization-specific user signup with Replit Auth integration
+- Added unique signup link display in community admin dashboard with copy functionality
+- Community members sign up as regular users (non-admin) and are scoped to their organization
+- Admin users can only see/manage users, matches, and meetings within their organization
+- Created DAA organization and assigned averyjs@gmail.com as community manager
 
 ### June 22, 2025 - Replit Auth Integration & Availability System Fixed
 - Implemented complete Replit Auth integration with session-based authentication

@@ -8,6 +8,7 @@ import Admin from "@/pages/admin";
 import SuperAdmin from "@/pages/super-admin";
 import Profile from "@/pages/profile";
 import Landing from "@/pages/landing";
+import Signup from "@/pages/signup";
 import { queryClient } from "@/lib/queryClient";
 
 function AdminRoute() {
@@ -64,6 +65,9 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes - always accessible */}
+      <Route path="/signup/:orgSlug" component={Signup} />
+      
       <Route path="/dashboard">
         {isAuthenticated ? <Dashboard /> : <Landing />}
       </Route>

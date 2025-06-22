@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { requireSuperAdmin } from "./auth";
+import { requireSuperAdmin, requireAdmin } from "./auth";
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema, insertAvailabilitySchema } from "@shared/schema";
 import multer from 'multer';
 import { schedulerService } from "./services/scheduler";
@@ -308,31 +308,67 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  // Admin API endpoints
-  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  // Admin API endpoints - only show users from admin's organization
+  app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      const users = await storage.getAllUsers();
-      res.json(users);
+      const userId = req.user.claims.sub;
+      const admin = await storage.getUser(userId);
+      
+      if (!admin || !admin.organizationId) {
+        return res.json([]);
+      }
+      
+      // Get all users from the admin's organization
+      const allUsers = await storage.getAllUsers();
+      const organizationUsers = allUsers.filter(user => user.organizationId === admin.organizationId);
+      
+      res.json(organizationUsers);
     } catch (error) {
       console.error("Error fetching admin users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
 
-  app.get('/api/admin/matches', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/matches', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      const matches = await storage.getAllMatches();
-      res.json(matches);
+      const userId = req.user.claims.sub;
+      const admin = await storage.getUser(userId);
+      
+      if (!admin || !admin.organizationId) {
+        return res.json([]);
+      }
+      
+      // Get matches only for users in the admin's organization
+      const allMatches = await storage.getAllMatches();
+      const organizationMatches = allMatches.filter(match => 
+        match.user1.organizationId === admin.organizationId && 
+        match.user2.organizationId === admin.organizationId
+      );
+      
+      res.json(organizationMatches);
     } catch (error) {
       console.error("Error fetching admin matches:", error);
       res.status(500).json({ message: "Failed to fetch matches" });
     }
   });
 
-  app.get('/api/admin/meetings', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/meetings', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      const meetings = await storage.getAllMeetings();
-      res.json(meetings);
+      const userId = req.user.claims.sub;
+      const admin = await storage.getUser(userId);
+      
+      if (!admin || !admin.organizationId) {
+        return res.json([]);
+      }
+      
+      // Get meetings only for users in the admin's organization
+      const allMeetings = await storage.getAllMeetings();
+      const organizationMeetings = allMeetings.filter(meeting => 
+        meeting.match?.user1?.organizationId === admin.organizationId && 
+        meeting.match?.user2?.organizationId === admin.organizationId
+      );
+      
+      res.json(organizationMeetings);
     } catch (error) {
       console.error("Error fetching admin meetings:", error);
       res.status(500).json({ message: "Failed to fetch meetings" });
