@@ -34,13 +34,13 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || 'dev-session-secret-key',
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: false, // Set to false for development
       maxAge: sessionTtl,
     },
   });
@@ -114,9 +114,27 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
+    passport.authenticate(`replitauth:${req.hostname}`, async (err, user) => {
+      if (err || !user) {
+        return res.redirect("/api/login");
+      }
+      
+      req.logIn(user, async (loginErr) => {
+        if (loginErr) {
+          return res.redirect("/api/login");
+        }
+        
+        // Check if user is admin and redirect accordingly
+        try {
+          const userId = user.claims.sub;
+          const dbUser = await storage.getUser(userId);
+          const redirectPath = dbUser?.isAdmin ? "/admin" : "/dashboard";
+          res.redirect(redirectPath);
+        } catch (error) {
+          console.error("Error checking admin status:", error);
+          res.redirect("/dashboard");
+        }
+      });
     })(req, res, next);
   });
 

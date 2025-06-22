@@ -31,14 +31,37 @@ function Router() {
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/admin" component={AdminRoute} />
-        </>
-      )}
+      <Route path="/dashboard">
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-lg">Loading...</div>
+          </div>
+        ) : isAuthenticated ? (
+          <Dashboard />
+        ) : (
+          <Landing />
+        )}
+      </Route>
+      <Route path="/admin">
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-lg">Loading...</div>
+          </div>
+        ) : (
+          <AdminRoute />
+        )}
+      </Route>
+      <Route path="/">
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-lg">Loading...</div>
+          </div>
+        ) : isAuthenticated ? (
+          <Dashboard />
+        ) : (
+          <Landing />
+        )}
+      </Route>
       <Route component={() => <div>404 - Page not found</div>} />
     </Switch>
   );
