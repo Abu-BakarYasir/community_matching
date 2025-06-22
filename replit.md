@@ -122,7 +122,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### June 22, 2025 - Multi-Tenant SaaS Architecture & Super Admin System
+### June 22, 2025 - Multi-Tenant SaaS Architecture & Super Admin System  
 - Restructured application for multi-tenant SaaS architecture
 - Added organizations table to support multiple communities
 - Created super admin role separate from community admin role
@@ -132,6 +132,10 @@ Preferred communication style: Simple, everyday language.
 - Separated community admin (manages one community) from super admin (manages entire platform)
 - Added super admin routes and navigation in header dropdown menu
 - Enhanced user schema with organizationId and isSuperAdmin fields
+- Fixed branding to show "Matches.Community" instead of "DAA Matches" throughout application
+- Added proper super admin authentication protection to all super admin API endpoints
+- Updated authentication endpoints to return isSuperAdmin status for proper access control
+- Made Settings tab the first tab and default open in admin dashboard (most useful for community managers)
 
 ### June 22, 2025 - Replit Auth Integration & Availability System Fixed
 - Implemented complete Replit Auth integration with session-based authentication

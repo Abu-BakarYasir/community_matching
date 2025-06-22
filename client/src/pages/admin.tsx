@@ -374,14 +374,293 @@ export default function Admin() {
           </Card>
         </div>
 
-        <Tabs defaultValue="users" className="space-y-6">
+        <Tabs defaultValue="settings" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="matches">Matches</TabsTrigger>
             <TabsTrigger value="meetings">Meetings</TabsTrigger>
             <TabsTrigger value="emails">Email Templates</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="settings">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>App Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="appName">Application Name</Label>
+                    <Input
+                      id="appName"
+                      value={settings?.appName || "DAA Matches"}
+                      onChange={(e) => updateSettings.mutate({ appName: e.target.value })}
+                      className="mt-2"
+                      placeholder="Enter application name"
+                    />
+                    <p className="text-sm text-slate-600 mt-1">
+                      Name displayed throughout the application
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="defaultFirstName">Default First Name</Label>
+                    <Input
+                      id="defaultFirstName"
+                      value={settings?.defaultFirstName || "User"}
+                      onChange={(e) => updateSettings.mutate({ defaultFirstName: e.target.value })}
+                      className="mt-2"
+                      placeholder="Enter default first name"
+                    />
+                    <p className="text-sm text-slate-600 mt-1">
+                      Default first name for new users (instead of extracting from email)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="defaultLastName">Default Last Name</Label>
+                    <Input
+                      id="defaultLastName"
+                      value={settings?.defaultLastName || ""}
+                      onChange={(e) => updateSettings.mutate({ defaultLastName: e.target.value })}
+                      className="mt-2"
+                      placeholder="Enter default last name (optional)"
+                    />
+                    <p className="text-sm text-slate-600 mt-1">
+                      Default last name for new users (leave empty if not needed)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="googleMeetLink">Default Google Meet Link</Label>
+                    <Input
+                      id="googleMeetLink"
+                      value={settings?.googleMeetLink || "https://meet.google.com/wnf-cjab-twp"}
+                      onChange={(e) => updateSettings.mutate({ googleMeetLink: e.target.value })}
+                      className="mt-2"
+                      placeholder="Enter Google Meet link"
+                    />
+                    <p className="text-sm text-slate-600 mt-1">
+                      Default meeting link used for all scheduled meetings
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="matchingDay">Monthly Matching Day</Label>
+                    <Select value={matchingDay} onValueChange={setMatchingDay}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select day of month" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                          <SelectItem key={day} value={day.toString()}>
+                            Day {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-slate-600 mt-1">
+                      The day of each month when automatic matching runs
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Prevent Meeting Overlaps</Label>
+                      <p className="text-sm text-slate-600">Only allow one meeting at a time per user</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => updateSettings.mutate({ preventMeetingOverlap: !settings?.preventMeetingOverlap })}
+                      disabled={updateSettings.isPending}
+                      className={`relative w-16 h-8 rounded-full transition-all duration-300 ease-in-out p-1 ${
+                        settings?.preventMeetingOverlap 
+                          ? "bg-green-500 hover:bg-green-600" 
+                          : "bg-slate-300 hover:bg-slate-400"
+                      }`}
+                    >
+                      <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out ${
+                        settings?.preventMeetingOverlap ? "translate-x-8" : "translate-x-0"
+                      }`}>
+                        <span className={`flex items-center justify-center w-full h-full text-xs font-bold ${
+                          settings?.preventMeetingOverlap ? "text-green-600" : "text-slate-600"
+                        }`}>
+                          {updateSettings.isPending ? "..." : (settings?.preventMeetingOverlap ? "ON" : "OFF")}
+                        </span>
+                      </div>
+                    </Button>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="monthlyGoals">Monthly Focus Goals</Label>
+                    <div className="mt-2 space-y-2">
+                      {(settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]).map((goal, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Input
+                            value={goal}
+                            onChange={(e) => {
+                              const newGoals = [...(settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"])];
+                              newGoals[index] = e.target.value;
+                              updateSettings.mutate({ monthlyGoals: newGoals });
+                            }}
+                            className="flex-1"
+                            placeholder="Enter goal option"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const newGoals = (settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]).filter((_, i) => i !== index);
+                              updateSettings.mutate({ monthlyGoals: newGoals });
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const newGoals = [...(settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]), "New Goal"];
+                          updateSettings.mutate({ monthlyGoals: newGoals });
+                        }}
+                      >
+                        Add Goal
+                      </Button>
+                    </div>
+                    <p className="text-sm text-slate-600 mt-1">Options users can select for their monthly networking focus</p>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <Button 
+                      onClick={handleUpdateMatchingDay}
+                      disabled={updateSettings.isPending}
+                    >
+                      {updateSettings.isPending ? "Updating..." : "Save Matching Day"}
+                    </Button>
+                    {updateSettings.isPending && (
+                      <div className="text-sm text-blue-600">Saving settings...</div>
+                    )}
+                  </div>
+                  <p className="text-sm text-green-600 mt-2">
+                    Current matching day: {settings?.matchingDay || matchingDay}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Algorithm Weights</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Industry Match: {settings?.weights?.industry || 35}%</Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={settings?.weights?.industry || 35}
+                      onChange={(e) => {
+                        const newWeights = {
+                          ...settings?.weights,
+                          industry: parseInt(e.target.value)
+                        };
+                        updateSettings.mutate({ weights: newWeights });
+                      }}
+                      className="w-full mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Company Type: {settings?.weights?.company || 20}%</Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="40"
+                      value={settings?.weights?.company || 20}
+                      onChange={(e) => {
+                        const newWeights = {
+                          ...settings?.weights,
+                          company: parseInt(e.target.value)
+                        };
+                        updateSettings.mutate({ weights: newWeights });
+                      }}
+                      className="w-full mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Networking Goals: {settings?.weights?.networkingGoals || 30}%</Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={settings?.weights?.networkingGoals || 30}
+                      onChange={(e) => {
+                        const newWeights = {
+                          ...settings?.weights,
+                          networkingGoals: parseInt(e.target.value)
+                        };
+                        updateSettings.mutate({ weights: newWeights });
+                      }}
+                      className="w-full mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Job Title: {settings?.weights?.jobTitle || 15}%</Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="30"
+                      value={settings?.weights?.jobTitle || 15}
+                      onChange={(e) => {
+                        const newWeights = {
+                          ...settings?.weights,
+                          jobTitle: parseInt(e.target.value)
+                        };
+                        updateSettings.mutate({ weights: newWeights });
+                      }}
+                      className="w-full mt-2"
+                    />
+                  </div>
+
+                  <p className="text-xs text-slate-600">
+                    Weights determine how much each factor influences match scores. 
+                    Each user gets exactly one match per period. With odd numbers, one user may remain unmatched.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Manual Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Trigger Monthly Matching</h4>
+                    <p className="text-sm text-slate-600 mb-3">
+                      Run the matching algorithm. Each user gets one match per period. With odd numbers of users, one may remain unmatched and will be notified.
+                    </p>
+                    <Button 
+                      onClick={() => triggerMatching.mutate()}
+                      disabled={triggerMatching.isPending}
+                      variant="outline"
+                    >
+                      {triggerMatching.isPending ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-2" />
+                      )}
+                      {triggerMatching.isPending ? "Running..." : "Run Matching Now"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           <TabsContent value="users">
             <Card>
