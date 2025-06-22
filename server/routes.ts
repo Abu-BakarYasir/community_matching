@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { requireSuperAdmin } from "./auth";
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema, insertAvailabilitySchema } from "@shared/schema";
 import multer from 'multer';
 import { schedulerService } from "./services/scheduler";
@@ -314,7 +315,7 @@ app.get('/api/settings/public', async (req, res) => {
   });
 
   // Super Admin API endpoints
-  app.get('/api/super-admin/organizations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/super-admin/organizations', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
     try {
       // For now, return empty array as we'll add organization storage later
       res.json([]);
@@ -324,7 +325,7 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.get('/api/super-admin/users', isAuthenticated, async (req: any, res) => {
+  app.get('/api/super-admin/users', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -334,7 +335,7 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.get('/api/super-admin/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/super-admin/stats', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       const stats = {
@@ -350,7 +351,7 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.patch('/api/super-admin/users/:userId/super-admin', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/super-admin/users/:userId/super-admin', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { isSuperAdmin } = req.body;
