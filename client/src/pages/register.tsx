@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Mail, ArrowRight } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient, setAuthToken, clearAuthToken } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
@@ -25,18 +25,13 @@ export default function Register() {
       return response.json();
     },
     onSuccess: async (result) => {
-      // Store the JWT token if provided
-      if (result.token) {
-        setAuthToken(result.token);
-      }
-      
       toast({
         title: "Welcome to DAA Monthly Matching!",
         description: "Your account has been created successfully.",
       });
       
       // Clear auth cache and redirect
-      queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.removeQueries({ queryKey: ["/api/auth/user"] });
       window.location.href = '/dashboard';
     },
     onError: (error: any) => {
@@ -66,25 +61,14 @@ export default function Register() {
       return response.json();
     },
     onSuccess: async (data) => {
-      // Store the JWT token
-      if (data.token) {
-        setAuthToken(data.token);
-        
-        toast({
-          title: "Welcome back!",
-          description: "You have been logged in successfully.",
-        });
-        
-        // Clear auth cache and redirect based on admin status
-        queryClient.removeQueries({ queryKey: ["/api/auth/me"] });
-        window.location.href = data.user.isAdmin ? '/admin' : '/dashboard';
-      } else {
-        toast({
-          title: "Login Error",
-          description: "Authentication failed. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Welcome back!",
+        description: "You have been logged in successfully.",
+      });
+      
+      // Clear auth cache and redirect based on admin status
+      queryClient.removeQueries({ queryKey: ["/api/auth/user"] });
+      window.location.href = data.user.isAdmin ? '/admin' : '/dashboard';
     },
     onError: (error: any) => {
       toast({

@@ -7,29 +7,7 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Store JWT token in localStorage
-let authToken: string | null = null;
-
-export function setAuthToken(token: string) {
-  authToken = token;
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('auth_token', token);
-  }
-}
-
-export function getAuthToken(): string | null {
-  if (!authToken && typeof window !== 'undefined') {
-    authToken = localStorage.getItem('auth_token');
-  }
-  return authToken;
-}
-
-export function clearAuthToken() {
-  authToken = null;
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
-  }
-}
+// Replit Auth uses session-based authentication, no tokens needed
 
 export async function apiRequest(
   method: string,
@@ -40,17 +18,11 @@ export async function apiRequest(
     ...(data ? { "Content-Type": "application/json" } : {}),
   };
 
-  // Add Authorization header if token exists
-  const token = getAuthToken();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
   const res = await fetch(url, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include", // Still include cookies for fallback
+    credentials: "include", // Use session cookies for Replit Auth
   });
 
   await throwIfResNotOk(res);
@@ -70,17 +42,8 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const headers: Record<string, string> = {};
-
-    // Add Authorization header if token exists
-    const token = getAuthToken();
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
     const res = await fetch(queryKey[0] as string, {
-      headers,
-      credentials: "include",
+      credentials: "include", // Use session cookies for Replit Auth
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

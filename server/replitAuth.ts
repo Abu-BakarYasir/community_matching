@@ -8,9 +8,11 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-// For development, use localhost as domain
+// For development, provide fallback values
 const replitDomains = process.env.REPLIT_DOMAINS || "localhost";
 const replId = process.env.REPL_ID || "dev-repl-id";
+
+console.log("Replit Auth config:", { domains: replitDomains, replId });
 
 const getOidcConfig = memoize(
   async () => {

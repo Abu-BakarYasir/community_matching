@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
 import Landing from "@/pages/landing";
-import DevLogin from "@/pages/dev-login";
 import { queryClient } from "@/lib/queryClient";
 
 function AdminRoute() {
@@ -32,7 +31,6 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/dev-login" component={DevLogin} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
