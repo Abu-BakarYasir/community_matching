@@ -593,13 +593,19 @@ app.get('/api/settings/public', async (req, res) => {
   });
 
   // Admin trigger matching endpoint
-  app.post('/api/admin/trigger-matching', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/trigger-matching', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
-      // For now, just simulate matching process
       console.log("Manual matching triggered by admin");
       
+      // Import the matching service
+      const { matchingService } = await import('./services/matching');
+      
+      // Run the monthly matching
+      const result = await matchingService.runMonthlyMatching();
+      
       res.json({ 
-        message: "Matching process started successfully",
+        message: "Matching process completed successfully",
+        matchCount: result.matchCount || 0,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
