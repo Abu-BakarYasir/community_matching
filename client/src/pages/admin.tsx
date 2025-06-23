@@ -75,6 +75,10 @@ export default function Admin() {
     mutationFn: async () => {
       return await apiRequest("/api/admin/trigger-matching", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
       });
     },
     onSuccess: (data: any) => {
