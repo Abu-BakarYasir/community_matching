@@ -99,7 +99,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
 
   const updateProfile = useMutation({
     mutationFn: async () => {
-      await apiRequest("PATCH", "/api/user/profile", {
+      console.log("Updating profile with data:", {
         jobTitle,
         company,
         industry,
@@ -107,6 +107,17 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
         linkedinUrl,
         profileImageUrl
       });
+      
+      const response = await apiRequest("PATCH", "/api/user/profile", {
+        jobTitle,
+        company,
+        industry,
+        bio,
+        linkedinUrl,
+        profileImageUrl
+      });
+      
+      console.log("Profile update response:", response);
       
       await apiRequest("POST", "/api/user/profile-questions", {
         networkingGoals

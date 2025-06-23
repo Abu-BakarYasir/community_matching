@@ -224,7 +224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         linkedinUrl: req.body.linkedinUrl,
       };
       
+      console.log("Profile update request:", { userId, updateData });
       const user = await storage.updateUser(userId, updateData);
+      console.log("Profile updated successfully:", user);
       res.json(user);
     } catch (error) {
       console.error("Error updating user profile:", error);
