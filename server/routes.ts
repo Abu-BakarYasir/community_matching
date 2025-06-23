@@ -310,12 +310,15 @@ let adminSettings = {
   monthlyFocusGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
   googleMeetLink: "https://meet.google.com/wnf-cjab-twp",
   preventMeetingOverlap: true,
+  showMonthlyGoals: false, // Feature toggle for monthly goals
   weights: {
     industry: 35,
     company: 20,
     goals: 30,
     jobTitle: 15
-  }
+  },
+  defaultFirstName: "New",
+  defaultLastName: "Member"
 };
 
 // Settings endpoints
@@ -325,7 +328,8 @@ app.get('/api/settings/public', async (req, res) => {
     res.json({
       appName: adminSettings.appName,
       nextMatchingDate: adminSettings.nextMatchingDate,
-      matchingDay: adminSettings.matchingDay
+      matchingDay: adminSettings.matchingDay,
+      showMonthlyGoals: adminSettings.showMonthlyGoals
     });
   } catch (error) {
     console.error("Error fetching public settings:", error);
@@ -389,6 +393,7 @@ app.get('/api/settings/public', async (req, res) => {
         monthlyGoals: organization.settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
         googleMeetLink: organization.settings?.googleMeetLink || "https://meet.google.com/new",
         preventMeetingOverlap: organization.settings?.preventMeetingOverlap || true,
+        showMonthlyGoals: adminSettings.showMonthlyGoals || false, // Use global feature toggle
         weights: organization.settings?.weights || { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
       };
       res.json(settings);

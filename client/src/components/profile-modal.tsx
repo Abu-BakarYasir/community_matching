@@ -265,29 +265,31 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
                 />
               </div>
 
-              {/* Monthly Focus Goals */}
-              <div>
-                <Label>Monthly Focus Goals</Label>
-                <p className="text-sm text-slate-600 mb-3">
-                  Select what you're focusing on this month (choose all that apply)
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {(adminSettings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]).map((goal) => (
-                    <button
-                      key={goal}
-                      type="button"
-                      onClick={() => handleNetworkingGoalToggle(goal)}
-                      className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                        networkingGoals.includes(goal)
-                          ? "bg-blue-100 border-blue-300 text-blue-700"
-                          : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
-                      }`}
-                    >
-                      {goal}
-                    </button>
-                  ))}
+              {/* Monthly Focus Goals - Hidden by feature toggle */}
+              {adminSettings?.showMonthlyGoals && (
+                <div>
+                  <Label>Monthly Focus Goals</Label>
+                  <p className="text-sm text-slate-600 mb-3">
+                    Select what you're focusing on this month (choose all that apply)
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(adminSettings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"]).map((goal) => (
+                      <button
+                        key={goal}
+                        type="button"
+                        onClick={() => handleNetworkingGoalToggle(goal)}
+                        className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                          networkingGoals.includes(goal)
+                            ? "bg-blue-100 border-blue-300 text-blue-700"
+                            : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
+                        }`}
+                      >
+                        {goal}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </TabsContent>
 
             <TabsContent value="schedule" className="space-y-6">

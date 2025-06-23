@@ -399,6 +399,59 @@ export default function SuperAdmin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="settings">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card style={{ backgroundColor: '#fefefe' }}>
+                <CardHeader>
+                  <CardTitle style={{ color: '#1e293b' }}>Feature Toggles</CardTitle>
+                  <p className="text-sm" style={{ color: '#6b7280' }}>
+                    Control which features are available across all communities
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="monthlyGoals">Monthly Focus Goals</Label>
+                      <p className="text-sm text-slate-500">
+                        Allow communities to set and track monthly focus goals
+                      </p>
+                    </div>
+                    <Switch
+                      id="monthlyGoals"
+                      checked={false}
+                      disabled
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Currently disabled to simplify the platform. Will be configurable per community in future updates.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card style={{ backgroundColor: '#fefefe' }}>
+                <CardHeader>
+                  <CardTitle style={{ color: '#1e293b' }}>Platform Statistics</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold" style={{ color: '#f97316' }}>
+                        {allUsers.length}
+                      </div>
+                      <p className="text-sm text-slate-600">Total Users</p>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold" style={{ color: '#2563eb' }}>
+                        {organizations.length}
+                      </div>
+                      <p className="text-sm text-slate-600">Communities</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </main>
     </div>
