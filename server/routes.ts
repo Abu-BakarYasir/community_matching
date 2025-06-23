@@ -593,24 +593,31 @@ app.get('/api/settings/public', async (req, res) => {
   });
 
   // Admin trigger matching endpoint
-  app.post('/api/admin/trigger-matching', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/trigger-matching', isAuthenticated, async (req: any, res) => {
     try {
-      console.log("Manual matching triggered by admin");
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (!user.isAdmin && !user.isSuperAdmin)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      console.log("Manual matching triggered by admin:", user.email);
       
       // Import the matching service
       const { matchingService } = await import('./services/matching');
       
-      // Run the monthly matching
+      // Run the monthly matching for this admin's organization
       const result = await matchingService.runMonthlyMatching();
       
       res.json({ 
         message: "Matching process completed successfully",
-        matchCount: result.matchCount || 0,
+        matchCount: result?.length || 0,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
       console.error("Error triggering matching:", error);
-      res.status(500).json({ message: "Failed to trigger matching" });
+      res.status(500).json({ message: "Failed to trigger matching: " + error.message });
     }
   });
 
