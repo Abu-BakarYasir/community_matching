@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Linkedin, Camera, Upload, Calendar, Clock } from "lucide-react";
+import { Linkedin, Calendar, Clock, User } from "lucide-react";
 
 interface ProfileModalProps {
   open: boolean;
@@ -25,10 +25,8 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
   const [industry, setIndustry] = useState("");
   const [bio, setBio] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [profileImageUrl, setProfileImageUrl] = useState("");
   const [networkingGoals, setNetworkingGoals] = useState<string[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
 
@@ -50,7 +48,6 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
       setBio(user?.bio || "");
       setLinkedinUrl(user?.linkedinUrl || "");
       setNetworkingGoals(user?.profileQuestions?.networkingGoals || []);
-      setProfileImageUrl(user?.profileImageUrl || "");
     }
   }, [user]);
 
@@ -60,42 +57,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
     }
   }, [userAvailability]);
 
-  const uploadProfileImage = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('image', file);
-      
-      const response = await fetch('/api/user/upload-profile-image', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-      
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setProfileImageUrl(data.profileImageUrl);
-      // Invalidate user data cache to refresh profile picture immediately
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      
-      toast({
-        title: "Profile picture uploaded",
-        description: "Your profile picture has been updated successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Upload failed",
-        description: "There was an error uploading your profile picture.",
-      });
-    }
-  });
+
 
   const updateProfile = useMutation({
     mutationFn: async () => {
@@ -104,8 +66,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
         company,
         industry,
         bio,
-        linkedinUrl,
-        profileImageUrl
+        linkedinUrl
       });
       
       const response = await apiRequest("PATCH", "/api/user/profile", {
@@ -113,8 +74,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
         company,
         industry,
         bio,
-        linkedinUrl,
-        profileImageUrl
+        linkedinUrl
       });
       
       console.log("Profile update response:", response);
@@ -157,23 +117,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
     updateProfile.mutate();
   };
 
-  const handleFileSelect = () => {
-    fileInputRef.current?.click();
-  };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select an image smaller than 5MB.",
-        });
-        return;
-      }
-      uploadProfileImage.mutate(file);
-    }
-  };
 
   const handleNetworkingGoalToggle = (goal: string) => {
     setNetworkingGoals(prev => 
@@ -234,7 +178,7 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="profile" className="flex items-center gap-2">
-              <Camera className="w-4 h-4" />
+              <User className="w-4 h-4" />
               Profile Info
             </TabsTrigger>
             <TabsTrigger value="schedule" className="flex items-center gap-2">

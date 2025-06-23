@@ -4,24 +4,12 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireSuperAdmin, requireAdmin } from "./auth";
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema, insertAvailabilitySchema } from "@shared/schema";
-import multer from 'multer';
+
 import { schedulerService } from "./services/scheduler";
 import { timeSlotService } from "./services/timeSlots";
 import { z } from "zod";
 
-// Configure multer for file uploads
-const storage_multer = multer.memoryStorage();
-const upload = multer({ 
-  storage: storage_multer,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  }
-});
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Replit authentication
@@ -221,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         company: req.body.company,
         industry: req.body.industry,
         bio: req.body.bio,
-        linkedinUrl: req.body.linkedinUrl,
+        linkedinUrl: req.body.linkedinUrl
       };
       
       console.log("Profile update request:", { userId, updateData });
