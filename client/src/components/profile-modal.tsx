@@ -189,40 +189,6 @@ export function ProfileModal({ open, onOpenChange, user }: ProfileModalProps) {
           
           <form onSubmit={handleSubmit} className="space-y-6 mt-6">
             <TabsContent value="profile" className="space-y-6">
-              {/* Profile Picture Section */}
-              <div className="flex flex-col items-center space-y-4">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
-                    {profileImageUrl ? (
-                      <img
-                        src={profileImageUrl}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Camera className="w-8 h-8 text-slate-400" />
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleFileSelect}
-                    className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-2 hover:bg-blue-600 transition-colors"
-                  >
-                    <Upload className="w-3 h-3" />
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </div>
-                <p className="text-sm text-slate-600 text-center">
-                  Click to upload profile picture (max 5MB)
-                </p>
-              </div>
-
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

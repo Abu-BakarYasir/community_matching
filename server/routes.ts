@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: testUser.email,
           firstName: testUser.firstName,
           lastName: testUser.lastName,
-          profileImageUrl: null,
+  
         };
         
         // Set organization and admin status based on test user type
