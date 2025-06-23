@@ -55,26 +55,56 @@ export function requireAuth(req: AuthenticatedRequest, res: Response, next: Next
   next();
 }
 
-export function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  if (!req.user) {
+export async function requireAdmin(req: any, res: Response, next: NextFunction) {
+  if (!req.user?.claims?.sub) {
     return res.status(401).json({ message: "Authentication required" });
   }
   
-  if (!req.user.isAdmin) {
-    return res.status(403).json({ message: "Admin access required" });
+  try {
+    // Import storage here to avoid circular dependency
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(req.user.claims.sub);
+    
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    
+    if (!user.isAdmin && !user.isSuperAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    
+    // Attach user data to request for use in route handlers
+    req.userData = user;
+    next();
+  } catch (error) {
+    console.error("Error checking admin status:", error);
+    return res.status(500).json({ message: "Authentication error" });
   }
-  
-  next();
 }
 
-export function requireSuperAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  if (!req.user) {
+export async function requireSuperAdmin(req: any, res: Response, next: NextFunction) {
+  if (!req.user?.claims?.sub) {
     return res.status(401).json({ message: "Authentication required" });
   }
   
-  if (!req.user.isSuperAdmin) {
-    return res.status(403).json({ message: "Super admin access required" });
+  try {
+    // Import storage here to avoid circular dependency
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(req.user.claims.sub);
+    
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    
+    if (!user.isSuperAdmin) {
+      return res.status(403).json({ message: "Super admin access required" });
+    }
+    
+    // Attach user data to request for use in route handlers
+    req.userData = user;
+    next();
+  } catch (error) {
+    console.error("Error checking super admin status:", error);
+    return res.status(500).json({ message: "Authentication error" });
   }
-  
-  next();
 }
