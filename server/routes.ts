@@ -260,6 +260,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User opt-in/opt-out endpoint
+  app.patch('/api/user/opt-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { isActive } = req.body;
+      
+      const user = await storage.updateUser(userId, { isActive });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ success: true, isActive: user.isActive });
+    } catch (error) {
+      console.error("Error updating opt-in status:", error);
+      res.status(500).json({ message: "Failed to update opt-in status" });
+    }
+  });
+
   // Matches endpoints
   app.get('/api/matches', isAuthenticated, async (req: any, res) => {
     try {
