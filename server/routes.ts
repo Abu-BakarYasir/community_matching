@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { requireSuperAdmin, requireAdmin } from "./auth";
+// Removed JWT auth imports - using Replit Auth only
 import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema, insertAvailabilitySchema } from "@shared/schema";
 
 import { schedulerService } from "./services/scheduler";
@@ -404,12 +404,16 @@ app.get('/api/settings/public', async (req, res) => {
   });
 
   // Admin API endpoints - only show users from admin's organization
-  app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const admin = await storage.getUser(userId);
       
-      if (!admin || !admin.organizationId) {
+      if (!admin || (!admin.isAdmin && !admin.isSuperAdmin)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      if (!admin.organizationId) {
         return res.json([]);
       }
       
@@ -424,12 +428,16 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.get('/api/admin/matches', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/matches', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const admin = await storage.getUser(userId);
       
-      if (!admin || !admin.organizationId) {
+      if (!admin || (!admin.isAdmin && !admin.isSuperAdmin)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      if (!admin.organizationId) {
         return res.json([]);
       }
       
@@ -447,12 +455,16 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.get('/api/admin/meetings', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/meetings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const admin = await storage.getUser(userId);
       
-      if (!admin || !admin.organizationId) {
+      if (!admin || (!admin.isAdmin && !admin.isSuperAdmin)) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      if (!admin.organizationId) {
         return res.json([]);
       }
       
@@ -492,8 +504,15 @@ app.get('/api/settings/public', async (req, res) => {
   });
 
   // Super Admin API endpoints
-  app.get('/api/super-admin/organizations', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/organizations', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
       const organizations = await storage.getAllOrganizations();
       res.json(organizations);
     } catch (error) {
@@ -502,8 +521,15 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.post('/api/super-admin/organizations', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
+  app.post('/api/super-admin/organizations', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
       const { name, slug, description } = req.body;
       
       if (!name || !slug) {
@@ -546,8 +572,15 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.get('/api/super-admin/users', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/users', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
       const users = await storage.getAllUsers();
       res.json(users);
     } catch (error) {
@@ -556,8 +589,15 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.get('/api/super-admin/stats', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
+  app.get('/api/super-admin/stats', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
       const users = await storage.getAllUsers();
       const organizations = await storage.getAllOrganizations();
       const stats = {
@@ -575,8 +615,15 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
-  app.patch('/api/super-admin/users/:userId/super-admin', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
+  app.patch('/api/super-admin/users/:userId/super-admin', isAuthenticated, async (req: any, res) => {
     try {
+      const currentUserId = req.user.claims.sub;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      if (!currentUser || !currentUser.isSuperAdmin) {
+        return res.status(403).json({ message: "Super admin access required" });
+      }
+      
       const { userId } = req.params;
       const { isSuperAdmin } = req.body;
       
