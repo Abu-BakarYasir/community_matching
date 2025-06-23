@@ -36,7 +36,7 @@ export default function SuperAdmin() {
     queryKey: ["/api/super-admin/stats"],
   });
 
-  // Create organization mutation
+  // Create community mutation
   const createOrgMutation = useMutation({
     mutationFn: async (orgData: { name: string; slug: string; description?: string }) => {
       return apiRequest("/api/super-admin/organizations", "POST", orgData);
@@ -46,10 +46,10 @@ export default function SuperAdmin() {
       setNewOrgName("");
       setNewOrgSlug("");
       setNewOrgDescription("");
-      toast({ title: "Organization created successfully" });
+      toast({ title: "Community created successfully" });
     },
     onError: (error: any) => {
-      toast({ title: "Error creating organization", description: error.message, variant: "destructive" });
+      toast({ title: "Error creating community", description: error.message, variant: "destructive" });
     },
   });
 
@@ -107,7 +107,7 @@ export default function SuperAdmin() {
           <Card style={{ backgroundColor: '#fefefe' }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium" style={{ color: '#6b7280' }}>
-                Total Organizations
+                Total Communities
               </CardTitle>
               <Building className="h-4 w-4" style={{ color: '#2563eb' }} />
             </CardHeader>
@@ -164,31 +164,31 @@ export default function SuperAdmin() {
         {/* Main Content Tabs */}
         <Tabs defaultValue="organizations" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="organizations">Organizations</TabsTrigger>
+            <TabsTrigger value="organizations">Communities</TabsTrigger>
             <TabsTrigger value="users">Platform Users</TabsTrigger>
             <TabsTrigger value="settings">Platform Settings</TabsTrigger>
           </TabsList>
 
-          {/* Organizations Tab */}
+          {/* Communities Tab */}
           <TabsContent value="organizations" className="space-y-6">
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-semibold" style={{ color: '#1e293b' }}>
-                Organizations
+                Communities
               </h3>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }} className="text-white">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Organization
+                    Add Community
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Create New Organization</DialogTitle>
+                    <DialogTitle>Create New Community</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleCreateOrganization} className="space-y-4">
                     <div>
-                      <Label htmlFor="orgName">Organization Name</Label>
+                      <Label htmlFor="orgName">Community Name</Label>
                       <Input
                         id="orgName"
                         value={newOrgName}
@@ -223,7 +223,7 @@ export default function SuperAdmin() {
                       style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }}
                       disabled={createOrgMutation.isPending}
                     >
-                      {createOrgMutation.isPending ? "Creating..." : "Create Organization"}
+                      {createOrgMutation.isPending ? "Creating..." : "Create Community"}
                     </Button>
                   </form>
                 </DialogContent>
@@ -287,7 +287,7 @@ export default function SuperAdmin() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
-                      <TableHead>Organization</TableHead>
+                      <TableHead>Community</TableHead>
                       <TableHead>Roles</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Joined</TableHead>

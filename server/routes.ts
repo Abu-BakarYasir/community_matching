@@ -507,7 +507,7 @@ app.get('/api/settings/public', async (req, res) => {
       );
 
       if (slugExists) {
-        return res.status(400).json({ message: "Organization slug already exists" });
+        return res.status(400).json({ message: "Community slug already exists" });
       }
 
       const organizationData = {
@@ -530,8 +530,8 @@ app.get('/api/settings/public', async (req, res) => {
       const newOrganization = await storage.createOrganization(organizationData);
       res.status(201).json(newOrganization);
     } catch (error) {
-      console.error("Error creating organization:", error);
-      res.status(500).json({ message: "Failed to create organization" });
+      console.error("Error creating community:", error);
+      res.status(500).json({ message: "Failed to create community" });
     }
   });
 
@@ -554,8 +554,8 @@ app.get('/api/settings/public', async (req, res) => {
         activeUsers: users.filter(u => u.isActive).length,
         adminUsers: users.filter(u => u.isAdmin).length,
         superAdminUsers: users.filter(u => u.isSuperAdmin).length,
-        totalOrganizations: organizations.length,
-        activeOrganizations: organizations.filter(o => o.isActive).length,
+        totalCommunities: organizations.length,
+        activeCommunities: organizations.filter(o => o.isActive).length,
       };
       res.json(stats);
     } catch (error) {

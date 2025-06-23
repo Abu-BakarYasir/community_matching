@@ -127,7 +127,7 @@ Preferred communication style: Simple, everyday language.
 - Added organizations table to support multiple communities
 - Created super admin role separate from community admin role
 - Built comprehensive Super Admin dashboard for platform management
-- Added organization management, user role control, and platform statistics
+- Added community management, user role control, and platform statistics
 - Updated authentication system to support super admin privileges
 - Separated community admin (manages one community) from super admin (manages entire platform)
 - Added super admin routes and navigation in header dropdown menu
@@ -136,12 +136,13 @@ Preferred communication style: Simple, everyday language.
 - Added proper super admin authentication protection to all super admin API endpoints
 - Updated authentication endpoints to return isSuperAdmin status for proper access control
 - Made Settings tab the first tab and default open in admin dashboard (most useful for community managers)
-- Created unique signup pages for each organization (/signup/[orgslug])
-- Implemented organization-specific user signup with Replit Auth integration
+- Created unique signup pages for each community (/signup/[slug])
+- Implemented community-specific user signup with Replit Auth integration
 - Added unique signup link display in community admin dashboard with copy functionality
-- Community members sign up as regular users (non-admin) and are scoped to their organization
-- Admin users can only see/manage users, matches, and meetings within their organization
-- Created DAA organization and assigned averyjs@gmail.com as community manager
+- Community members sign up as regular users (non-admin) and are scoped to their community
+- Admin users can only see/manage users, matches, and meetings within their community
+- Created DAA community and assigned averyjs@gmail.com as community manager
+- Updated terminology from "Organizations" to "Communities" throughout the platform
 
 ### June 22, 2025 - Replit Auth Integration & Availability System Fixed
 - Implemented complete Replit Auth integration with session-based authentication
