@@ -491,6 +491,50 @@ app.get('/api/settings/public', async (req, res) => {
     }
   });
 
+  app.post('/api/super-admin/organizations', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
+    try {
+      const { name, slug, description } = req.body;
+      
+      if (!name || !slug) {
+        return res.status(400).json({ message: "Name and slug are required" });
+      }
+
+      // Check if slug already exists
+      const existingOrgs = await storage.getAllOrganizations();
+      const slugExists = existingOrgs.some(org => 
+        (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
+        org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase()
+      );
+
+      if (slugExists) {
+        return res.status(400).json({ message: "Organization slug already exists" });
+      }
+
+      const organizationData = {
+        name,
+        slug,
+        description: description || "",
+        adminId: "", // Will be set when an admin is assigned
+        domain: `${slug}.matches.community`,
+        isActive: true,
+        settings: {
+          appName: name,
+          matchingDay: 1,
+          monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+          googleMeetLink: "https://meet.google.com/new",
+          preventMeetingOverlap: true,
+          weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
+        }
+      };
+
+      const newOrganization = await storage.createOrganization(organizationData);
+      res.status(201).json(newOrganization);
+    } catch (error) {
+      console.error("Error creating organization:", error);
+      res.status(500).json({ message: "Failed to create organization" });
+    }
+  });
+
   app.get('/api/super-admin/users', isAuthenticated, requireSuperAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
