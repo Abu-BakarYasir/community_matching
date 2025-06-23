@@ -43,8 +43,8 @@ export function Header() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold text-primary cursor-pointer" onClick={() => setLocation("/dashboard")}>
-                {user?.organizationName || "Community"}
+              <h1 className="text-2xl font-bold cursor-pointer" style={{ color: '#2563eb' }} onClick={() => setLocation("/dashboard")}>
+                Matches.Community
               </h1>
             </div>
           </div>
