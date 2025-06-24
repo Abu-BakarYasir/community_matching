@@ -67,17 +67,15 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public routes - always accessible */}
-      <Route path="/signup/:orgSlug" component={Signup} />
-      
-      <Route path="/dashboard">
-        {isAuthenticated ? <Dashboard /> : <Landing />}
+      {/* Community pages - always accessible */}
+      <Route path="/community/:slug">
+        <CommunitySignup />
       </Route>
       <Route path="/admin">
-        <AdminRoute />
+        {isAuthenticated && user?.isAdmin ? <Admin /> : <AdminRoute />}
       </Route>
       <Route path="/super-admin">
-        <SuperAdminRoute />
+        {isAuthenticated && user?.isSuperAdmin ? <SuperAdmin /> : <SuperAdminRoute />}
       </Route>
       <Route path="/profile">
         {isAuthenticated ? <Profile /> : <Landing />}
@@ -87,9 +85,6 @@ function Router() {
       </Route>
       <Route path="/register">
         <Landing />
-      </Route>
-      <Route path="/signup/:slug">
-        <CommunitySignup />
       </Route>
       <Route path="/">
         {isAuthenticated ? <Dashboard /> : <Landing />}

@@ -229,13 +229,13 @@ export default function Admin() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-3 bg-gray-50 rounded border text-sm font-mono">
-                    {typeof window !== 'undefined' ? `${window.location.origin}/signup/${user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community'}` : 'Loading...'}
+                    {typeof window !== 'undefined' ? `${window.location.origin}/community/${user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community'}` : 'Loading...'}
                   </div>
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => {
-                      const inviteLink = `${window.location.origin}/signup/${user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community'}`;
+                      const inviteLink = `${window.location.origin}/community/${user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community'}`;
                       navigator.clipboard.writeText(inviteLink);
                       toast({ title: "Link copied!", description: "Community invite link copied to clipboard" });
                     }}

@@ -136,7 +136,7 @@ Preferred communication style: Simple, everyday language.
 - Added proper super admin authentication protection to all super admin API endpoints
 - Updated authentication endpoints to return isSuperAdmin status for proper access control
 - Made Settings tab the first tab and default open in admin dashboard (most useful for community managers)
-- Created unique signup pages for each community (/signup/[slug])
+- Created unique community pages for each community (/community/[slug])
 - Implemented community-specific user signup with Replit Auth integration
 - Added unique signup link display in community admin dashboard with copy functionality
 - Community members sign up as regular users (non-admin) and are scoped to their community
