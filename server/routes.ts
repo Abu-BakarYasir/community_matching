@@ -488,14 +488,31 @@ app.get('/api/settings/public', async (req, res) => {
       const updates = req.body;
       console.log("Admin settings update request:", updates);
       
-      // Update the in-memory settings
-      adminSettings = { ...adminSettings, ...updates };
+      // Get user's organization
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user?.organizationId) {
+        return res.status(400).json({ message: 'User not associated with an organization' });
+      }
+
+      const organization = await storage.getOrganization(user.organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: 'Organization not found' });
+      }
+
+      // Update organization settings in database
+      const currentSettings = organization.settings || {};
+      const newSettings = { ...currentSettings, ...updates };
       
-      console.log("Updated admin settings:", adminSettings);
+      await storage.updateOrganization(organization.id, {
+        settings: newSettings
+      });
+      
+      console.log("Updated organization settings in database:", newSettings);
       
       res.json({ 
         message: "Settings updated successfully",
-        settings: adminSettings
+        settings: newSettings
       });
     } catch (error) {
       console.error("Error updating admin settings:", error);
