@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/header";
@@ -18,6 +18,7 @@ export default function Admin() {
   const { user } = useAuth();
   const [editingUser, setEditingUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [communityName, setCommunityName] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
   const { toast } = useToast();
 
@@ -48,8 +49,7 @@ export default function Admin() {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Debouncing for settings updates
-  const debounceRef = useRef<NodeJS.Timeout>();
+
 
   const updateSettings = useMutation({
     mutationFn: async (updates: any) => {
@@ -92,15 +92,12 @@ export default function Admin() {
     },
   });
 
-  const debouncedUpdateSettings = useCallback((updates: any) => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
+  // Set community name when settings load
+  React.useEffect(() => {
+    if (settings?.appName) {
+      setCommunityName(settings.appName);
     }
-    
-    debounceRef.current = setTimeout(() => {
-      updateSettings.mutate(updates);
-    }, 1000); // Wait 1 second after user stops typing
-  }, [updateSettings]);
+  }, [settings?.appName]);
 
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
@@ -273,13 +270,22 @@ export default function Admin() {
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="appName">Community Name</Label>
-                    <Input
-                      id="appName"
-                      value={settings?.appName || "DAA Community"}
-                      onChange={(e) => debouncedUpdateSettings({ appName: e.target.value })}
-                      className="mt-2"
-                      placeholder="Enter community name"
-                    />
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        id="appName"
+                        value={communityName}
+                        onChange={(e) => setCommunityName(e.target.value)}
+                        placeholder="Enter community name"
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={() => updateSettings.mutate({ appName: communityName })}
+                        disabled={updateSettings.isPending}
+                        size="sm"
+                      >
+                        Save
+                      </Button>
+                    </div>
                     <p className="text-sm text-slate-600 mt-1">
                       Name displayed throughout the application
                     </p>
