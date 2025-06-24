@@ -73,13 +73,7 @@ export default function Admin() {
 
   const triggerMatching = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/admin/trigger-matching", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      });
+      return await apiRequest("POST", "/api/admin/trigger-matching", {});
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
