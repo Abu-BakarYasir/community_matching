@@ -263,7 +263,7 @@ export default function Admin() {
                     <Input
                       id="appName"
                       value={settings?.appName || "DAA Community"}
-                      onChange={(e) => updateSettings.mutate({ appName: e.target.value })}
+                      onChange={(e) => debouncedUpdateSettings({ appName: e.target.value })}
                       className="mt-2"
                       placeholder="Enter community name"
                     />
