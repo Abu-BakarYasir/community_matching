@@ -389,7 +389,7 @@ app.get('/api/settings/public', async (req, res) => {
       const settings = {
         appName: organization.settings?.appName || organization.name,
         nextMatchingDate: "2025-07-01",
-        matchingDay: organization.settings?.matchingDay || 1,
+        matchingDay: organization.settings?.matchingDay || 15,
         monthlyGoals: organization.settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
         googleMeetLink: organization.settings?.googleMeetLink || "https://meet.google.com/new",
         preventMeetingOverlap: organization.settings?.preventMeetingOverlap || true,
@@ -556,7 +556,7 @@ app.get('/api/settings/public', async (req, res) => {
         isActive: true,
         settings: {
           appName: name,
-          matchingDay: 1,
+          matchingDay: 15,
           monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
           googleMeetLink: "https://meet.google.com/new",
           preventMeetingOverlap: true,

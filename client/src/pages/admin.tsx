@@ -273,6 +273,7 @@ export default function Admin() {
                   <div>
                     <Label htmlFor="matchingDay">Monthly Matching Day</Label>
                     <Select
+                      key={settings?.matchingDay}
                       value={settings?.matchingDay?.toString()}
                       onValueChange={(value) => updateSettings.mutate({ matchingDay: parseInt(value) })}
                     >
