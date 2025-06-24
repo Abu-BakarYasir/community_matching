@@ -3,15 +3,21 @@ import { emailService } from './email';
 import type { User, ProfileQuestions } from '@shared/schema';
 
 class MatchingService {
-  async runMonthlyMatching(weights?: any) {
+  async runMonthlyMatching(weights?: any, organizationId?: number) {
     console.log('Starting monthly matching process...');
     
     const currentDate = new Date();
     const monthYear = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     
-    // Get all active users
-    const users = await storage.getAllUsers();
-    const activeUsers = users.filter(user => user.isActive);
+    // Get all active users - filter by organization if specified
+    const allUsers = await storage.getAllUsers();
+    let activeUsers = allUsers.filter(user => user.isActive);
+    
+    // If organizationId is specified, only match users from that organization
+    if (organizationId) {
+      activeUsers = activeUsers.filter(user => user.organizationId === organizationId);
+      console.log(`Filtering to organization ${organizationId}: ${activeUsers.length} users`);
+    }
     
     console.log(`Found ${activeUsers.length} active users for matching`);
     

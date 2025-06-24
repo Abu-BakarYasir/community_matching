@@ -25,7 +25,7 @@ import {
   type InsertOrganization,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 export interface IStorage {

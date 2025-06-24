@@ -654,8 +654,8 @@ app.get('/api/settings/public', async (req, res) => {
       // Import the matching service
       const { matchingService } = await import('./services/matching');
       
-      // Run the monthly matching for this admin's organization
-      const result = await matchingService.runMonthlyMatching();
+      // Run the monthly matching for this admin's organization only
+      const result = await matchingService.runMonthlyMatching(undefined, user.organizationId);
       
       res.json({ 
         message: "Matching process completed successfully",
