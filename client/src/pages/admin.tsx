@@ -241,8 +241,8 @@ export default function Admin() {
                   <div className="p-3 bg-gray-50 rounded border text-sm font-mono">
                     {(() => {
                       if (typeof window === 'undefined') return 'Loading...';
-                      // Use the existing organization slug (daa) for now - community name is just for display
-                      const slug = user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community';
+                      // Generate slug from current community name
+                      const slug = (settings?.appName || communityName || 'community').toLowerCase().replace(/[^a-z0-9]/g, '');
                       return `${window.location.origin}/community/${slug}`;
                     })()}
                   </div>
@@ -251,7 +251,7 @@ export default function Admin() {
                     size="sm"
                     onClick={() => {
                       if (typeof window !== 'undefined') {
-                        const slug = user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community';
+                        const slug = (settings?.appName || communityName || 'community').toLowerCase().replace(/[^a-z0-9]/g, '');
                         const inviteLink = `${window.location.origin}/community/${slug}`;
                         navigator.clipboard.writeText(inviteLink);
                         toast({ title: "Link copied!", description: "Community invite link copied to clipboard" });
