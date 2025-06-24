@@ -254,8 +254,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllMatches(): Promise<MatchWithUsers[]> {
-    // For now, return empty array to fix the blocking issue
-    return [];
+    try {
+      const matchesWithUsers = await db
+        .select({
+          id: matches.id,
+          user1Id: matches.user1Id,
+          user2Id: matches.user2Id,
+          matchScore: matches.matchScore,
+          status: matches.status,
+          monthYear: matches.monthYear,
+          createdAt: matches.createdAt,
+          user1: {
+            id: sql`u1.id`,
+            email: sql`u1.email`,
+            firstName: sql`u1.first_name`,
+            lastName: sql`u1.last_name`,
+            jobTitle: sql`u1.job_title`,
+            company: sql`u1.company`,
+            industry: sql`u1.industry`,
+            organizationId: sql`u1.organization_id`,
+            isActive: sql`u1.is_active`,
+            isAdmin: sql`u1.is_admin`,
+            isSuperAdmin: sql`u1.is_super_admin`,
+            createdAt: sql`u1.created_at`,
+            updatedAt: sql`u1.updated_at`,
+          },
+          user2: {
+            id: sql`u2.id`,
+            email: sql`u2.email`,
+            firstName: sql`u2.first_name`,
+            lastName: sql`u2.last_name`,
+            jobTitle: sql`u2.job_title`,
+            company: sql`u2.company`,
+            industry: sql`u2.industry`,
+            organizationId: sql`u2.organization_id`,
+            isActive: sql`u2.is_active`,
+            isAdmin: sql`u2.is_admin`,
+            isSuperAdmin: sql`u2.is_super_admin`,
+            createdAt: sql`u2.created_at`,
+            updatedAt: sql`u2.updated_at`,
+          }
+        })
+        .from(matches)
+        .leftJoin(sql`users u1`, sql`u1.id = ${matches.user1Id}`)
+        .leftJoin(sql`users u2`, sql`u2.id = ${matches.user2Id}`)
+        .orderBy(desc(matches.createdAt));
+
+      return matchesWithUsers as MatchWithUsers[];
+    } catch (error) {
+      console.error("Error fetching all matches:", error);
+      return [];
+    }
   }
 
   async deleteMatch(id: number): Promise<boolean> {
