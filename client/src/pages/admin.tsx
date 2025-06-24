@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/header";
@@ -93,7 +93,7 @@ export default function Admin() {
   });
 
   // Set community name when settings load
-  React.useEffect(() => {
+  useEffect(() => {
     if (settings?.appName) {
       setCommunityName(settings.appName);
     }
@@ -241,8 +241,8 @@ export default function Admin() {
                   <div className="p-3 bg-gray-50 rounded border text-sm font-mono">
                     {(() => {
                       if (typeof window === 'undefined') return 'Loading...';
-                      // Use the organization slug if available, otherwise fall back to name-based slug
-                      const slug = settings?.organizationSlug || user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community';
+                      // Generate slug from current community name
+                      const slug = (settings?.appName || communityName || 'community').toLowerCase().replace(/[^a-z0-9]/g, '');
                       return `${window.location.origin}/community/${slug}`;
                     })()}
                   </div>
@@ -251,7 +251,7 @@ export default function Admin() {
                     size="sm"
                     onClick={() => {
                       if (typeof window !== 'undefined') {
-                        const slug = settings?.organizationSlug || user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community';
+                        const slug = (settings?.appName || communityName || 'community').toLowerCase().replace(/[^a-z0-9]/g, '');
                         const inviteLink = `${window.location.origin}/community/${slug}`;
                         navigator.clipboard.writeText(inviteLink);
                         toast({ title: "Link copied!", description: "Community invite link copied to clipboard" });
