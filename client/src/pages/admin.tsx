@@ -33,7 +33,7 @@ export default function Admin() {
     queryKey: ["/api/admin/meetings"],
   });
 
-  const { data: settings } = useQuery({
+  const { data: settings, refetch: refetchSettings } = useQuery({
     queryKey: ["/api/admin/settings"],
   });
 
@@ -54,6 +54,7 @@ export default function Admin() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      refetchSettings();
       toast({
         title: "Settings updated",
         description: "Your changes have been saved.",
@@ -272,7 +273,7 @@ export default function Admin() {
                   <div>
                     <Label htmlFor="matchingDay">Monthly Matching Day</Label>
                     <Select
-                      value={settings?.matchingDay?.toString() || "1"}
+                      value={settings?.matchingDay?.toString()}
                       onValueChange={(value) => updateSettings.mutate({ matchingDay: parseInt(value) })}
                     >
                       <SelectTrigger>
