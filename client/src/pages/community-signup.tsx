@@ -54,21 +54,23 @@ export default function CommunitySignup() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-sm shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            {organization.name} Matches
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            onClick={handleSignIn}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium"
-          >
-            Sign In to Get Started
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-sm">
+        <Card className="shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              {organization.name} Matches
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Button 
+              onClick={handleSignIn}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium"
+            >
+              Sign In to Get Started
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
