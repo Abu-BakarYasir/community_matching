@@ -159,7 +159,7 @@ export default function Admin() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            {user?.organizationName || "DAA"} Dashboard
+            Admin Dashboard
           </h1>
           <p className="text-slate-600">
             Manage users, matches, and system settings.
@@ -241,8 +241,8 @@ export default function Admin() {
                   <div className="p-3 bg-gray-50 rounded border text-sm font-mono">
                     {(() => {
                       if (typeof window === 'undefined') return 'Loading...';
-                      // Generate slug from current community name
-                      const slug = (settings?.appName || communityName || 'community').toLowerCase().replace(/[^a-z0-9]/g, '');
+                      // Use the existing organization slug (daa) for now - community name is just for display
+                      const slug = user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community';
                       return `${window.location.origin}/community/${slug}`;
                     })()}
                   </div>
@@ -251,7 +251,7 @@ export default function Admin() {
                     size="sm"
                     onClick={() => {
                       if (typeof window !== 'undefined') {
-                        const slug = (settings?.appName || communityName || 'community').toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const slug = user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community';
                         const inviteLink = `${window.location.origin}/community/${slug}`;
                         navigator.clipboard.writeText(inviteLink);
                         toast({ title: "Link copied!", description: "Community invite link copied to clipboard" });
