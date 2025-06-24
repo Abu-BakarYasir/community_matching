@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/header";
@@ -48,6 +48,9 @@ export default function Admin() {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Debouncing for settings updates
+  const debounceRef = useRef<NodeJS.Timeout>();
+
   const updateSettings = useMutation({
     mutationFn: async (updates: any) => {
       return await apiRequest("PATCH", "/api/admin/settings", updates);
@@ -88,6 +91,16 @@ export default function Admin() {
       });
     },
   });
+
+  const debouncedUpdateSettings = useCallback((updates: any) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
+    debounceRef.current = setTimeout(() => {
+      updateSettings.mutate(updates);
+    }, 1000); // Wait 1 second after user stops typing
+  }, [updateSettings]);
 
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
