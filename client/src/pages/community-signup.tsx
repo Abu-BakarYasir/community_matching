@@ -58,7 +58,7 @@ export default function CommunitySignup() {
         <Card className="shadow-lg">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold text-gray-900">
-              {organization.name} Matches
+              {organization.settings?.appName || organization.name} Matches
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
