@@ -46,6 +46,7 @@ class EmailService {
              (m.match.user1Id === user2.id && m.match.user2Id === user1.id);
     });
 
+    const { storage } = await import('../storage');
     const createEmailContent = (recipient: User, partner: User) => {
       // Meeting information section
       const meetingInfoHtml = matchMeeting 

@@ -50,10 +50,7 @@ export default function Admin() {
 
   const updateSettings = useMutation({
     mutationFn: async (updates: any) => {
-      return await apiRequest("/api/admin/settings", {
-        method: "PATCH",
-        body: JSON.stringify(updates),
-      });
+      return await apiRequest("PATCH", "/api/admin/settings", updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
