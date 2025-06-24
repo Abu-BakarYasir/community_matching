@@ -322,14 +322,36 @@ let adminSettings = {
 };
 
 // Settings endpoints
-app.get('/api/settings/public', async (req, res) => {
+app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
   try {
-    console.log("Public settings request - current adminSettings:", adminSettings);
+    // Get user's organization settings from database
+    const userId = req.user.claims.sub;
+    const user = await storage.getUser(userId);
+    
+    if (!user?.organizationId) {
+      // Fallback to default settings if no organization
+      return res.json({
+        appName: adminSettings.appName,
+        nextMatchingDate: adminSettings.nextMatchingDate,
+        matchingDay: adminSettings.matchingDay,
+        showMonthlyGoals: adminSettings.showMonthlyGoals
+      });
+    }
+
+    const organization = await storage.getOrganization(user.organizationId);
+    if (!organization) {
+      return res.status(404).json({ message: 'Organization not found' });
+    }
+
+    // Return organization settings from database
+    const settings = organization.settings || {};
+    console.log("Public settings from database:", settings);
+    
     res.json({
-      appName: adminSettings.appName,
-      nextMatchingDate: adminSettings.nextMatchingDate,
-      matchingDay: adminSettings.matchingDay,
-      showMonthlyGoals: adminSettings.showMonthlyGoals
+      appName: settings.appName || organization.name,
+      nextMatchingDate: "2025-07-01",
+      matchingDay: settings.matchingDay || 15,
+      showMonthlyGoals: adminSettings.showMonthlyGoals || false
     });
   } catch (error) {
     console.error("Error fetching public settings:", error);
