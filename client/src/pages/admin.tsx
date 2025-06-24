@@ -225,29 +225,23 @@ export default function Admin() {
               <Card>
                 <CardHeader>
                   <CardTitle>Community Invite Link</CardTitle>
-                  <CardDescription>
-                    Share this link with community members to join your organization
-                  </CardDescription>
+                  <CardDescription>Share this link for new members to join your community</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2 p-3 bg-slate-50 rounded-lg border">
-                    <Link className="h-4 w-4 text-slate-500" />
-                    <code className="flex-1 text-sm font-mono text-slate-700 break-all">
-                      {getInviteLink()}
-                    </code>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={copyInviteLink}
-                      className="flex items-center space-x-2 shrink-0"
-                    >
-                      <Copy className="h-4 w-4" />
-                      <span>{copiedLink ? "Copied!" : "Copy"}</span>
-                    </Button>
+                  <div className="p-3 bg-gray-50 rounded border text-sm font-mono">
+                    {typeof window !== 'undefined' ? `${window.location.origin}/signup/${user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community'}` : 'Loading...'}
                   </div>
-                  <p className="text-sm text-slate-600">
-                    New members who sign up using this link will automatically join the {user?.organizationName || "DAA"} community and can participate in monthly matching rounds.
-                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const inviteLink = `${window.location.origin}/signup/${user?.organizationName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'community'}`;
+                      navigator.clipboard.writeText(inviteLink);
+                      toast({ title: "Link copied!", description: "Community invite link copied to clipboard" });
+                    }}
+                  >
+                    Copy Link
+                  </Button>
                 </CardContent>
               </Card>
 

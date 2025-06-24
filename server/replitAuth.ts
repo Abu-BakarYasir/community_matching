@@ -123,11 +123,21 @@ export async function setupAuth(app: Express) {
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-    verified: passport.AuthenticateCallback
+    verified: passport.AuthenticateCallback,
+    req?: any
   ) => {
     const user = {};
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    
+    // Get organization slug from session if available
+    const organizationSlug = req?.session?.organizationSlug;
+    await upsertUser(tokens.claims(), organizationSlug);
+    
+    // Clean up session
+    if (req?.session?.organizationSlug) {
+      delete req.session.organizationSlug;
+    }
+    
     verified(null, user);
   };
 
@@ -149,9 +159,10 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     // Store organization context in session if provided
-    const orgSlug = req.query.org as string;
-    if (orgSlug) {
-      req.session.orgSlug = orgSlug;
+    const organizationSlug = req.query.organization as string;
+    if (organizationSlug) {
+      (req.session as any).organizationSlug = organizationSlug;
+      console.log("Storing organization slug in session:", organizationSlug);
     }
     
     passport.authenticate(`replitauth:${req.hostname}`, {

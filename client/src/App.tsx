@@ -10,6 +10,7 @@ import Profile from "@/pages/profile";
 import Landing from "@/pages/landing";
 import Signup from "@/pages/signup";
 import TestRoles from "@/pages/test-roles";
+import CommunitySignup from "@/pages/community-signup";
 import { queryClient } from "@/lib/queryClient";
 
 function AdminRoute() {
@@ -86,6 +87,9 @@ function Router() {
       </Route>
       <Route path="/register">
         <Landing />
+      </Route>
+      <Route path="/signup/:slug">
+        <CommunitySignup />
       </Route>
       <Route path="/">
         {isAuthenticated ? <Dashboard /> : <Landing />}
