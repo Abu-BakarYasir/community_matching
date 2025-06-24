@@ -11,7 +11,10 @@ export default function CommunitySignup() {
   const { data: organization, isLoading, error } = useQuery({
     queryKey: [`/api/organizations/${slug}`],
     enabled: !!slug,
+    retry: 1
   });
+
+  console.log("Community signup - slug:", slug, "organization:", organization, "isLoading:", isLoading, "error:", error);
 
   const handleSignIn = () => {
     // Redirect to Replit Auth with the organization slug as state
