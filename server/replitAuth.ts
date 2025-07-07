@@ -59,8 +59,9 @@ function updateUserSession(
 
 async function upsertUser(
   claims: any,
+  organizationSlug?: string
 ) {
-  console.log("Upserting user:", claims["email"], claims);
+  console.log("Upserting user:", claims["email"], claims, "organizationSlug:", organizationSlug);
   
   try {
     const email = claims["email"] || "";
@@ -77,35 +78,64 @@ async function upsertUser(
     } else {
       console.log("Creating new user for:", email);
       
-      // First create the user
-      const newUser = await storage.createUser({
-        id: claims["sub"],
-        email: claims["email"],
-        firstName: claims["first_name"] || email.split('@')[0],
-        lastName: claims["last_name"] || "Member",
-        profileImageUrl: claims["profile_image_url"],
-        isActive: true,
-        isAdmin: true, // New users are admins of their own organization
-      });
-
-      // Then create an organization for this user
-      const organizationName = `${newUser.firstName}'s Community`;
-      const organization = await storage.createOrganization({
-        name: organizationName,
-        adminId: newUser.id,
-        domain: email.split('@')[1], // Use email domain
-        settings: {
-          appName: organizationName,
-          matchingDay: 1,
-          monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-          googleMeetLink: "https://meet.google.com/new",
-          preventMeetingOverlap: true,
-          weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
+      let targetOrganizationId: number | null = null;
+      
+      // If signing up through community page, assign to that organization
+      if (organizationSlug) {
+        console.log("Looking for organization with slug:", organizationSlug);
+        const organizations = await storage.getAllOrganizations();
+        const targetOrg = organizations.find(org => org.slug === organizationSlug);
+        if (targetOrg) {
+          console.log("Found target organization:", targetOrg.id, targetOrg.name);
+          targetOrganizationId = targetOrg.id;
         }
-      });
+      }
+      
+      if (targetOrganizationId) {
+        // Create user as member of existing organization
+        const newUser = await storage.createUser({
+          id: claims["sub"],
+          email: claims["email"],
+          firstName: claims["first_name"] || email.split('@')[0],
+          lastName: claims["last_name"] || "Member",
+          profileImageUrl: claims["profile_image_url"],
+          organizationId: targetOrganizationId,
+          isActive: true,
+          isAdmin: false, // Regular member, not admin
+        });
+        console.log("Created user as member of existing organization:", newUser.id);
+      } else {
+        // Create user with their own organization (admin flow)
+        const newUser = await storage.createUser({
+          id: claims["sub"],
+          email: claims["email"],
+          firstName: claims["first_name"] || email.split('@')[0],
+          lastName: claims["last_name"] || "Member",
+          profileImageUrl: claims["profile_image_url"],
+          isActive: true,
+          isAdmin: true, // New users are admins of their own organization
+        });
 
-      // Update user with organization ID
-      await storage.updateUser(newUser.id, { organizationId: organization.id });
+        // Then create an organization for this user
+        const organizationName = `${newUser.firstName}'s Community`;
+        const organization = await storage.createOrganization({
+          name: organizationName,
+          adminId: newUser.id,
+          domain: email.split('@')[1], // Use email domain
+          settings: {
+            appName: organizationName,
+            matchingDay: 1,
+            monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+            googleMeetLink: "https://meet.google.com/new",
+            preventMeetingOverlap: true,
+            weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
+          }
+        });
+
+        // Update user with organization ID
+        await storage.updateUser(newUser.id, { organizationId: organization.id });
+        console.log("Created user with new organization:", newUser.id, organization.id);
+      }
     }
   } catch (error) {
     console.error("Error upserting user:", error);
@@ -187,7 +217,7 @@ export async function setupAuth(app: Express) {
         try {
           const userId = user.claims.sub;
           const email = user.claims.email;
-          const orgSlug = req.session.orgSlug;
+          const orgSlug = (req.session as any).organizationSlug;
           console.log("Processing callback for user:", userId, email, "orgSlug:", orgSlug);
 
           // If signing up through organization link, handle as regular user
@@ -222,7 +252,7 @@ export async function setupAuth(app: Express) {
               }
               
               // Clear organization context
-              delete req.session.orgSlug;
+              delete (req.session as any).organizationSlug;
               return res.redirect("/dashboard");
             }
           }
