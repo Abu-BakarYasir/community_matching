@@ -245,9 +245,10 @@ export async function setupAuth(app: Express) {
                   organizationId: organization.id
                 });
               } else {
-                // Update existing user to belong to this organization
+                // Update existing user to belong to this organization as regular member
                 await storage.updateUser(existingUser.id, { 
-                  organizationId: organization.id 
+                  organizationId: organization.id,
+                  isAdmin: false // Ensure community signup users are not admins
                 });
               }
               
