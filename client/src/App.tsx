@@ -80,6 +80,9 @@ function Router() {
       <Route path="/profile">
         {isAuthenticated ? <Profile /> : <Landing />}
       </Route>
+      <Route path="/dashboard">
+        {isAuthenticated ? <Dashboard /> : <Landing />}
+      </Route>
       <Route path="/test-roles">
         {isAuthenticated ? <TestRoles /> : <Landing />}
       </Route>
