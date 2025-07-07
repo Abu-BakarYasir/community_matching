@@ -40,7 +40,7 @@ export default function SuperAdmin() {
   // Create community mutation
   const createOrgMutation = useMutation({
     mutationFn: async (orgData: { name: string; slug: string; description?: string }) => {
-      return apiRequest("/api/super-admin/organizations", "POST", orgData);
+      return apiRequest("POST", "/api/super-admin/organizations", orgData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/super-admin/organizations"] });
@@ -57,7 +57,7 @@ export default function SuperAdmin() {
   // Toggle super admin mutation
   const toggleSuperAdminMutation = useMutation({
     mutationFn: async ({ userId, isSuperAdmin }: { userId: string; isSuperAdmin: boolean }) => {
-      return apiRequest(`/api/super-admin/users/${userId}/super-admin`, "PATCH", { isSuperAdmin });
+      return apiRequest("PATCH", `/api/super-admin/users/${userId}/super-admin`, { isSuperAdmin });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/super-admin/users"] });
