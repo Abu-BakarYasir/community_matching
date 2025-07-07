@@ -55,7 +55,7 @@ export interface IStorage {
   // Meeting operations
   getMeeting(id: number): Promise<Meeting | undefined>;
   getMeetingsByUser(userId: string): Promise<MeetingWithMatch[]>;
-  getAllMeetings(): Promise<Meeting[]>;
+  getAllMeetings(): Promise<MeetingWithMatch[]>;
   createMeeting(meeting: InsertMeeting): Promise<Meeting>;
   updateMeeting(id: number, updates: Partial<InsertMeeting>): Promise<Meeting | undefined>;
 
@@ -400,8 +400,66 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAllMeetings(): Promise<Meeting[]> {
-    return await db.select().from(meetings);
+  async getAllMeetings(): Promise<MeetingWithMatch[]> {
+    const allMeetings = await db
+      .select({
+        id: meetings.id,
+        matchId: meetings.matchId,
+        scheduledAt: meetings.scheduledAt,
+        duration: meetings.duration,
+        meetingLink: meetings.meetingLink,
+        status: meetings.status,
+        createdAt: meetings.createdAt,
+        match: {
+          id: matches.id,
+          user1Id: matches.user1Id,
+          user2Id: matches.user2Id,
+          matchScore: matches.matchScore,
+          status: matches.status,
+          monthYear: matches.monthYear,
+          createdAt: matches.createdAt,
+          user1: {
+            id: sql<string>`u1.id`,
+            email: sql<string>`u1.email`,
+            firstName: sql<string>`u1.first_name`,
+            lastName: sql<string>`u1.last_name`,
+            jobTitle: sql<string>`u1.job_title`,
+            company: sql<string>`u1.company`,
+            industry: sql<string>`u1.industry`,
+            bio: sql<string>`u1.bio`,
+            linkedinUrl: sql<string>`u1.linkedin_url`,
+            organizationId: sql<number>`u1.organization_id`,
+            isActive: sql<boolean>`u1.is_active`,
+            isAdmin: sql<boolean>`u1.is_admin`,
+            isSuperAdmin: sql<boolean>`u1.is_super_admin`,
+            createdAt: sql<Date>`u1.created_at`,
+            updatedAt: sql<Date>`u1.updated_at`
+          },
+          user2: {
+            id: sql<string>`u2.id`,
+            email: sql<string>`u2.email`,
+            firstName: sql<string>`u2.first_name`,
+            lastName: sql<string>`u2.last_name`,
+            jobTitle: sql<string>`u2.job_title`,
+            company: sql<string>`u2.company`,
+            industry: sql<string>`u2.industry`,
+            bio: sql<string>`u2.bio`,
+            linkedinUrl: sql<string>`u2.linkedin_url`,
+            organizationId: sql<number>`u2.organization_id`,
+            isActive: sql<boolean>`u2.is_active`,
+            isAdmin: sql<boolean>`u2.is_admin`,
+            isSuperAdmin: sql<boolean>`u2.is_super_admin`,
+            createdAt: sql<Date>`u2.created_at`,
+            updatedAt: sql<Date>`u2.updated_at`
+          }
+        }
+      })
+      .from(meetings)
+      .innerJoin(matches, eq(meetings.matchId, matches.id))
+      .innerJoin(sql`users u1`, eq(matches.user1Id, sql`u1.id`))
+      .innerJoin(sql`users u2`, eq(matches.user2Id, sql`u2.id`));
+    
+    return allMeetings as MeetingWithMatch[];
   }
 
   async deleteMeeting(id: number): Promise<boolean> {
