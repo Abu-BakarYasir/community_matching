@@ -49,6 +49,24 @@ function SuperAdminRoute() {
   return <SuperAdmin />;
 }
 
+function TestRolesRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg">Loading...</div>
+    </div>;
+  }
+
+  if (!user || !user.isSuperAdmin) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg text-red-600">Super admin access required</div>
+    </div>;
+  }
+
+  return <TestRoles />;
+}
+
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -84,7 +102,7 @@ function Router() {
         {isAuthenticated ? <Dashboard /> : <Landing />}
       </Route>
       <Route path="/test-roles">
-        {isAuthenticated ? <TestRoles /> : <Landing />}
+        <TestRolesRoute />
       </Route>
       <Route path="/register">
         <Landing />

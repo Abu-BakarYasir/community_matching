@@ -81,9 +81,11 @@ export function Header() {
                     Super Admin
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => setLocation("/test-roles")}>
-                  Test Roles
-                </DropdownMenuItem>
+                {user?.isSuperAdmin && (
+                  <DropdownMenuItem onClick={() => setLocation("/test-roles")}>
+                    Test Roles
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={() => logoutMutation.mutate()}
                   className="text-red-600"
