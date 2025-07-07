@@ -60,6 +60,9 @@ export default function CommunitySignup() {
             <CardTitle className="text-2xl font-bold text-gray-900">
               {organization.settings?.appName || organization.name} Matches
             </CardTitle>
+            <CardDescription className="text-gray-600 mt-3 text-base">
+              Join your community on Matches! Sign up to get started
+            </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             <Button 
