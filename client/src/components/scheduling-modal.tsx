@@ -27,6 +27,10 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
     queryKey: ["/api/auth/me"],
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ["/api/admin/settings"],
+  });
+
   const scheduleMutation = useMutation({
     mutationFn: (meetingData: any) => {
       if (match?.meeting) {
@@ -76,7 +80,7 @@ export function SchedulingModal({ match, open, onOpenChange }: SchedulingModalPr
       meetingType,
       duration: 30,
       location: meetingType === "coffee" ? "TBD" : undefined,
-      meetingLink: meetingType === "video" ? "https://meet.google.com/wnf-cjab-twp" : undefined,
+      meetingLink: meetingType === "video" ? (settings?.communityMeetingLink || "https://meet.google.com/new") : undefined,
       status: "scheduled"
     });
   };

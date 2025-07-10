@@ -450,7 +450,7 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
         nextMatchingDate: "2025-07-01",
         matchingDay: organization.settings?.matchingDay || 15,
         monthlyGoals: organization.settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-        googleMeetLink: organization.settings?.googleMeetLink || "https://meet.google.com/new",
+        communityMeetingLink: organization.settings?.communityMeetingLink || "https://meet.google.com/new",
         preventMeetingOverlap: organization.settings?.preventMeetingOverlap || true,
         showMonthlyGoals: adminSettings.showMonthlyGoals || false, // Use global feature toggle
         weights: organization.settings?.weights || { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
@@ -639,7 +639,7 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
           appName: name,
           matchingDay: 15,
           monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-          googleMeetLink: "https://meet.google.com/new",
+          communityMeetingLink: "https://meet.google.com/new",
           preventMeetingOverlap: true,
           weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
         }

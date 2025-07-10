@@ -20,6 +20,7 @@ export default function Admin() {
   const [editingUser, setEditingUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [communityName, setCommunityName] = useState("");
+  const [meetingLink, setMeetingLink] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
   const { toast } = useToast();
 
@@ -93,12 +94,15 @@ export default function Admin() {
     },
   });
 
-  // Set community name when settings load
+  // Set community name and meeting link when settings load
   useEffect(() => {
     if (settings?.appName) {
       setCommunityName(settings.appName);
     }
-  }, [settings?.appName]);
+    if (settings?.communityMeetingLink) {
+      setMeetingLink(settings.communityMeetingLink);
+    }
+  }, [settings?.appName, settings?.communityMeetingLink]);
 
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
@@ -289,6 +293,29 @@ export default function Admin() {
                     </div>
                     <p className="text-sm text-slate-600 mt-1">
                       Name displayed throughout the application
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="communityMeetingLink">Community Meeting Link</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        id="communityMeetingLink"
+                        value={meetingLink}
+                        onChange={(e) => setMeetingLink(e.target.value)}
+                        placeholder="https://meet.google.com/abc-defg-hij"
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={() => updateSettings.mutate({ communityMeetingLink: meetingLink })}
+                        disabled={updateSettings.isPending}
+                        size="sm"
+                      >
+                        Save
+                      </Button>
+                    </div>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Default meeting link for all community meetings (Zoom, Google Meet, etc.)
                     </p>
                   </div>
 
