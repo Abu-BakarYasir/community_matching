@@ -233,18 +233,24 @@ export class DatabaseStorage implements IStorage {
         .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)))
         .orderBy(desc(matches.createdAt));
 
-      // Get all user data needed
+      if (userMatches.length === 0) {
+        return [];
+      }
+
+      // Get all user data needed using individual queries to avoid array syntax issues
       const userIds = new Set<string>();
       userMatches.forEach(match => {
         userIds.add(match.user1Id);
         userIds.add(match.user2Id);
       });
 
-      const allUsers = await db
-        .select()
-        .from(users)
-        .where(sql`${users.id} = ANY(${Array.from(userIds)})`);
-
+      // Fetch users individually to avoid SQL array issues
+      const userPromises = Array.from(userIds).map(id => 
+        db.select().from(users).where(eq(users.id, id)).limit(1)
+      );
+      
+      const userResults = await Promise.all(userPromises);
+      const allUsers = userResults.flat();
       const userMap = new Map(allUsers.map(user => [user.id, user]));
 
       // Combine matches with user data
