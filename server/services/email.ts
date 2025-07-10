@@ -78,23 +78,43 @@ class EmailService {
       const subject = `[${communityName}] - ${recipient.firstName} <> ${partner.firstName}`;
       
       // Format meeting date and time if available
-      const meetingDetails = matchMeeting 
-        ? `
-Date and time: ${new Date(matchMeeting.scheduledAt).toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
-})} at ${new Date(matchMeeting.scheduledAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+      let meetingDetails;
+      let calendarLink = '';
+      
+      if (matchMeeting) {
+        const meetingDate = new Date(matchMeeting.scheduledAt);
+        const formattedDate = meetingDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const formattedTime = meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        // Create Google Calendar link
+        const startDate = meetingDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        const endDate = new Date(meetingDate.getTime() + 30 * 60000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        const eventTitle = encodeURIComponent(`Networking Meeting: ${recipient.firstName} & ${partner.firstName}`);
+        const eventDetails = encodeURIComponent(`Meeting with ${partner.firstName} from ${communityName}. Join: ${matchMeeting.meetingLink}`);
+        
+        calendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${startDate}/${endDate}&details=${eventDetails}&location=${encodeURIComponent(matchMeeting.meetingLink)}`;
+        
+        meetingDetails = `
+Date and time: ${formattedDate} at ${formattedTime}
 Link: ${matchMeeting.meetingLink}
-        `.trim()
-        : `
+        `.trim();
+      } else {
+        meetingDetails = `
 Date and time: Your meeting will be scheduled soon
 Link: Will be provided once scheduled
         `.trim();
+      }
 
       return {
-        from: fromEmail,
+        from: {
+          email: fromEmail,
+          name: 'Matches.Community'
+        },
         to: recipient.email,
         subject,
         html: `
@@ -107,7 +127,8 @@ Link: Will be provided once scheduled
             
             <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
               <p style="margin: 0 0 10px 0;"><strong>Your match - ${partner.firstName}</strong></p>
-              <p style="margin: 0; white-space: pre-line;">${meetingDetails}</p>
+              <p style="margin: 0 0 15px 0; white-space: pre-line;">${meetingDetails}</p>
+              ${calendarLink ? `<a href="${calendarLink}" style="display: inline-block; background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">📅 Add to Calendar</a>` : ''}
             </div>
             
             <p>Enjoy your chat!</p>
@@ -204,13 +225,19 @@ Link: Will be provided once scheduled
     try {
       await Promise.all([
         this.mailService.send({
-          from: fromEmail,
+          from: {
+            email: fromEmail,
+            name: 'Matches.Community'
+          },
           to: user1.email,
           subject,
           html: htmlContent,
         }),
         this.mailService.send({
-          from: fromEmail,
+          from: {
+            email: fromEmail,
+            name: 'Matches.Community'
+          },
           to: user2.email,
           subject,
           html: htmlContent.replace(user1.firstName, user2.firstName).replace(`${user2.firstName} ${user2.lastName}`, `${user1.firstName} ${user1.lastName}`),
@@ -257,7 +284,10 @@ Link: Will be provided once scheduled
 
     try {
       await this.mailService.send({
-        from: fromEmail,
+        from: {
+          email: fromEmail,
+          name: 'Matches.Community'
+        },
         to: user.email,
         subject,
         html: htmlContent,
