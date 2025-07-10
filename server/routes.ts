@@ -302,6 +302,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/meetings', isAuthenticated, async (req: any, res) => {
+    try {
+      const validatedData = insertMeetingSchema.parse(req.body);
+      const meeting = await storage.createMeeting(validatedData);
+      res.json(meeting);
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+      res.status(500).json({ message: "Failed to create meeting" });
+    }
+  });
+
+  app.patch('/api/meetings/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const meetingId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      console.log("Meeting update request:", { meetingId, updateData });
+      
+      // Convert scheduledAt to proper date format if provided
+      if (updateData.scheduledAt) {
+        updateData.scheduledAt = new Date(updateData.scheduledAt);
+      }
+      
+      const updatedMeeting = await storage.updateMeeting(meetingId, updateData);
+      
+      if (!updatedMeeting) {
+        return res.status(404).json({ message: "Meeting not found" });
+      }
+      
+      console.log("Meeting updated successfully:", updatedMeeting);
+      res.json(updatedMeeting);
+    } catch (error) {
+      console.error("Error updating meeting:", error);
+      res.status(500).json({ message: "Failed to update meeting" });
+    }
+  });
+
 // In-memory settings storage for demo (in production, this would be in database)
 let adminSettings = {
   appName: "DAA Monthly Matching",
