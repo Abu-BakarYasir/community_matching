@@ -146,11 +146,16 @@ class MatchingService {
       try {
         const organization = await storage.getOrganization(organizationId);
         if (organization) {
-          // Get admin user for this organization
+          // Get admin user for this organization - prioritize real admin users over test accounts
           const allUsers = await storage.getAllUsers();
-          const adminUser = allUsers.find(user => 
+          const adminUsers = allUsers.filter(user => 
             user.organizationId === organizationId && user.isAdmin
           );
+          
+          // Prioritize non-test admin users (those with real email addresses)
+          const adminUser = adminUsers.find(user => 
+            !user.email.includes('daa.community') && !user.email.includes('test')
+          ) || adminUsers[0]; // Fallback to first admin if no real admin found
           
           if (adminUser) {
             // Get full match data with user details
