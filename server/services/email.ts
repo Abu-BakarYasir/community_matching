@@ -38,6 +38,9 @@ class EmailService {
     // Get suggested meeting times and check if meeting already exists
     const suggestedTimes = await timeSlotService.getSuggestedMeetingTimes(user1.id, user2.id);
     
+    // Import storage service at the top of the function
+    const { storage } = await import('../storage');
+    
     // Check if there's already a scheduled meeting for this match
     const user1Meetings = await storage.getMeetingsByUser(user1.id);
     const user2Meetings = await storage.getMeetingsByUser(user2.id);
@@ -47,8 +50,6 @@ class EmailService {
       return (m.match.user1Id === user1.id && m.match.user2Id === user2.id) ||
              (m.match.user1Id === user2.id && m.match.user2Id === user1.id);
     });
-
-    const { storage } = await import('../storage');
     const createEmailContent = (recipient: User, partner: User) => {
       // Meeting information section
       const meetingInfoHtml = matchMeeting 
