@@ -118,8 +118,15 @@ async function upsertUser(
 
         // Then create an organization for this user
         const organizationName = `${newUser.firstName}'s Community`;
+        const organizationSlug = organizationName.toLowerCase()
+          .replace(/[^a-z0-9\s]/g, '') // Remove special characters but keep spaces
+          .replace(/\s+/g, '-') // Replace spaces with hyphens
+          .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+          .substring(0, 50); // Limit length
+        
         const organization = await storage.createOrganization({
           name: organizationName,
+          slug: organizationSlug,
           adminId: newUser.id,
           domain: email.split('@')[1], // Use email domain
           settings: {

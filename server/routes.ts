@@ -728,11 +728,11 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
       const currentSettings = organization.settings || {};
       const newSettings = { ...currentSettings, ...updates };
       
-      // If appName is being updated, also update the organization slug
+      // If appName is being updated, also update the organization name but not slug (slug should remain static)
       const updateData: any = { settings: newSettings };
       if (updates.appName) {
-        updateData.slug = updates.appName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        console.log("Updating organization slug to:", updateData.slug);
+        updateData.name = updates.appName;
+        console.log("Updating organization name to:", updateData.name);
       }
       
       await storage.updateOrganization(organization.id, updateData);

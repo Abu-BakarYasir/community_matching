@@ -303,7 +303,7 @@ export default function Admin() {
                         id="communityMeetingLink"
                         value={meetingLink}
                         onChange={(e) => setMeetingLink(e.target.value)}
-                        placeholder="https://meet.google.com/abc-defg-hij"
+                        placeholder="https://meet.google.com/new (or your Zoom/Teams link)"
                         className="flex-1"
                       />
                       <Button
