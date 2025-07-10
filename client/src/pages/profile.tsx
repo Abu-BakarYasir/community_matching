@@ -5,14 +5,51 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Building, Briefcase, Calendar, MapPin, Linkedin, Edit, UserCheck } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { User, Mail, Building, Briefcase, Calendar, MapPin, Linkedin, Edit, UserCheck, Settings } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Profile() {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const { toast } = useToast();
   
   const { data: user } = useQuery({
     queryKey: ["/api/auth/me"],
+  });
+
+  // Initialize name fields when user data loads
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+    }
+  }, [user]);
+
+  const updateUserSettings = useMutation({
+    mutationFn: async (data: { firstName: string; lastName: string }) => {
+      return await apiRequest("PATCH", "/api/user/settings", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      setEditingName(false);
+      toast({
+        title: "Name updated",
+        description: "Your name has been successfully updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update failed",
+        description: error.message || "Failed to update name. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Check if this is a first-time user and automatically open profile modal
@@ -85,9 +122,91 @@ export default function Profile() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Profile Overview */}
+        <div className="space-y-6">
+          {/* User Settings Card */}
           <Card>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    User Settings
+                  </CardTitle>
+                </div>
+                {!editingName && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingName(true)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Name
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {editingName ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => updateUserSettings.mutate({ firstName, lastName })}
+                      disabled={updateUserSettings.isPending}
+                    >
+                      {updateUserSettings.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setEditingName(false);
+                        setFirstName(user.firstName || "");
+                        setLastName(user.lastName || "");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <User className="h-5 w-5 text-slate-400" />
+                    <span className="text-slate-700 font-medium">
+                      {user.firstName} {user.lastName}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Mail className="h-5 w-5 text-slate-400" />
+                    <span className="text-slate-700">{user.email}</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Profile Overview */}
+            <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
@@ -196,6 +315,7 @@ export default function Profile() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
       </main>
       

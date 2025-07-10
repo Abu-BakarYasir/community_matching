@@ -93,11 +93,15 @@ async function upsertUser(
       
       if (targetOrganizationId) {
         // Create user as member of existing organization
+        // For regular users: use auth name or email prefix, never "Member"
+        const firstName = claims["first_name"] || email.split('@')[0];
+        const lastName = claims["last_name"] || "";
+        
         const newUser = await storage.createUser({
           id: claims["sub"],
           email: claims["email"],
-          firstName: claims["first_name"] || email.split('@')[0],
-          lastName: claims["last_name"] || "Member",
+          firstName,
+          lastName,
           profileImageUrl: claims["profile_image_url"],
           organizationId: targetOrganizationId,
           isActive: true,
@@ -106,11 +110,15 @@ async function upsertUser(
         console.log("Created user as member of existing organization:", newUser.id);
       } else {
         // Create user with their own organization (admin flow)
+        // For community creators: use auth name or fallback to "[Community Name] Admin"
+        const firstName = claims["first_name"] || email.split('@')[0];
+        const lastName = claims["last_name"] || "";
+        
         const newUser = await storage.createUser({
           id: claims["sub"],
           email: claims["email"],
-          firstName: claims["first_name"] || email.split('@')[0],
-          lastName: claims["last_name"] || "Member",
+          firstName,
+          lastName,
           profileImageUrl: claims["profile_image_url"],
           isActive: true,
           isAdmin: true, // New users are admins of their own organization
@@ -245,7 +253,7 @@ export async function setupAuth(app: Express) {
                   id: userId,
                   email: email,
                   firstName: user.claims.first_name || email.split('@')[0],
-                  lastName: user.claims.last_name || "Member",
+                  lastName: user.claims.last_name || "",
                   profileImageUrl: user.claims.profile_image_url,
                   isActive: true,
                   isAdmin: false, // Regular community members are not admins

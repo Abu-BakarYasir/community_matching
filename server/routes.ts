@@ -124,10 +124,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userId = `admin-${Date.now()}`;
         console.log("Creating new admin user with ID:", userId);
         
+        // For community creators from homepage: use [Community Name] Admin format
         adminUser = await storage.createUser({
           id: userId,
           email: adminEmail,
-          firstName: adminEmail.split('@')[0],
+          firstName: `${name}`,
           lastName: "Admin",
           profileImageUrl: null,
           isActive: true,
@@ -175,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: claims.sub,
           email: claims.email,
           firstName: claims.first_name || claims.email.split('@')[0],
-          lastName: claims.last_name || "Member",
+          lastName: claims.last_name || "",
           profileImageUrl: claims.profile_image_url,
         });
         user = await storage.getUser(userId);
@@ -220,7 +221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: claims.sub,
           email: claims.email,
           firstName: claims.first_name || claims.email.split('@')[0],
-          lastName: claims.last_name || "Member",
+          lastName: claims.last_name || "",
           profileImageUrl: claims.profile_image_url,
         });
         user = await storage.getUser(userId);
@@ -296,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User profile endpoints
+  // User profile endpoints  
   app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -317,6 +318,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating user profile:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // User settings endpoints (separate from profile for basic info like name)
+  app.patch('/api/user/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const updateData = {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName
+      };
+      
+      console.log("User settings update request:", { userId, updateData });
+      const user = await storage.updateUser(userId, updateData);
+      console.log("User settings updated successfully:", user);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user settings:", error);
+      res.status(500).json({ message: "Failed to update user settings" });
     }
   });
 
