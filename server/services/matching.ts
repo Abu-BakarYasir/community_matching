@@ -212,8 +212,8 @@ class MatchingService {
       if (organizationId) {
         try {
           const organization = await storage.getOrganization(organizationId);
-          if (organization && organization.communityMeetingLink) {
-            meetingLink = organization.communityMeetingLink;
+          if (organization && organization.settings?.communityMeetingLink) {
+            meetingLink = organization.settings.communityMeetingLink;
           }
         } catch (error) {
           console.log('Could not get organization meeting link, using default');
