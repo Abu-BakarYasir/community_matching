@@ -4,18 +4,79 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, Heart, Sparkles, CheckCircle, ArrowRight, Network, Coffee, MessageCircle, Star } from "lucide-react";
+import { Users, Heart, Sparkles, CheckCircle, ArrowRight, Network, Coffee, MessageCircle, Star, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Landing() {
   const [email, setEmail] = useState("");
   const [communityName, setCommunityName] = useState("");
   const [communitySize, setCommunitySize] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, redirect to the existing auth flow
-    window.location.href = '/api/login';
+    
+    if (!email || !communityName) {
+      toast({
+        title: "Missing information",
+        description: "Please provide your email and community name.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Create community slug from name (more readable format)
+      const slug = communityName.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '') // Remove special characters but keep spaces
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+        .substring(0, 50); // Limit length
+      
+      // First, create the organization
+      const createResponse = await fetch('/api/public/create-community', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: communityName,
+          slug,
+          adminEmail: email,
+          description: `A community for ${communityName} members to connect through meaningful 1:1 conversations.`,
+          communitySize
+        }),
+      });
+
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
+        throw new Error(errorData.message || 'Failed to create community');
+      }
+
+      const { community, signupUrl } = await createResponse.json();
+      
+      toast({
+        title: "Community created successfully!",
+        description: "You'll receive an email with setup instructions shortly.",
+      });
+
+      // Redirect to the community's admin login
+      window.location.href = signupUrl;
+      
+    } catch (error: any) {
+      console.error('Error creating community:', error);
+      toast({
+        title: "Failed to create community",
+        description: error.message || "Please try again or contact support.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -406,11 +467,21 @@ export default function Landing() {
               <div className="text-center">
                 <Button 
                   type="submit"
-                  className="text-white font-semibold px-12 py-4 text-xl hover:opacity-90 transition-opacity"
+                  disabled={isSubmitting}
+                  className="text-white font-semibold px-12 py-4 text-xl hover:opacity-90 transition-opacity disabled:opacity-50"
                   style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }}
                 >
-                  Start the magic today
-                  <Sparkles className="w-6 h-6 ml-2" />
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                      Creating your community...
+                    </>
+                  ) : (
+                    <>
+                      Start the magic today
+                      <Sparkles className="w-6 h-6 ml-2" />
+                    </>
+                  )}
                 </Button>
                 
                 <p className="text-lg mt-4" style={{ color: '#2563eb' }}>

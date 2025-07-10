@@ -64,6 +64,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
 
+  // Public community creation endpoint (no auth required)
+  app.post('/api/public/create-community', async (req, res) => {
+    try {
+      const { name, slug, adminEmail, description, communitySize } = req.body;
+      console.log("Public community creation request:", { name, slug, adminEmail, description, communitySize });
+      
+      if (!name || !slug || !adminEmail) {
+        return res.status(400).json({ message: "Name, slug, and admin email are required" });
+      }
+
+      // Check if slug already exists
+      const existingOrgs = await storage.getAllOrganizations();
+      console.log("Existing organizations:", existingOrgs.map(org => ({ name: org.name, slug: org.slug })));
+      
+      const slugExists = existingOrgs.some(org => 
+        (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
+        org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase()
+      );
+
+      if (slugExists) {
+        console.log("Slug already exists:", slug);
+        return res.status(400).json({ message: "A community with this name already exists. Please choose a different name." });
+      }
+
+      // Create the organization first
+      const organizationData = {
+        name,
+        slug,
+        description: description || `A community for ${name} members to connect through meaningful 1:1 conversations.`,
+        domain: `${slug}.matches.community`,
+        isActive: true,
+        settings: {
+          appName: name,
+          matchingDay: 15,
+          monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+          communityMeetingLink: "https://meet.google.com/new",
+          preventMeetingOverlap: true,
+          weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
+        }
+      };
+
+      console.log("Creating organization with data:", organizationData);
+      const newOrganization = await storage.createOrganization(organizationData);
+      console.log("Successfully created organization:", newOrganization);
+
+      // Check if user already exists with this email
+      let adminUser = await storage.getUserByEmail(adminEmail);
+      
+      if (adminUser) {
+        // Update existing user to be admin of this organization
+        console.log("Updating existing user to be admin:", adminUser.id);
+        adminUser = await storage.updateUser(adminUser.id, { 
+          isAdmin: true, 
+          organizationId: newOrganization.id 
+        });
+      } else {
+        // Create new admin user
+        const userId = `admin-${Date.now()}`;
+        console.log("Creating new admin user with ID:", userId);
+        
+        adminUser = await storage.createUser({
+          id: userId,
+          email: adminEmail,
+          firstName: adminEmail.split('@')[0],
+          lastName: "Admin",
+          profileImageUrl: null,
+          isActive: true,
+          isAdmin: true,
+          organizationId: newOrganization.id
+        });
+      }
+
+      // Update organization with admin ID
+      console.log("Updating organization with admin ID:", adminUser.id);
+      await storage.updateOrganization(newOrganization.id, { adminId: adminUser.id });
+
+      // Create signup URL for the new community
+      const signupUrl = `/community/${slug}`;
+
+      console.log("Community creation completed successfully");
+      res.status(201).json({ 
+        community: newOrganization, 
+        adminUser,
+        signupUrl,
+        message: "Community created successfully! You are now the admin." 
+      });
+    } catch (error) {
+      console.error("Error creating community from homepage - full error:", error);
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ 
+        message: "Failed to create community", 
+        error: error.message,
+        details: error.stack
+      });
+    }
+  });
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
