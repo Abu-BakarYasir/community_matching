@@ -76,6 +76,7 @@ class MatchingService {
       if (potential.matchScore >= 60) {
         // Only match if both users don't have a match yet
         if (userMatchCount.get(potential.user1.id) === 0 && userMatchCount.get(potential.user2.id) === 0) {
+          console.log(`🎯 Creating HIGH-QUALITY match: ${potential.user1.email} ↔ ${potential.user2.email} (${potential.matchScore}%)`);
           const match = await this.createMatch(potential.user1, potential.user2, potential.matchScore, monthYear);
           matches.push(match);
           
@@ -106,6 +107,7 @@ class MatchingService {
           
           if (!existingPairs.has(pairKey)) {
             const randomScore = Math.floor(Math.random() * 25) + 35; // 35-60% for random matches
+            console.log(`🔀 Creating RANDOM match: ${user1.email} ↔ ${user2.email} (${randomScore}%)`);
             const match = await this.createMatch(user1, user2, randomScore, monthYear);
             matches.push(match);
             
@@ -171,10 +173,18 @@ class MatchingService {
     }
     
     // Send email notifications
+    console.log(`🔄 CALLING emailService.sendMatchNotification for match ${match.id}`);
+    console.log(`   → User 1: ${user1.email} (${user1.firstName} ${user1.lastName})`);
+    console.log(`   → User 2: ${user2.email} (${user2.firstName} ${user2.lastName})`);
+    console.log(`   → Match Score: ${matchScore}%`);
+    
     try {
+      console.log(`📧 About to send match notification email...`);
       await emailService.sendMatchNotification(user1, user2, matchScore);
+      console.log(`✅ Email notification completed for match ${match.id}`);
     } catch (error) {
-      console.log('Email notification failed:', error);
+      console.error(`❌ Email notification failed for match ${match.id}:`, error);
+      console.error(`❌ Error details:`, error.message);
     }
     
     // Create notifications
