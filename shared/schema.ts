@@ -28,7 +28,8 @@ export const sessions = pgTable(
 export const organizations = pgTable("organizations", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
-  adminId: text("admin_id").notNull(), // The user ID who is the admin for this organization
+  adminId: text("admin_id"), // The user ID who is the admin for this organization (optional initially)
+  description: text("description"), // Added description field
   slug: varchar("slug", { length: 100 }).unique(),
   domain: text("domain"),
   settings: jsonb("settings").default({}), // Community-specific settings

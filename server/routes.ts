@@ -767,6 +767,7 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
       }
       
       const { name, slug, description } = req.body;
+      console.log("Creating community with data:", { name, slug, description });
       
       if (!name || !slug) {
         return res.status(400).json({ message: "Name and slug are required" });
@@ -774,12 +775,15 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
 
       // Check if slug already exists
       const existingOrgs = await storage.getAllOrganizations();
+      console.log("Existing organizations:", existingOrgs.map(org => ({ name: org.name, slug: org.slug })));
+      
       const slugExists = existingOrgs.some(org => 
         (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
         org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase()
       );
 
       if (slugExists) {
+        console.log("Slug already exists:", slug);
         return res.status(400).json({ message: "Community slug already exists" });
       }
 
@@ -787,7 +791,6 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
         name,
         slug,
         description: description || "",
-        adminId: "", // Will be set when an admin is assigned
         domain: `${slug}.matches.community`,
         isActive: true,
         settings: {
@@ -800,11 +803,18 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
         }
       };
 
+      console.log("Creating organization with data:", organizationData);
       const newOrganization = await storage.createOrganization(organizationData);
+      console.log("Successfully created organization:", newOrganization);
       res.status(201).json(newOrganization);
     } catch (error) {
-      console.error("Error creating community:", error);
-      res.status(500).json({ message: "Failed to create community" });
+      console.error("Error creating community - full error:", error);
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ 
+        message: "Failed to create community", 
+        error: error.message,
+        details: error.stack
+      });
     }
   });
 
