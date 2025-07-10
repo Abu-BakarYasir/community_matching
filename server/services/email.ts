@@ -404,8 +404,19 @@ Link: Will be provided once scheduled
       </div>
     `;
 
+    console.log(`📧 Preparing admin summary email for ${adminUser.email}...`);
+    console.log(`📧 Email details:`, {
+      fromEmail,
+      toEmail: adminUser.email,
+      subject,
+      organizationName,
+      matchCount: matches.length,
+      meetingCount: meetings.length,
+      isConfigured: this.isConfigured
+    });
+
     try {
-      await this.mailService.send({
+      const emailData = {
         from: {
           email: fromEmail,
           name: 'Matches.Community Admin'
@@ -413,11 +424,33 @@ Link: Will be provided once scheduled
         to: adminUser.email,
         subject,
         html: htmlContent,
-      });
+      };
 
-      console.log(`✅ Admin summary email sent to ${adminUser.email} for ${organizationName}`);
+      console.log(`📧 Sending admin summary email via SendGrid...`);
+      const result = await this.mailService.send(emailData);
+      
+      console.log(`✅ SUCCESS: Admin summary email sent to ${adminUser.email} for ${organizationName}`);
+      console.log(`✅ SendGrid response:`, {
+        statusCode: result[0]?.statusCode,
+        headers: result[0]?.headers,
+        messageId: result[0]?.headers?.['x-message-id']
+      });
+      
+      return result;
     } catch (error) {
-      console.error('❌ Failed to send admin summary email:', error);
+      console.error('❌ FAILED: Error sending admin summary email:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.body,
+        statusCode: error.response?.statusCode
+      });
+      
+      if (error.response?.body?.errors) {
+        console.error('❌ SendGrid API errors:', JSON.stringify(error.response.body.errors, null, 2));
+      }
+      
+      throw error;
     }
   }
 }

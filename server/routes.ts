@@ -710,16 +710,29 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
         }
       ];
       
-      console.log('Sending test admin summary email to averyjs@gmail.com...');
-      await emailService.sendAdminMatchSummary(
+      console.log('📧 Sending test admin summary email to averyjs@gmail.com...');
+      console.log('📧 Test admin user:', JSON.stringify(testAdmin, null, 2));
+      console.log('📧 Test matches data:', JSON.stringify(testMatches, null, 2));
+      console.log('📧 Test meetings data:', JSON.stringify(testMeetings, null, 2));
+      
+      const result = await emailService.sendAdminMatchSummary(
         testAdmin,
         'Test Community',
         testMatches,
         testMeetings
       );
       
+      console.log('📧 Email service result:', result);
       console.log('✅ Test admin email sent successfully!');
-      res.json({ message: 'Test admin email sent successfully to averyjs@gmail.com' });
+      res.json({ 
+        message: 'Test admin email sent successfully to averyjs@gmail.com',
+        details: {
+          recipient: testAdmin.email,
+          communityName: 'Test Community',
+          matchCount: testMatches.length,
+          meetingCount: testMeetings.length
+        }
+      });
     } catch (error) {
       console.error('❌ Error sending test admin email:', error);
       res.status(500).json({ message: 'Failed to send test admin email', error: error.message });
