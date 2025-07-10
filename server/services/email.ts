@@ -101,17 +101,15 @@ Link: Will be provided once scheduled
     };
 
     try {
-      console.log(`📧 Sending emails via SendGrid API...`);
-      console.log(`   → FROM: ${fromEmail}`);
-      console.log(`   → TO: ${user1.email}, ${user2.email}`);
-      console.log(`   → SUBJECT: ${subject}`);
-      
       // Create email content for debugging
       const email1Content = createEmailContent(user1, user2);
       const email2Content = createEmailContent(user2, user1);
       
-      console.log(`   → Email 1 TO: ${email1Content.to}`);
-      console.log(`   → Email 2 TO: ${email2Content.to}`);
+      console.log(`📧 Sending emails via SendGrid API...`);
+      console.log(`   → FROM: ${fromEmail}`);
+      console.log(`   → TO: ${user1.email}, ${user2.email}`);
+      console.log(`   → Email 1 Subject: ${email1Content.subject}`);
+      console.log(`   → Email 2 Subject: ${email2Content.subject}`);
       
       // Send emails to both users using SendGrid
       const emailPromises = [
