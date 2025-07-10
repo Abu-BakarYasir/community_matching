@@ -467,13 +467,13 @@ export default function Admin() {
                   </div>
 
                   <div>
-                    <Label htmlFor="googleMeetLink">Default Google Meet Link</Label>
+                    <Label htmlFor="communityMeetingLink">Community Meeting Link</Label>
                     <Input
-                      id="googleMeetLink"
-                      value={settings?.googleMeetLink || "https://meet.google.com/wnf-cjab-twp"}
-                      onChange={(e) => updateSettings.mutate({ googleMeetLink: e.target.value })}
+                      id="communityMeetingLink"
+                      value={settings?.communityMeetingLink || "https://meet.google.com/wnf-cjab-twp"}
+                      onChange={(e) => updateSettings.mutate({ communityMeetingLink: e.target.value })}
                       className="mt-2"
-                      placeholder="Enter Google Meet link"
+                      placeholder="Enter community meeting link"
                     />
                     <p className="text-sm text-slate-600 mt-1">
                       Default meeting link used for all scheduled meetings
@@ -1031,13 +1031,13 @@ export default function Admin() {
                   </div>
 
                   <div>
-                    <Label htmlFor="googleMeetLink">Default Google Meet Link</Label>
+                    <Label htmlFor="communityMeetingLink">Community Meeting Link</Label>
                     <Input
-                      id="googleMeetLink"
-                      value={settings?.googleMeetLink || "https://meet.google.com/wnf-cjab-twp"}
-                      onChange={(e) => updateSettings.mutate({ googleMeetLink: e.target.value })}
+                      id="communityMeetingLink"
+                      value={settings?.communityMeetingLink || "https://meet.google.com/wnf-cjab-twp"}
+                      onChange={(e) => updateSettings.mutate({ communityMeetingLink: e.target.value })}
                       className="mt-2"
-                      placeholder="Enter Google Meet link"
+                      placeholder="Enter community meeting link"
                     />
                     <p className="text-sm text-slate-600 mt-1">
                       Default meeting link used for all scheduled meetings

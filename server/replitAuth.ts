@@ -126,7 +126,7 @@ async function upsertUser(
             appName: organizationName,
             matchingDay: 1,
             monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-            googleMeetLink: "https://meet.google.com/new",
+            communityMeetingLink: "https://meet.google.com/new",
             preventMeetingOverlap: true,
             weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
           }

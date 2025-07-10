@@ -156,7 +156,7 @@ Preferred communication style: Simple, everyday language.
 - Google Calendar integration maintains proper timezone handling for meeting creation
 - Added "Reschedule" link to match notification emails that directs users to their dashboard for meeting management
 
-### July 10, 2025 - Admin Email Notification System Completed
+### July 10, 2025 - Admin Email Notification System Completed & Meeting Link Terminology Cleanup
 - Implemented comprehensive admin notification system with SendGrid integration
 - Admin receives detailed email summaries automatically when monthly matching completes
 - Professional HTML email templates with Eastern Time formatting and meetings table data
@@ -165,6 +165,9 @@ Preferred communication style: Simple, everyday language.
 - Removed test admin accounts to ensure notifications are delivered to real admin email addresses
 - Email delivery confirmed with SendGrid status 202 responses and unique message IDs
 - Admin notifications include complete match summaries, meeting schedules, and dashboard links
+- Removed all "googleMeetLink" references and replaced with "communityMeetingLink" throughout codebase
+- Updated database settings to remove deprecated googleMeetLink field and use only communityMeetingLink
+- Changed UI terminology from "Google Meet Link" to "Community Meeting Link" to maintain brand neutrality
 
 ### June 22, 2025 - Replit Auth Integration & Availability System Fixed
 - Implemented complete Replit Auth integration with session-based authentication

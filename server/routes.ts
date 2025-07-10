@@ -413,7 +413,7 @@ let adminSettings = {
   nextMatchingDate: "2025-07-01",
   matchingDay: 1,
   monthlyFocusGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-  googleMeetLink: "https://meet.google.com/wnf-cjab-twp",
+  communityMeetingLink: "https://meet.google.com/wnf-cjab-twp",
   preventMeetingOverlap: true,
   showMonthlyGoals: false, // Feature toggle for monthly goals
   weights: {
