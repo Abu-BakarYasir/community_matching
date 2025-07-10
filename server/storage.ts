@@ -26,7 +26,6 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -226,14 +225,101 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMatchesByUser(userId: string): Promise<MatchWithUsers[]> {
-    // For now, return empty array to fix the blocking issue
-    // Will implement proper join query after fixing the table alias issue
-    return [];
+    try {
+      // Get all matches for this user
+      const userMatches = await db
+        .select()
+        .from(matches)
+        .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)))
+        .orderBy(desc(matches.createdAt));
+
+      // Get all user data needed
+      const userIds = new Set<string>();
+      userMatches.forEach(match => {
+        userIds.add(match.user1Id);
+        userIds.add(match.user2Id);
+      });
+
+      const allUsers = await db
+        .select()
+        .from(users)
+        .where(sql`${users.id} = ANY(${Array.from(userIds)})`);
+
+      const userMap = new Map(allUsers.map(user => [user.id, user]));
+
+      // Combine matches with user data
+      const matchesWithUsers = userMatches.map(match => ({
+        ...match,
+        user1: userMap.get(match.user1Id)!,
+        user2: userMap.get(match.user2Id)!,
+      }));
+
+      return matchesWithUsers;
+    } catch (error) {
+      console.error('Error fetching matches by user:', error);
+      return [];
+    }
   }
 
   async getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]> {
-    // For now, return empty array to fix the blocking issue
-    return [];
+    try {
+      const matchesWithUsers = await db
+        .select({
+          id: matches.id,
+          user1Id: matches.user1Id,
+          user2Id: matches.user2Id,
+          matchScore: matches.matchScore,
+          status: matches.status,
+          monthYear: matches.monthYear,
+          createdAt: matches.createdAt,
+          user1: {
+            id: sql`u1.id`,
+            email: sql`u1.email`,
+            firstName: sql`u1.first_name`,
+            lastName: sql`u1.last_name`,
+            jobTitle: sql`u1.job_title`,
+            company: sql`u1.company`,
+            industry: sql`u1.industry`,
+            bio: sql`u1.bio`,
+            linkedinUrl: sql`u1.linkedin_url`,
+            profileImageUrl: sql`u1.profile_image_url`,
+            organizationId: sql`u1.organization_id`,
+            isActive: sql`u1.is_active`,
+            isAdmin: sql`u1.is_admin`,
+            isSuperAdmin: sql`u1.is_super_admin`,
+            createdAt: sql`u1.created_at`,
+            updatedAt: sql`u1.updated_at`,
+          },
+          user2: {
+            id: sql`u2.id`,
+            email: sql`u2.email`,
+            firstName: sql`u2.first_name`,
+            lastName: sql`u2.last_name`,
+            jobTitle: sql`u2.job_title`,
+            company: sql`u2.company`,
+            industry: sql`u2.industry`,
+            bio: sql`u2.bio`,
+            linkedinUrl: sql`u2.linkedin_url`,
+            profileImageUrl: sql`u2.profile_image_url`,
+            organizationId: sql`u2.organization_id`,
+            isActive: sql`u2.is_active`,
+            isAdmin: sql`u2.is_admin`,
+            isSuperAdmin: sql`u2.is_super_admin`,
+            createdAt: sql`u2.created_at`,
+            updatedAt: sql`u2.updated_at`,
+          }
+        })
+        .from(matches)
+        .innerJoin(sql`users u1`, sql`u1.id = ${matches.user1Id}`)
+        .innerJoin(sql`users u2`, sql`u2.id = ${matches.user2Id}`)
+        .where(eq(matches.monthYear, monthYear))
+        .orderBy(desc(matches.createdAt));
+
+      return matchesWithUsers;
+    } catch (error) {
+      console.error('Error fetching matches by month:', error);
+      return [];
+    }
   }
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
