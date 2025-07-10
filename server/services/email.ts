@@ -126,7 +126,10 @@ Link: Will be provided once scheduled
             <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
               <p style="margin: 0 0 10px 0;"><strong>Your match - ${partner.firstName}</strong></p>
               <p style="margin: 0 0 15px 0; white-space: pre-line;">${meetingDetails}</p>
-              ${calendarLink ? `<a href="${calendarLink}" style="display: inline-block; background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">📅 Add to Calendar</a>` : ''}
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                ${calendarLink ? `<a href="${calendarLink}" style="display: inline-block; background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">📅 Add to Calendar</a>` : ''}
+                <a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'https://matches.community'}" style="display: inline-block; background: #f97316; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">🔄 Reschedule</a>
+              </div>
             </div>
             
             <p>Enjoy your chat!</p>

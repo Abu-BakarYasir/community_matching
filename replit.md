@@ -144,7 +144,7 @@ Preferred communication style: Simple, everyday language.
 - Created DAA community and assigned averyjs@gmail.com as community manager
 - Updated terminology from "Organizations" to "Communities" throughout the platform
 
-### July 10, 2025 - Comprehensive Eastern Time Implementation
+### July 10, 2025 - Comprehensive Eastern Time Implementation & Email Reschedule Link
 - Implemented complete timezone system using Eastern Time as platform default
 - Installed and integrated date-fns-tz library for consistent timezone handling
 - Created centralized timezone utility functions in client/src/lib/timezone.ts
@@ -154,6 +154,7 @@ Preferred communication style: Simple, everyday language.
 - Updated meeting scheduling system to handle timezone conversions for calendar integration
 - All user-facing dates now consistently display in Eastern Time format with clear timezone indicators
 - Google Calendar integration maintains proper timezone handling for meeting creation
+- Added "Reschedule" link to match notification emails that directs users to their dashboard for meeting management
 
 ### July 10, 2025 - Email Notification System Fixed
 - Resolved "Cannot access 'storage2' before initialization" error in EmailService.sendMatchNotification
