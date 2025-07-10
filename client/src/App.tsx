@@ -89,6 +89,9 @@ function Router() {
       <Route path="/community/:slug">
         <CommunitySignup />
       </Route>
+      <Route path="/create-community">
+        <Landing />
+      </Route>
       <Route path="/admin">
         {isAuthenticated && user?.isAdmin ? <Admin /> : <AdminRoute />}
       </Route>

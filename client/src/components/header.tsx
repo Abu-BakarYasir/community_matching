@@ -86,6 +86,11 @@ export function Header() {
                     Test Roles
                   </DropdownMenuItem>
                 )}
+                {user?.isSuperAdmin && (
+                  <DropdownMenuItem onClick={() => setLocation("/create-community")}>
+                    Create Community
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={() => logoutMutation.mutate()}
                   className="text-red-600"

@@ -166,7 +166,19 @@ Preferred communication style: Simple, everyday language.
 - Updated admin settings to properly update organization name without breaking slug references
 - Meeting link field now includes helpful placeholder text for better user guidance
 
-### July 10, 2025 - Homepage Community Creation System & Admin Auto-Assignment
+### July 10, 2025 - Community Creation System Fixed & User Settings Completed
+- Fixed user naming system with proper fallback logic for community creators and regular users
+- Community creators now default to "[Community Name] Admin" names (e.g., "DataCommunity Admin")
+- Regular users get email prefix before @ as lastName fallback (e.g., "john" from john.doe@example.com)
+- Removed hardcoded "Member" lastName fallback that was causing confusion
+- Added comprehensive user settings page in Profile section where all users can edit their names
+- Enhanced Profile page with dedicated User Settings card featuring inline name editing
+- Fixed homepage community creation access by adding /create-community route for logged-in users
+- Added "Create Community" menu item in header dropdown for super admins
+- Confirmed community creation API is fully functional - successfully created test communities
+- Backend generates proper admin users with "[Community Name] Admin" naming pattern
+
+### July 10, 2025 - Homepage Community Creation System & Admin Auto-Assignment (Previous)
 - Implemented complete community creation system through homepage signup form
 - Email submitters automatically become community admins when creating new communities
 - Built public API endpoint `/api/public/create-community` for unauthenticated community creation
