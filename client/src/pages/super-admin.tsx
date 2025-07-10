@@ -15,6 +15,7 @@ import { Building, Users, Settings, Shield, Plus, Edit, Trash2, Crown } from "lu
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { formatDateET, getTimezoneAbbreviation } from "@/lib/timezone";
 
 export default function SuperAdmin() {
   const [newOrgName, setNewOrgName] = useState("");
@@ -80,7 +81,7 @@ export default function SuperAdmin() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return formatDateET(dateString, 'MMM d, yyyy');
   };
 
   return (

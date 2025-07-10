@@ -14,6 +14,7 @@ import { Users, Calendar, Clock, Handshake, ArrowRight, Video, Coffee, User } fr
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { formatMeetingDateTime, formatTimeET, getTimezoneAbbreviation, formatDateET } from "@/lib/timezone";
 import type { MatchWithUsers, MeetingWithMatch } from "@shared/schema";
 
 export default function Dashboard() {
@@ -284,7 +285,7 @@ export default function Dashboard() {
                                     ? 'text-blue-700 dark:text-blue-300' 
                                     : 'text-green-700 dark:text-green-300'
                                 }`}>
-                                  Meeting Scheduled: {isToday ? 'Today' : meetingDate.toLocaleDateString()} at {meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  Meeting Scheduled: {isToday ? 'Today' : formatDateET(meetingDate, 'MMM d')} at {formatTimeET(meetingDate)} {getTimezoneAbbreviation()}
                                 </p>
                                 <p className="text-xs text-slate-500">
                                   Duration: {match.meeting?.duration}min • Type: {match.meeting?.meetingType === 'video' ? 'Video Call' : 'Coffee Chat'}

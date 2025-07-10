@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, CheckCircle, AlertCircle, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { formatDateOnlyET, getTimezoneAbbreviation } from "@/lib/timezone";
 
 interface NextRoundCardProps {
   user: any;
@@ -81,14 +82,6 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
   }, [adminSettings?.matchingDay]); // Re-run when matching day changes
 
   const nextMatchingDate = getNextMatchingDate();
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
 
   const getOrdinalSuffix = (day: number) => {
     if (day > 3 && day < 21) return 'th';
@@ -137,7 +130,7 @@ export function NextRoundCard({ user }: NextRoundCardProps) {
       {/* Date and Countdown */}
       <div className="text-center">
         <h3 className="text-lg font-semibold mb-2">
-          {formatDate(nextMatchingDate)}
+          {formatDateOnlyET(nextMatchingDate)} ({getTimezoneAbbreviation()})
         </h3>
         
         {/* Countdown Timer */}

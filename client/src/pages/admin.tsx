@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Calendar, Heart, Settings, Play, RefreshCw, Trash2, Edit, Copy, Link } from "lucide-react";
+import { formatDateET, formatMeetingDateTime, getTimezoneAbbreviation } from "@/lib/timezone";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -377,7 +378,7 @@ export default function Admin() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          {formatDateET(user.createdAt, 'MMM d, yyyy')}
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
@@ -440,7 +441,7 @@ export default function Admin() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {new Date(match.createdAt).toLocaleDateString()}
+                          {formatDateET(match.createdAt, 'MMM d, yyyy')}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -476,7 +477,7 @@ export default function Admin() {
                           {meeting.match?.user1?.firstName} {meeting.match?.user1?.lastName} & {meeting.match?.user2?.firstName} {meeting.match?.user2?.lastName}
                         </TableCell>
                         <TableCell>
-                          {new Date(meeting.scheduledAt).toLocaleString()}
+                          {formatMeetingDateTime(meeting.scheduledAt)}
                         </TableCell>
                         <TableCell>{meeting.duration} minutes</TableCell>
                         <TableCell>

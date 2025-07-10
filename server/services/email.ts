@@ -1,4 +1,5 @@
 import { MailService } from '@sendgrid/mail';
+import { formatInTimeZone } from 'date-fns-tz';
 import type { User, Meeting } from '@shared/schema';
 import { timeSlotService } from './timeSlots';
 
@@ -83,15 +84,12 @@ class EmailService {
       
       if (matchMeeting) {
         const meetingDate = new Date(matchMeeting.scheduledAt);
-        const formattedDate = meetingDate.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        const formattedTime = meetingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const formattedDate = formatInTimeZone(meetingDate, 'America/New_York', 'EEEE, MMMM d, yyyy');
+        const formattedTime = formatInTimeZone(meetingDate, 'America/New_York', 'h:mm a');
+        const timezone = formatInTimeZone(meetingDate, 'America/New_York', 'zzz');
         
-        // Create Google Calendar link
+        // Create Google Calendar link with proper timezone handling
+        // Convert Eastern Time to UTC for Google Calendar
         const startDate = meetingDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
         const endDate = new Date(meetingDate.getTime() + 30 * 60000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
         const eventTitle = encodeURIComponent(`Networking Meeting: ${recipient.firstName} & ${partner.firstName}`);
@@ -100,7 +98,7 @@ class EmailService {
         calendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${startDate}/${endDate}&details=${eventDetails}&location=${encodeURIComponent(matchMeeting.meetingLink)}`;
         
         meetingDetails = `
-Date and time: ${formattedDate} at ${formattedTime}
+Date and time: ${formattedDate} at ${formattedTime} ${timezone}
 Link: ${matchMeeting.meetingLink}
         `.trim();
       } else {
@@ -189,14 +187,7 @@ Link: Will be provided once scheduled
     const fromEmail = process.env.EMAIL_FROM || 'no-reply@matches.community';
     
     const formatDate = (date: Date) => {
-      return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      });
+      return formatInTimeZone(date, 'America/New_York', 'EEEE, MMMM d, yyyy \'at\' h:mm a zzz');
     };
 
     const htmlContent = `
@@ -269,7 +260,7 @@ Link: Will be provided once scheduled
         
         <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0; color: #1e293b;">Meeting Details:</h3>
-          <p><strong>Time:</strong> ${meeting.scheduledAt ? new Date(meeting.scheduledAt).toLocaleTimeString() : 'TBD'}</p>
+          <p><strong>Time:</strong> ${meeting.scheduledAt ? formatInTimeZone(new Date(meeting.scheduledAt), 'America/New_York', 'h:mm a zzz') : 'TBD'}</p>
           <p><strong>Duration:</strong> ${meeting.duration} minutes</p>
           <p><strong>Type:</strong> ${meeting.meetingType === 'video' ? 'Video Call' : meeting.meetingType === 'coffee' ? 'Coffee Chat' : 'Meeting'}</p>
           ${meeting.meetingLink ? `<p><strong>Meeting Link:</strong> <a href="${meeting.meetingLink}">${meeting.meetingLink}</a></p>` : ''}
