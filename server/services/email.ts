@@ -13,7 +13,9 @@ class EmailService {
     if (this.isConfigured) {
       this.mailService.setApiKey(process.env.SENDGRID_API_KEY!);
       console.log('✅ SendGrid email service initialized');
-      console.log('   Note: Verify your sender email is authenticated in SendGrid dashboard');
+      console.log(`   → API Key: ${process.env.SENDGRID_API_KEY.substring(0, 10)}...`);
+      console.log(`   → Default sender: ${process.env.EMAIL_FROM || 'avery@dataanalystroadmap.com'}`);
+      console.log('   → Verify your sender email is authenticated in SendGrid dashboard');
     } else {
       console.log('⚠️ SENDGRID_API_KEY not found. Email functionality will be simulated.');
     }
