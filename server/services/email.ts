@@ -138,11 +138,21 @@ class EmailService {
 
     try {
       console.log(`📧 Sending emails via SendGrid API...`);
+      console.log(`   → FROM: ${fromEmail}`);
+      console.log(`   → TO: ${user1.email}, ${user2.email}`);
+      console.log(`   → SUBJECT: ${subject}`);
+      
+      // Create email content for debugging
+      const email1Content = createEmailContent(user1, user2);
+      const email2Content = createEmailContent(user2, user1);
+      
+      console.log(`   → Email 1 TO: ${email1Content.to}`);
+      console.log(`   → Email 2 TO: ${email2Content.to}`);
       
       // Send emails to both users using SendGrid
       const emailPromises = [
-        this.mailService.send(createEmailContent(user1, user2)),
-        this.mailService.send(createEmailContent(user2, user1))
+        this.mailService.send(email1Content),
+        this.mailService.send(email2Content)
       ];
 
       const results = await Promise.all(emailPromises);
@@ -151,11 +161,16 @@ class EmailService {
       console.log(`   → Email 1 sent to ${user1.email}`);
       console.log(`   → Email 2 sent to ${user2.email}`);
       console.log(`   → Match Score: ${matchScore}%`);
-      console.log('   → SendGrid Response Status:', results.map(r => r[0]?.statusCode || 'success'));
+      console.log('   → SendGrid Response Details:', JSON.stringify(results.map(r => ({
+        statusCode: r[0]?.statusCode,
+        body: r[0]?.body,
+        headers: r[0]?.headers?.['x-message-id']
+      })), null, 2));
       
     } catch (error) {
       console.error('❌ FAILED: Error sending match notification via SendGrid:', error);
       console.error('❌ Error details:', error.message);
+      console.error('❌ Error response:', error.response?.body);
       if (error.response && error.response.body && error.response.body.errors) {
         console.error('❌ SendGrid error details:', JSON.stringify(error.response.body.errors, null, 2));
       }
