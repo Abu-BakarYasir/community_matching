@@ -14,7 +14,7 @@ class EmailService {
       this.mailService.setApiKey(process.env.SENDGRID_API_KEY!);
       console.log('✅ SendGrid email service initialized');
       console.log(`   → API Key: ${process.env.SENDGRID_API_KEY.substring(0, 10)}...`);
-      console.log(`   → Default sender: ${process.env.EMAIL_FROM || 'avery@dataanalystroadmap.com'}`);
+      console.log(`   → Default sender: ${process.env.EMAIL_FROM || 'no-reply@matches.community'}`);
       console.log('   → Verify your sender email is authenticated in SendGrid dashboard');
     } else {
       console.log('⚠️ SENDGRID_API_KEY not found. Email functionality will be simulated.');
@@ -49,20 +49,26 @@ class EmailService {
     // Get the actual meeting for this specific match from the database
     let matchMeeting = null;
     try {
-      // First, get all matches to find the current match ID
+      // Look for the newest match (just created) between these two users
       const allMatches = await storage.getAllMatches();
-      const currentMatch = allMatches.find(match => 
+      
+      // Sort by ID descending to get the newest match first
+      const sortedMatches = allMatches.sort((a, b) => b.id - a.id);
+      
+      const currentMatch = sortedMatches.find(match => 
         (match.user1Id === user1.id && match.user2Id === user2.id) ||
         (match.user1Id === user2.id && match.user2Id === user1.id)
       );
+      
+      console.log(`📅 Looking for meeting for newest match between ${user1.id} and ${user2.id}`);
+      console.log(`📅 Found match:`, currentMatch ? `ID ${currentMatch.id}` : 'No match found');
       
       if (currentMatch) {
         // Get all meetings and find the one for this match
         const allMeetings = await storage.getAllMeetings();
         matchMeeting = allMeetings.find(meeting => meeting.matchId === currentMatch.id);
         
-        console.log(`📅 Looking for meeting for match ${currentMatch.id}`);
-        console.log(`📅 Found meeting:`, matchMeeting ? `ID ${matchMeeting.id} scheduled for ${matchMeeting.scheduledAt}` : 'No meeting found');
+        console.log(`📅 Found meeting:`, matchMeeting ? `ID ${matchMeeting.id} scheduled for ${matchMeeting.scheduledAt} with link ${matchMeeting.meetingLink}` : 'No meeting found');
       }
     } catch (error) {
       console.log(`⚠️ Error fetching meeting data:`, error.message);
