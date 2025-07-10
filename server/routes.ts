@@ -652,6 +652,80 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
     }
   });
 
+  // Test endpoint to send admin summary email
+  app.post('/api/test/admin-email', isAuthenticated, async (req: any, res) => {
+    try {
+      console.log('Testing admin email notification...');
+      
+      // Create test admin user
+      const testAdmin = {
+        id: 'test-admin',
+        email: 'averyjs@gmail.com',
+        firstName: 'Avery',
+        lastName: 'Admin',
+        isAdmin: true,
+        organizationId: 2
+      };
+      
+      // Create test match data
+      const testMatches = [
+        {
+          id: 1,
+          user1Id: 'user1',
+          user2Id: 'user2',
+          matchScore: 85,
+          monthYear: '2025-01',
+          status: 'pending',
+          createdAt: new Date(),
+          user1: {
+            id: 'user1',
+            email: 'user1@test.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            jobTitle: 'Software Engineer',
+            company: 'Tech Corp'
+          },
+          user2: {
+            id: 'user2',
+            email: 'user2@test.com',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            jobTitle: 'Product Manager',
+            company: 'Innovation Inc'
+          }
+        }
+      ];
+      
+      // Create test meeting data
+      const testMeetings = [
+        {
+          id: 1,
+          matchId: 1,
+          scheduledAt: new Date('2025-01-15T14:00:00Z'),
+          meetingType: 'video',
+          duration: 30,
+          meetingLink: 'https://meet.google.com/test-meeting',
+          status: 'scheduled',
+          match: testMatches[0]
+        }
+      ];
+      
+      console.log('Sending test admin summary email to averyjs@gmail.com...');
+      await emailService.sendAdminMatchSummary(
+        testAdmin,
+        'Test Community',
+        testMatches,
+        testMeetings
+      );
+      
+      console.log('✅ Test admin email sent successfully!');
+      res.json({ message: 'Test admin email sent successfully to averyjs@gmail.com' });
+    } catch (error) {
+      console.error('❌ Error sending test admin email:', error);
+      res.status(500).json({ message: 'Failed to send test admin email', error: error.message });
+    }
+  });
+
   // Super Admin API endpoints
   app.get('/api/super-admin/organizations', isAuthenticated, async (req: any, res) => {
     try {
