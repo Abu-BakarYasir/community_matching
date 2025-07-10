@@ -43,18 +43,30 @@ class EmailService {
       }
     }
 
-    // Use verified sender identity from DataAnalystRoadmap.com domain
-    const fromEmail = process.env.EMAIL_FROM || 'avery@dataanalystroadmap.com';
+    // Use verified sender identity from Matches.Community domain
+    const fromEmail = process.env.EMAIL_FROM || 'no-reply@matches.community';
     
-    // Check if there's already a scheduled meeting for this match
-    const user1Meetings = await storage.getMeetingsByUser(user1.id);
-    const user2Meetings = await storage.getMeetingsByUser(user2.id);
-    
-    const matchMeeting = [...user1Meetings, ...user2Meetings].find(m => {
-      if (!m.match) return false;
-      return (m.match.user1Id === user1.id && m.match.user2Id === user2.id) ||
-             (m.match.user1Id === user2.id && m.match.user2Id === user1.id);
-    });
+    // Get the actual meeting for this specific match from the database
+    let matchMeeting = null;
+    try {
+      // First, get all matches to find the current match ID
+      const allMatches = await storage.getAllMatches();
+      const currentMatch = allMatches.find(match => 
+        (match.user1Id === user1.id && match.user2Id === user2.id) ||
+        (match.user1Id === user2.id && match.user2Id === user1.id)
+      );
+      
+      if (currentMatch) {
+        // Get all meetings and find the one for this match
+        const allMeetings = await storage.getAllMeetings();
+        matchMeeting = allMeetings.find(meeting => meeting.matchId === currentMatch.id);
+        
+        console.log(`📅 Looking for meeting for match ${currentMatch.id}`);
+        console.log(`📅 Found meeting:`, matchMeeting ? `ID ${matchMeeting.id} scheduled for ${matchMeeting.scheduledAt}` : 'No meeting found');
+      }
+    } catch (error) {
+      console.log(`⚠️ Error fetching meeting data:`, error.message);
+    }
 
     const createEmailContent = (recipient: User, partner: User) => {
       const subject = `[${communityName}] - ${recipient.firstName} <> ${partner.firstName}`;
@@ -147,7 +159,7 @@ Link: Will be provided once scheduled
     }
 
     const subject = '📅 Meeting Scheduled - DAA Monthly Matching';
-    const fromEmail = process.env.EMAIL_FROM || 'avery@dataanalystroadmap.com';
+    const fromEmail = process.env.EMAIL_FROM || 'no-reply@matches.community';
     
     const formatDate = (date: Date) => {
       return date.toLocaleDateString('en-US', {
@@ -212,7 +224,7 @@ Link: Will be provided once scheduled
     }
 
     const subject = '⏰ Meeting Reminder - Tomorrow!';
-    const fromEmail = process.env.EMAIL_FROM || 'avery@dataanalystroadmap.com';
+    const fromEmail = process.env.EMAIL_FROM || 'no-reply@matches.community';
     
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
