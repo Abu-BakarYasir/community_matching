@@ -365,7 +365,7 @@ Looking forward to connecting!`;
                                 size="sm"
                                 variant="outline"
                               >
-                                Edit
+                                Reschedule
                               </Button>
                             </>
                           ) : (

@@ -253,11 +253,21 @@ export class DatabaseStorage implements IStorage {
       const allUsers = userResults.flat();
       const userMap = new Map(allUsers.map(user => [user.id, user]));
 
-      // Combine matches with user data
+      // Get all meetings for these matches
+      const meetingPromises = userMatches.map(match => 
+        db.select().from(meetings).where(eq(meetings.matchId, match.id)).limit(1)
+      );
+      
+      const meetingResults = await Promise.all(meetingPromises);
+      const allMeetings = meetingResults.flat();
+      const meetingMap = new Map(allMeetings.map(meeting => [meeting.matchId, meeting]));
+
+      // Combine matches with user data and meeting data
       const matchesWithUsers = userMatches.map(match => ({
         ...match,
         user1: userMap.get(match.user1Id)!,
         user2: userMap.get(match.user2Id)!,
+        meeting: meetingMap.get(match.id),
       }));
 
       return matchesWithUsers;
@@ -415,8 +425,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMeetingsByUser(userId: string): Promise<MeetingWithMatch[]> {
-    // For now, return empty array to fix the blocking issue
-    return [];
+    try {
+      // Get all meetings for this user by finding their matches first
+      const userMatches = await db
+        .select()
+        .from(matches)
+        .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
+
+      if (userMatches.length === 0) {
+        return [];
+      }
+
+      const matchIds = userMatches.map(match => match.id);
+      
+      // Fetch meetings for these matches using individual queries to avoid array syntax
+      const meetingPromises = matchIds.map(matchId => 
+        db.select().from(meetings).where(eq(meetings.matchId, matchId))
+      );
+      
+      const meetingResults = await Promise.all(meetingPromises);
+      const userMeetings = meetingResults.flat();
+
+      // Create a map of matches by id
+      const matchMap = new Map(userMatches.map(match => [match.id, match]));
+
+      // Get all user data needed
+      const userIds = new Set<string>();
+      userMatches.forEach(match => {
+        userIds.add(match.user1Id);
+        userIds.add(match.user2Id);
+      });
+
+      // Fetch users individually
+      const userPromises = Array.from(userIds).map(id => 
+        db.select().from(users).where(eq(users.id, id)).limit(1)
+      );
+      
+      const userResults = await Promise.all(userPromises);
+      const allUsers = userResults.flat();
+      const userMap = new Map(allUsers.map(user => [user.id, user]));
+
+      // Combine meetings with match and user data
+      const meetingsWithMatch = userMeetings.map(meeting => {
+        const match = matchMap.get(meeting.matchId)!;
+        return {
+          ...meeting,
+          match: {
+            ...match,
+            user1: userMap.get(match.user1Id)!,
+            user2: userMap.get(match.user2Id)!,
+          }
+        };
+      });
+
+      return meetingsWithMatch;
+    } catch (error) {
+      console.error('Error fetching meetings by user:', error);
+      return [];
+    }
   }
 
   async createMeeting(insertMeeting: InsertMeeting): Promise<Meeting> {
