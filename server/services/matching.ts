@@ -140,6 +140,48 @@ class MatchingService {
     }
     
     console.log(`Monthly matching complete. Created ${matches.length} new matches.`);
+    
+    // Send admin notification if matches were created and organizationId is specified
+    if (matches.length > 0 && organizationId) {
+      try {
+        const organization = await storage.getOrganization(organizationId);
+        if (organization) {
+          // Get admin user for this organization
+          const allUsers = await storage.getAllUsers();
+          const adminUser = allUsers.find(user => 
+            user.organizationId === organizationId && user.isAdmin
+          );
+          
+          if (adminUser) {
+            // Get full match data with user details
+            const matchesWithUsers = await Promise.all(
+              matches.map(async (match) => {
+                const user1 = await storage.getUser(match.user1Id);
+                const user2 = await storage.getUser(match.user2Id);
+                return { ...match, user1, user2 };
+              })
+            );
+            
+            // Get meetings for these matches
+            const meetings = await storage.getAllMeetings();
+            const matchMeetings = meetings.filter(meeting => 
+              matches.some(match => match.id === meeting.matchId)
+            );
+            
+            console.log(`📧 Sending admin summary to ${adminUser.email} for ${organization.name}`);
+            await emailService.sendAdminMatchSummary(
+              adminUser, 
+              organization.name, 
+              matchesWithUsers, 
+              matchMeetings
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Failed to send admin summary:', error);
+      }
+    }
+    
     return matches;
   }
   
@@ -158,12 +200,27 @@ class MatchingService {
       suggestedDate.setDate(suggestedDate.getDate() + 7);
       suggestedDate.setHours(14, 0, 0, 0); // 2 PM
 
+      // Get organization settings for meeting link
+      const organizationId = user1.organizationId || user2.organizationId;
+      let meetingLink = "https://meet.google.com/new"; // Default fallback
+      
+      if (organizationId) {
+        try {
+          const organization = await storage.getOrganization(organizationId);
+          if (organization && organization.communityMeetingLink) {
+            meetingLink = organization.communityMeetingLink;
+          }
+        } catch (error) {
+          console.log('Could not get organization meeting link, using default');
+        }
+      }
+
       await storage.createMeeting({
         matchId: match.id,
         scheduledAt: suggestedDate,
         meetingType: "video",
         duration: 30,
-        meetingLink: "https://meet.google.com/wnf-cjab-twp",
+        meetingLink,
         status: "scheduled"
       });
 

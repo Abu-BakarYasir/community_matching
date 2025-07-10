@@ -7,6 +7,7 @@ import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema, in
 
 import { schedulerService } from "./services/scheduler";
 import { timeSlotService } from "./services/timeSlots";
+import { emailService } from "./services/email";
 import { z } from "zod";
 
 
@@ -306,6 +307,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertMeetingSchema.parse(req.body);
       const meeting = await storage.createMeeting(validatedData);
+      
+      // Send admin notification about new meeting
+      try {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        
+        if (user?.organizationId) {
+          const organization = await storage.getOrganization(user.organizationId);
+          if (organization) {
+            // Get admin user for this organization
+            const allUsers = await storage.getAllUsers();
+            const adminUser = allUsers.find(u => 
+              u.organizationId === user.organizationId && u.isAdmin
+            );
+            
+            if (adminUser) {
+              // Get meeting with match details
+              const meetingWithMatch = await storage.getMeeting(meeting.id);
+              if (meetingWithMatch) {
+                console.log(`📧 Sending admin notification about new meeting to ${adminUser.email}`);
+                await emailService.sendAdminMatchSummary(
+                  adminUser, 
+                  organization.name, 
+                  [], // No new matches, just meeting
+                  [meetingWithMatch]
+                );
+              }
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error('Failed to send admin notification for new meeting:', emailError);
+      }
+      
       res.json(meeting);
     } catch (error) {
       console.error("Error creating meeting:", error);
@@ -329,6 +364,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!updatedMeeting) {
         return res.status(404).json({ message: "Meeting not found" });
+      }
+      
+      // Send admin notification about meeting update
+      try {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        
+        if (user?.organizationId) {
+          const organization = await storage.getOrganization(user.organizationId);
+          if (organization) {
+            // Get admin user for this organization
+            const allUsers = await storage.getAllUsers();
+            const adminUser = allUsers.find(u => 
+              u.organizationId === user.organizationId && u.isAdmin
+            );
+            
+            if (adminUser) {
+              // Get meeting with match details
+              const meetingWithMatch = await storage.getMeeting(meetingId);
+              if (meetingWithMatch) {
+                console.log(`📧 Sending admin notification about meeting update to ${adminUser.email}`);
+                await emailService.sendAdminMatchSummary(
+                  adminUser, 
+                  organization.name, 
+                  [], // No new matches, just meeting update
+                  [meetingWithMatch]
+                );
+              }
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error('Failed to send admin notification for meeting update:', emailError);
       }
       
       console.log("Meeting updated successfully:", updatedMeeting);

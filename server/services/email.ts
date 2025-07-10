@@ -292,6 +292,134 @@ Link: Will be provided once scheduled
       console.error('❌ Failed to send meeting reminder via SendGrid:', error);
     }
   }
+
+  async sendAdminMatchSummary(adminUser: User, organizationName: string, matches: any[], meetings: any[]) {
+    if (!this.isConfigured) {
+      console.log(`📧 [SIMULATED] Admin match summary email would be sent to ${adminUser.email}`);
+      return;
+    }
+
+    const subject = `📊 ${organizationName} - New Matches & Meetings Summary`;
+    const fromEmail = process.env.EMAIL_FROM || 'no-reply@matches.community';
+    
+    // Create meetings table HTML
+    const meetingsTableRows = meetings.map(meeting => {
+      const formatMeetingDate = (date: Date) => {
+        return formatInTimeZone(date, 'America/New_York', 'MMM d, yyyy \'at\' h:mm a zzz');
+      };
+
+      return `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 12px; text-align: left;">${meeting.match?.user1?.firstName} ${meeting.match?.user1?.lastName} & ${meeting.match?.user2?.firstName} ${meeting.match?.user2?.lastName}</td>
+          <td style="padding: 12px; text-align: left;">${meeting.scheduledAt ? formatMeetingDate(new Date(meeting.scheduledAt)) : 'Pending'}</td>
+          <td style="padding: 12px; text-align: left;">${meeting.duration} min</td>
+          <td style="padding: 12px; text-align: left;">${meeting.meetingType === 'video' ? 'Video Call' : meeting.meetingType === 'coffee' ? 'Coffee Chat' : 'Meeting'}</td>
+          <td style="padding: 12px; text-align: left;">
+            ${meeting.meetingLink ? `<a href="${meeting.meetingLink}" style="color: #2563eb; text-decoration: underline;">Join Meeting</a>` : 'TBD'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    const matchesTableRows = matches.map(match => `
+      <tr style="border-bottom: 1px solid #e2e8f0;">
+        <td style="padding: 12px; text-align: left;">${match.user1?.firstName} ${match.user1?.lastName}</td>
+        <td style="padding: 12px; text-align: left;">${match.user2?.firstName} ${match.user2?.lastName}</td>
+        <td style="padding: 12px; text-align: left;">${match.matchScore}%</td>
+        <td style="padding: 12px; text-align: left;">
+          <span style="background: ${match.meeting ? '#10b981' : '#6b7280'}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+            ${match.meeting ? 'Meeting Scheduled' : 'Pending'}
+          </span>
+        </td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #2563eb; margin: 0; font-size: 28px;">${organizationName}</h1>
+          <h2 style="color: #1e293b; margin: 10px 0 0 0; font-size: 20px;">Community Activity Summary</h2>
+        </div>
+        
+        <p style="color: #475569; font-size: 16px;">Hi ${adminUser.firstName},</p>
+        
+        <p style="color: #475569; font-size: 16px;">Here's a summary of the latest activity in your ${organizationName} community:</p>
+        
+        ${matches.length > 0 ? `
+        <div style="margin: 30px 0;">
+          <h3 style="color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 8px;">🤝 New Matches (${matches.length})</h3>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <thead>
+                <tr style="background: #f8fafc;">
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">User 1</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">User 2</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Match Score</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${matchesTableRows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        ` : ''}
+
+        ${meetings.length > 0 ? `
+        <div style="margin: 30px 0;">
+          <h3 style="color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 8px;">📅 Scheduled Meetings (${meetings.length})</h3>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <thead>
+                <tr style="background: #f8fafc;">
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Participants</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Date & Time</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Duration</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Type</th>
+                  <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Meeting Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${meetingsTableRows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        ` : ''}
+
+        <div style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 20px; border-radius: 8px; margin: 30px 0; text-align: center;">
+          <h3 style="margin: 0 0 10px 0; font-size: 18px;">Community Dashboard</h3>
+          <p style="margin: 0 0 15px 0; opacity: 0.9;">Monitor all community activity and manage settings</p>
+          <a href="${process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/admin` : '#'}" 
+             style="display: inline-block; background: white; color: #2563eb; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+            View Admin Dashboard
+          </a>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #6b7280; font-size: 14px;">
+          <p>This is an automated summary from your Matches.Community platform.</p>
+          <p>To manage these notifications, visit your admin dashboard.</p>
+        </div>
+      </div>
+    `;
+
+    try {
+      await this.mailService.send({
+        from: {
+          email: fromEmail,
+          name: 'Matches.Community Admin'
+        },
+        to: adminUser.email,
+        subject,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Admin summary email sent to ${adminUser.email} for ${organizationName}`);
+    } catch (error) {
+      console.error('❌ Failed to send admin summary email:', error);
+    }
+  }
 }
 
 export const emailService = new EmailService();
