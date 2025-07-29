@@ -260,7 +260,12 @@ export default function Admin() {
                     size="sm"
                     onClick={() => {
                       if (typeof window !== 'undefined') {
-                        const slug = (settings?.appName || communityName || 'community').toLowerCase().replace(/[^a-z0-9]/g, '');
+                        // Use the same slug logic as display
+                        const slug = user?.organizationSlug || (settings?.appName || communityName || 'community').toLowerCase()
+                          .replace(/[^a-z0-9\s]/g, '') // Remove special characters but keep spaces
+                          .replace(/\s+/g, '-') // Replace spaces with hyphens
+                          .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+                          .substring(0, 50); // Limit length
                         const inviteLink = `${window.location.origin}/community/${slug}`;
                         navigator.clipboard.writeText(inviteLink);
                         toast({ title: "Link copied!", description: "Community invite link copied to clipboard" });
