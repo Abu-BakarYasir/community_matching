@@ -99,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           appName: name,
           matchingDay: 15,
           monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-          communityMeetingLink: "https://meet.google.com/new",
+          communityMeetingLink: "https://meet.google.com/new (or your Zoom/Teams link)",
           preventMeetingOverlap: true,
           weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
         }
@@ -187,19 +187,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to create or retrieve user" });
       }
 
-      // Get organization name for header display
+      // Get organization name and slug for header display
       let organizationName = "Community";
+      let organizationSlug = null;
       if (user.organizationId) {
         const organization = await storage.getOrganization(user.organizationId);
         if (organization) {
           organizationName = organization.name;
+          organizationSlug = organization.slug;
         }
       }
       
       console.log("Returning user data:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
       res.json({
         ...user,
-        organizationName
+        organizationName,
+        organizationSlug
       });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -232,19 +235,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Failed to create or retrieve user" });
       }
 
-      // Get organization name for header display
+      // Get organization name and slug for header display
       let organizationName = "Community";
+      let organizationSlug = null;
       if (user.organizationId) {
         const organization = await storage.getOrganization(user.organizationId);
         if (organization) {
           organizationName = organization.name;
+          organizationSlug = organization.slug;
         }
       }
       
       console.log("Returning user data via /me:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
       res.json({
         ...user,
-        organizationName
+        organizationName,
+        organizationSlug
       });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -914,7 +920,7 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
           appName: name,
           matchingDay: 15,
           monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-          communityMeetingLink: "https://meet.google.com/new",
+          communityMeetingLink: "https://meet.google.com/new (or your Zoom/Teams link)",
           preventMeetingOverlap: true,
           weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
         }

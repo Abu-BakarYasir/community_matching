@@ -246,8 +246,12 @@ export default function Admin() {
                   <div className="p-3 bg-gray-50 rounded border text-sm font-mono">
                     {(() => {
                       if (typeof window === 'undefined') return 'Loading...';
-                      // Generate slug from current community name
-                      const slug = (settings?.appName || communityName || 'community').toLowerCase().replace(/[^a-z0-9]/g, '');
+                      // Use the actual organization slug from the database (matches creation format)
+                      const slug = user?.organizationSlug || (settings?.appName || communityName || 'community').toLowerCase()
+                        .replace(/[^a-z0-9\s]/g, '') // Remove special characters but keep spaces
+                        .replace(/\s+/g, '-') // Replace spaces with hyphens
+                        .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+                        .substring(0, 50); // Limit length
                       return `${window.location.origin}/community/${slug}`;
                     })()}
                   </div>

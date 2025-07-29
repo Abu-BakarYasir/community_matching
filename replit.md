@@ -166,7 +166,15 @@ Preferred communication style: Simple, everyday language.
 - Updated admin settings to properly update organization name without breaking slug references
 - Meeting link field now includes helpful placeholder text for better user guidance
 
-### July 10, 2025 - Community Creation System Fixed & User Settings Completed
+### July 29, 2025 - Community Creation Issues Fixed & Meeting Link Placeholder Updated
+- Fixed community invite link slug generation to match original creation format (hyphens instead of merged characters)
+- Updated community meeting link default from hardcoded Google Meet URL to proper placeholder text
+- Changed default meeting link to "https://meet.google.com/new (or your Zoom/Teams link)" for better user guidance
+- Added organizationSlug to user authentication responses for proper admin panel invite link display
+- Synchronized slug generation logic between community creation and admin panel display
+- Ensured community creation API uses consistent slug format with hyphens for readability
+
+### July 10, 2025 - Community Creation System Fixed & User Settings Completed (Previous)
 - Fixed user naming system with proper fallback logic for community creators and regular users
 - Community creators now default to "[Community Name] Admin" names (e.g., "DataCommunity Admin")
 - Regular users get email prefix before @ as lastName fallback (e.g., "john" from john.doe@example.com)
