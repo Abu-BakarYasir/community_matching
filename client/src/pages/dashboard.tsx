@@ -341,8 +341,8 @@ export default function Dashboard() {
                                     return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
                                   };
                                   
-                                  const title = `DAA Matches Meeting with ${otherUser.firstName} ${otherUser.lastName}`;
-                                  const details = `Networking meeting scheduled through DAA Matches.
+                                  const title = `Community Meeting with ${otherUser.firstName} ${otherUser.lastName}`;
+                                  const details = `Networking meeting scheduled through community platform.
 
 Meeting Link: ${meeting.meetingLink}
 Match Score: ${match.matchScore}%

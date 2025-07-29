@@ -532,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 // In-memory settings storage for demo (in production, this would be in database)
 let adminSettings = {
-  appName: "DAA Monthly Matching",
+  appName: "Community Platform",
   nextMatchingDate: "2025-07-01",
   matchingDay: 1,
   monthlyFocusGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],

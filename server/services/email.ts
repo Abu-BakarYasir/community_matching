@@ -186,7 +186,7 @@ Link: Will be provided once scheduled
       return;
     }
 
-    const subject = '📅 Meeting Scheduled - DAA Monthly Matching';
+    const subject = '📅 Meeting Scheduled - Community Networking';
     const fromEmail = process.env.EMAIL_FROM || 'no-reply@matches.community';
     
     const formatDate = (date: Date) => {
@@ -212,7 +212,7 @@ Link: Will be provided once scheduled
         
         <p>A calendar invite has been sent to both participants. We're excited for you to connect!</p>
         
-        <p>Best regards,<br>The DAA Monthly Matching Team</p>
+        <p>Best regards,<br>Community Matching Team</p>
       </div>
     `;
 
@@ -272,7 +272,7 @@ Link: Will be provided once scheduled
         
         <p>Looking forward to a great networking session!</p>
         
-        <p>Best regards,<br>The DAA Monthly Matching Team</p>
+        <p>Best regards,<br>Community Matching Team</p>
       </div>
     `;
 
