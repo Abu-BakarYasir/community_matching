@@ -248,7 +248,7 @@ Preferred communication style: Simple, everyday language.
 - Added PATCH /api/user/profile and POST /api/user/profile-questions endpoints for development
 - Profile data now persists in user sessions and displays correctly in dashboard
 - Updated application name to "DAA Monthly Matching" throughout the interface
-- Integrated default Google Meet link (https://meet.google.com/wnf-cjab-twp) for all video meetings
+- Integrated configurable meeting link system with proper placeholder guidance for all video meetings
 - Enhanced scheduling system with comprehensive meeting management features
 - Improved development mode authentication for reliable testing
 
@@ -308,7 +308,7 @@ Preferred communication style: Simple, everyday language.
 - Added PATCH /api/user/profile and POST /api/user/profile-questions endpoints for development
 - Profile data now persists in user sessions and displays correctly in dashboard
 - Updated application name to "DAA Monthly Matching" throughout the interface
-- Integrated default Google Meet link (https://meet.google.com/wnf-cjab-twp) for all video meetings
+- Integrated configurable meeting link system with proper placeholder guidance for all video meetings
 - Enhanced scheduling system with comprehensive meeting management features
 - Improved development mode authentication for reliable testing
 
