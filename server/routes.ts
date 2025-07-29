@@ -88,15 +88,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "A community with this name already exists. Please choose a different name." });
       }
 
+      // Ensure we have a valid community name (never use email-based fallbacks)
+      const validName = name && name.trim() && !name.includes('@') ? name.trim() : `community-${Date.now()}`;
+      const validSlug = slug && slug.trim() ? slug.trim() : validName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      
       // Create the organization first
       const organizationData = {
-        name,
-        slug,
-        description: description || `A community for ${name} members to connect through meaningful 1:1 conversations.`,
-        domain: `${slug}.matches.community`,
+        name: validName,
+        slug: validSlug,
+        description: description || `A community for ${validName} members to connect through meaningful 1:1 conversations.`,
+        domain: `${validSlug}.matches.community`,
         isActive: true,
         settings: {
-          appName: name,
+          appName: validName,
           matchingDay: 15,
           monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
           communityMeetingLink: "https://meet.google.com/new (or your Zoom/Teams link)",
@@ -128,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adminUser = await storage.createUser({
           id: userId,
           email: adminEmail,
-          firstName: `${name}`,
+          firstName: `${validName}`,
           lastName: "Admin",
           profileImageUrl: null,
           isActive: true,
