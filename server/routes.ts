@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.upsertUser({
           id: claims.sub,
           email: claims.email,
-          firstName: claims.first_name || claims.email.split('@')[0],
+          firstName: claims.first_name || claims.email?.split('@')[0] || "User",
           lastName: claims.last_name || "",
           profileImageUrl: claims.profile_image_url,
         });
@@ -933,6 +933,11 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
       console.log("Creating organization with data:", organizationData);
       const newOrganization = await storage.createOrganization(organizationData);
       console.log("Successfully created organization:", newOrganization);
+      
+      // NOTE: Super admin creates organizations without admin users
+      // Admin users will be assigned when they first log in via Replit Auth
+      // This is different from homepage creation which creates admin users immediately
+      
       res.status(201).json(newOrganization);
     } catch (error) {
       console.error("Error creating community - full error:", error);

@@ -246,12 +246,9 @@ export default function Admin() {
                   <div className="p-3 bg-gray-50 rounded border text-sm font-mono">
                     {(() => {
                       if (typeof window === 'undefined') return 'Loading...';
-                      // Use the actual organization slug from the database (matches creation format)
-                      const slug = user?.organizationSlug || (settings?.appName || communityName || 'community').toLowerCase()
-                        .replace(/[^a-z0-9\s]/g, '') // Remove special characters but keep spaces
-                        .replace(/\s+/g, '-') // Replace spaces with hyphens
-                        .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
-                        .substring(0, 50); // Limit length
+                      // Use the actual organization slug from the database
+                      const slug = user?.organizationSlug;
+                      if (!slug) return 'Loading community link...';
                       return `${window.location.origin}/community/${slug}`;
                     })()}
                   </div>
@@ -260,12 +257,12 @@ export default function Admin() {
                     size="sm"
                     onClick={() => {
                       if (typeof window !== 'undefined') {
-                        // Use the same slug logic as display
-                        const slug = user?.organizationSlug || (settings?.appName || communityName || 'community').toLowerCase()
-                          .replace(/[^a-z0-9\s]/g, '') // Remove special characters but keep spaces
-                          .replace(/\s+/g, '-') // Replace spaces with hyphens
-                          .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
-                          .substring(0, 50); // Limit length
+                        // Use the actual organization slug from the database
+                        const slug = user?.organizationSlug;
+                        if (!slug) {
+                          toast({ title: "Error", description: "Community slug not found", variant: "destructive" });
+                          return;
+                        }
                         const inviteLink = `${window.location.origin}/community/${slug}`;
                         navigator.clipboard.writeText(inviteLink);
                         toast({ title: "Link copied!", description: "Community invite link copied to clipboard" });

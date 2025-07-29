@@ -166,13 +166,16 @@ Preferred communication style: Simple, everyday language.
 - Updated admin settings to properly update organization name without breaking slug references
 - Meeting link field now includes helpful placeholder text for better user guidance
 
-### July 29, 2025 - Community Creation Issues Fixed & Meeting Link Placeholder Updated
-- Fixed community invite link slug generation to match original creation format (hyphens instead of merged characters)
-- Updated community meeting link default from hardcoded Google Meet URL to proper placeholder text
-- Changed default meeting link to "https://meet.google.com/new (or your Zoom/Teams link)" for better user guidance
-- Added organizationSlug to user authentication responses for proper admin panel invite link display
-- Synchronized slug generation logic between community creation and admin panel display
-- Ensured community creation API uses consistent slug format with hyphens for readability
+### July 29, 2025 - Community Creation Dual-Script Bug Fixed & Admin Assignment Resolved
+- CRITICAL FIX: Identified and resolved dual community creation scripts causing duplicate organizations
+- Fixed super admin endpoint (/api/super-admin/organizations) that was creating orphaned communities without admin users
+- Cleaned up "admin's Community" naming bug by removing hardcoded email-based fallbacks in authentication
+- Enhanced community name validation to never use email-based naming, always use form input or community-[ID] fallback
+- Fixed admin panel invite link generation to use actual database slug instead of computed fallbacks
+- Resolved user assignment issues where admin@datacareerjumpstart.com was getting incorrect organization assignments
+- Updated community creation to use validName/validSlug variables ensuring consistent naming throughout
+- Added safeguards against @ symbols in community names to prevent email-based naming corruption
+- Community invite links now properly display using the actual organization slug from database
 
 ### July 10, 2025 - Community Creation System Fixed & User Settings Completed (Previous)
 - Fixed user naming system with proper fallback logic for community creators and regular users
