@@ -2,18 +2,53 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Calendar, Heart, Settings, Play, RefreshCw, Trash2, Edit, Copy, Link } from "lucide-react";
-import { formatDateET, formatMeetingDateTime, getTimezoneAbbreviation } from "@/lib/timezone";
+import {
+  Users,
+  Calendar,
+  Heart,
+  Settings,
+  Play,
+  RefreshCw,
+  Trash2,
+  Edit,
+  Copy,
+  Link,
+} from "lucide-react";
+import {
+  formatDateET,
+  formatMeetingDateTime,
+  getTimezoneAbbreviation,
+} from "@/lib/timezone";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -45,13 +80,12 @@ export default function Admin() {
   const safeMatches = Array.isArray(matches) ? matches : [];
   const safeMeetings = Array.isArray(meetings) ? meetings : [];
 
-  const filteredUsers = safeUsers.filter((user: any) => 
-    user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = safeUsers.filter(
+    (user: any) =>
+      user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
-
 
   const updateSettings = useMutation({
     mutationFn: async (updates: any) => {
@@ -129,7 +163,7 @@ export default function Admin() {
   const getInviteLink = () => {
     const baseUrl = window.location.origin;
     const orgData = user?.organization || user;
-    const orgSlug = orgData?.slug || 'daa';
+    const orgSlug = orgData?.slug || "daa";
     return `${baseUrl}/signup/${orgSlug}`;
   };
 
@@ -153,7 +187,11 @@ export default function Admin() {
   };
 
   const handleDeleteUser = (userId: string) => {
-    if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this user? This action cannot be undone.",
+      )
+    ) {
       deleteUser.mutate(userId);
     }
   };
@@ -162,13 +200,78 @@ export default function Admin() {
     <div className="min-h-screen bg-slate-50">
       <Header />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-slate-600">
-            Manage users, matches, and system settings.
-          </p>
+        <div className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              Admin Dashboard
+            </h1>
+            <p className="text-slate-600">
+              Manage users, matches, and system settings.
+            </p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <input
+              type="file"
+              accept=".csv"
+              id="upload-users-csv"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                // Dynamically import PapaParse so no global dependency issues
+                import("papaparse").then((Papa) => {
+                  Papa.parse(file, {
+                    header: true, // Treat first row as column headers
+                    skipEmptyLines: true,
+                    complete: async (results: any) => {
+                      console.log("Parsed CSV:", results.data);
+
+                      // Map CSV to required format
+                      const users = results.data.map((row: any) => ({
+                        first_name: row.first_name?.trim(),
+                        last_name: row.last_name?.trim(),
+                        email: row.email?.trim(),
+                      }));
+
+                      console.log("Mapped Users Array:", users);
+
+                      try {
+                        // Send to backend API
+                        const res = await fetch("/api/admin/upload-users", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({ users }),
+                        });
+
+                        if (!res.ok) {
+                          throw new Error(`Upload failed: ${res.statusText}`);
+                        }
+
+                        alert("Users uploaded successfully!");
+                      } catch (err: any) {
+                        console.error("Upload error:", err);
+                        alert("Error uploading users. Check console.");
+                      }
+                    },
+                  });
+                });
+              }}
+              className="hidden"
+            />
+
+            <Button
+              onClick={() => {
+                const fileInput = document.getElementById(
+                  "upload-users-csv",
+                ) as HTMLInputElement;
+                if (fileInput) fileInput.click();
+              }}
+            >
+              Upload Users
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -181,40 +284,70 @@ export default function Admin() {
             <CardContent>
               <div className="text-2xl font-bold">{safeUsers.length}</div>
               <p className="text-xs text-slate-600">
-                +{safeUsers.filter((u: any) => new Date(u.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length} this month
+                +
+                {
+                  safeUsers.filter(
+                    (u: any) =>
+                      new Date(u.createdAt) >
+                      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                  ).length
+                }{" "}
+                this month
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Matches</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Matches
+              </CardTitle>
               <Heart className="h-4 w-4 text-slate-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{safeMatches.length}</div>
               <p className="text-xs text-slate-600">
-                +{safeMatches.filter((m: any) => new Date(m.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length} this month
+                +
+                {
+                  safeMatches.filter(
+                    (m: any) =>
+                      new Date(m.createdAt) >
+                      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                  ).length
+                }{" "}
+                this month
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Scheduled Meetings</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Scheduled Meetings
+              </CardTitle>
               <Calendar className="h-4 w-4 text-slate-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{safeMeetings.length}</div>
               <p className="text-xs text-slate-600">
-                +{safeMeetings.filter((m: any) => new Date(m.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length} this month
+                +
+                {
+                  safeMeetings.filter(
+                    (m: any) =>
+                      new Date(m.createdAt) >
+                      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                  ).length
+                }{" "}
+                this month
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">System Status</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                System Status
+              </CardTitle>
               <Settings className="h-4 w-4 text-slate-600" />
             </CardHeader>
             <CardContent>
@@ -240,32 +373,42 @@ export default function Admin() {
               <Card>
                 <CardHeader>
                   <CardTitle>Community Invite Link</CardTitle>
-                  <CardDescription>Share this link for new members to join your community</CardDescription>
+                  <CardDescription>
+                    Share this link for new members to join your community
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-3 bg-gray-50 rounded border text-sm font-mono">
                     {(() => {
-                      if (typeof window === 'undefined') return 'Loading...';
+                      if (typeof window === "undefined") return "Loading...";
                       // Use the actual organization slug from the database
                       const slug = user?.organizationSlug;
-                      if (!slug) return 'Loading community link...';
+                      if (!slug) return "Loading community link...";
                       return `${window.location.origin}/community/${slug}`;
                     })()}
                   </div>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (typeof window !== 'undefined') {
+                      if (typeof window !== "undefined") {
                         // Use the actual organization slug from the database
                         const slug = user?.organizationSlug;
                         if (!slug) {
-                          toast({ title: "Error", description: "Community slug not found", variant: "destructive" });
+                          toast({
+                            title: "Error",
+                            description: "Community slug not found",
+                            variant: "destructive",
+                          });
                           return;
                         }
                         const inviteLink = `${window.location.origin}/community/${slug}`;
                         navigator.clipboard.writeText(inviteLink);
-                        toast({ title: "Link copied!", description: "Community invite link copied to clipboard" });
+                        toast({
+                          title: "Link copied!",
+                          description:
+                            "Community invite link copied to clipboard",
+                        });
                       }
                     }}
                   >
@@ -290,7 +433,9 @@ export default function Admin() {
                         className="flex-1"
                       />
                       <Button
-                        onClick={() => updateSettings.mutate({ appName: communityName })}
+                        onClick={() =>
+                          updateSettings.mutate({ appName: communityName })
+                        }
                         disabled={updateSettings.isPending}
                         size="sm"
                       >
@@ -303,7 +448,9 @@ export default function Admin() {
                   </div>
 
                   <div>
-                    <Label htmlFor="communityMeetingLink">Community Meeting Link</Label>
+                    <Label htmlFor="communityMeetingLink">
+                      Community Meeting Link
+                    </Label>
                     <div className="flex gap-2 mt-2">
                       <Input
                         id="communityMeetingLink"
@@ -313,7 +460,11 @@ export default function Admin() {
                         className="flex-1"
                       />
                       <Button
-                        onClick={() => updateSettings.mutate({ communityMeetingLink: meetingLink })}
+                        onClick={() =>
+                          updateSettings.mutate({
+                            communityMeetingLink: meetingLink,
+                          })
+                        }
                         disabled={updateSettings.isPending}
                         size="sm"
                       >
@@ -321,7 +472,8 @@ export default function Admin() {
                       </Button>
                     </div>
                     <p className="text-sm text-slate-600 mt-1">
-                      Default meeting link for all community meetings (Zoom, Google Meet, etc.)
+                      Default meeting link for all community meetings (Zoom,
+                      Google Meet, etc.)
                     </p>
                   </div>
 
@@ -330,17 +482,21 @@ export default function Admin() {
                     <Select
                       key={settings?.matchingDay}
                       value={settings?.matchingDay?.toString()}
-                      onValueChange={(value) => updateSettings.mutate({ matchingDay: parseInt(value) })}
+                      onValueChange={(value) =>
+                        updateSettings.mutate({ matchingDay: parseInt(value) })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select matching day" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                          <SelectItem key={day} value={day.toString()}>
-                            Day {day}
-                          </SelectItem>
-                        ))}
+                        {Array.from({ length: 28 }, (_, i) => i + 1).map(
+                          (day) => (
+                            <SelectItem key={day} value={day.toString()}>
+                              Day {day}
+                            </SelectItem>
+                          ),
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-slate-600 mt-1">
@@ -356,10 +512,13 @@ export default function Admin() {
                       variant="default"
                     >
                       <Play className="mr-2 h-4 w-4" />
-                      {triggerMatching.isPending ? "Running..." : "Run Monthly Matching"}
+                      {triggerMatching.isPending
+                        ? "Running..."
+                        : "Run Monthly Matching"}
                     </Button>
                     <p className="text-sm text-slate-600 mt-2">
-                      Manually trigger the monthly matching algorithm for all opted-in users
+                      Manually trigger the monthly matching algorithm for all
+                      opted-in users
                     </p>
                   </div>
                 </CardContent>
@@ -403,15 +562,19 @@ export default function Admin() {
                           {user.firstName} {user.lastName}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.jobTitle || "Not specified"}</TableCell>
+                        <TableCell>
+                          {user.jobTitle || "Not specified"}
+                        </TableCell>
                         <TableCell>{user.company || "Not specified"}</TableCell>
                         <TableCell>
-                          <Badge variant={user.isActive ? "default" : "secondary"}>
+                          <Badge
+                            variant={user.isActive ? "default" : "secondary"}
+                          >
                             {user.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {formatDateET(user.createdAt, 'MMM d, yyyy')}
+                          {formatDateET(user.createdAt, "MMM d, yyyy")}
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
@@ -469,12 +632,14 @@ export default function Admin() {
                         </TableCell>
                         <TableCell>{match.matchScore}%</TableCell>
                         <TableCell>
-                          <Badge variant={match.meeting ? "default" : "secondary"}>
+                          <Badge
+                            variant={match.meeting ? "default" : "secondary"}
+                          >
                             {match.meeting ? "Meeting Scheduled" : "Pending"}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {formatDateET(match.createdAt, 'MMM d, yyyy')}
+                          {formatDateET(match.createdAt, "MMM d, yyyy")}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -507,7 +672,10 @@ export default function Admin() {
                     {safeMeetings.map((meeting: any) => (
                       <TableRow key={meeting.id}>
                         <TableCell>
-                          {meeting.match?.user1?.firstName} {meeting.match?.user1?.lastName} & {meeting.match?.user2?.firstName} {meeting.match?.user2?.lastName}
+                          {meeting.match?.user1?.firstName}{" "}
+                          {meeting.match?.user1?.lastName} &{" "}
+                          {meeting.match?.user2?.firstName}{" "}
+                          {meeting.match?.user2?.lastName}
                         </TableCell>
                         <TableCell>
                           {formatMeetingDateTime(meeting.scheduledAt)}
@@ -544,8 +712,9 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600">
-                  Email templates are automatically generated based on your community settings.
-                  Match notifications and meeting reminders are sent using your community name and branding.
+                  Email templates are automatically generated based on your
+                  community settings. Match notifications and meeting reminders
+                  are sent using your community name and branding.
                 </p>
               </CardContent>
             </Card>
