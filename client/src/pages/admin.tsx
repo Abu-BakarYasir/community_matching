@@ -218,54 +218,19 @@ export default function Admin() {
                 const file = e.target.files?.[0];
                 if (!file) return;
 
-                // Dynamically import PapaParse so no global dependency issues
-                import("papaparse").then((Papa) => {
-                  Papa.parse(file, {
-                    header: true, // Treat first row as column headers
-                    skipEmptyLines: true,
-                    complete: async (results: any) => {
-                      console.log("Parsed CSV:", results.data);
-
-                      // Map CSV to required format
-                      const users = results.data.map((row: any) => ({
-                        first_name: row.first_name?.trim(),
-                        last_name: row.last_name?.trim(),
-                        email: row.email?.trim(),
-                      }));
-
-                      console.log("Mapped Users Array:", users);
-
-                      try {
-                        // Send to backend API
-                        const res = await fetch("/api/admin/upload-users", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({ users }),
-                        });
-
-                        if (!res.ok) {
-                          throw new Error(`Upload failed: ${res.statusText}`);
-                        }
-
-                        alert("Users uploaded successfully!");
-                      } catch (err: any) {
-                        console.error("Upload error:", err);
-                        alert("Error uploading users. Check console.");
-                      }
-                    },
-                  });
-                });
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                  const csvText = event.target?.result;
+                  console.log("CSV Content:", csvText);
+                  // TODO: Send this CSV data to your backend API
+                };
+                reader.readAsText(file);
               }}
               className="hidden"
             />
-
             <Button
               onClick={() => {
-                const fileInput = document.getElementById(
-                  "upload-users-csv",
-                ) as HTMLInputElement;
+                const fileInput = document.getElementById("upload-users-csv");
                 if (fileInput) fileInput.click();
               }}
             >
@@ -724,3 +689,15 @@ export default function Admin() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
