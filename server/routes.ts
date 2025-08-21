@@ -2,132 +2,174 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { parse } from "csv-parse/sync";
+import { Readable } from "stream";
+
 // Removed JWT auth imports - using Replit Auth only
-import { insertUserSchema, insertProfileQuestionsSchema, insertMeetingSchema, insertAvailabilitySchema } from "@shared/schema";
+import {
+  insertUserSchema,
+  insertProfileQuestionsSchema,
+  insertMeetingSchema,
+  insertAvailabilitySchema,
+} from "@shared/schema";
 
 import { schedulerService } from "./services/scheduler";
 import { timeSlotService } from "./services/timeSlots";
 import { emailService } from "./services/email";
 import { z } from "zod";
-
-
+import multer from "multer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Replit authentication
   await setupAuth(app);
 
   // Testing endpoints for role switching (development only)
-  if (process.env.NODE_ENV === 'development') {
-    app.post('/api/test/switch-user', async (req, res) => {
+  if (process.env.NODE_ENV === "development") {
+    app.post("/api/test/switch-user", async (req, res) => {
       try {
         const testUser = req.body;
-        
+
         // Store test user in session for development testing
         (req.session as any).testUser = testUser;
-        
+
         // Create/update the test user in database with proper roles
         const testUserData = {
           id: testUser.id,
           email: testUser.email,
           firstName: testUser.firstName,
           lastName: testUser.lastName,
-  
         };
-        
+
         // Set organization and admin status based on test user type
-        if (testUser.id === 'test-super-admin') {
+        if (testUser.id === "test-super-admin") {
           testUserData.isSuperAdmin = true;
           testUserData.organizationId = null;
-        } else if (testUser.id === 'test-daa-admin') {
+        } else if (testUser.id === "test-daa-admin") {
           testUserData.isAdmin = true;
           testUserData.organizationId = 2; // DAA organization
-        } else if (testUser.id.startsWith('test-daa-user')) {
+        } else if (testUser.id.startsWith("test-daa-user")) {
           testUserData.organizationId = 2; // DAA organization
         }
-        
+
         await storage.upsertUser(testUserData);
-        
-        res.json({ message: 'Test user set', user: testUser });
+
+        res.json({ message: "Test user set", user: testUser });
       } catch (error) {
-        console.error('Error switching user:', error);
-        res.status(500).json({ message: 'Failed to switch user' });
+        console.error("Error switching user:", error);
+        res.status(500).json({ message: "Failed to switch user" });
       }
     });
 
-    app.post('/api/test/clear-user', async (req, res) => {
+    app.post("/api/test/clear-user", async (req, res) => {
       try {
         delete (req.session as any).testUser;
-        res.json({ message: 'Test mode cleared' });
+        res.json({ message: "Test mode cleared" });
       } catch (error) {
-        res.status(500).json({ message: 'Failed to clear test mode' });
+        res.status(500).json({ message: "Failed to clear test mode" });
       }
     });
   }
 
   // Public community creation endpoint (no auth required)
-  app.post('/api/public/create-community', async (req, res) => {
+  app.post("/api/public/create-community", async (req, res) => {
     try {
       const { name, slug, adminEmail, description, communitySize } = req.body;
-      console.log("Public community creation request:", { name, slug, adminEmail, description, communitySize });
-      
+      console.log("Public community creation request:", {
+        name,
+        slug,
+        adminEmail,
+        description,
+        communitySize,
+      });
+
       if (!name || !slug || !adminEmail) {
-        return res.status(400).json({ message: "Name, slug, and admin email are required" });
+        return res
+          .status(400)
+          .json({ message: "Name, slug, and admin email are required" });
       }
 
       // Check if slug already exists
       const existingOrgs = await storage.getAllOrganizations();
-      console.log("Existing organizations:", existingOrgs.map(org => ({ name: org.name, slug: org.slug })));
-      
-      const slugExists = existingOrgs.some(org => 
-        (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
-        org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase()
+      console.log(
+        "Existing organizations:",
+        existingOrgs.map((org) => ({ name: org.name, slug: org.slug })),
+      );
+
+      const slugExists = existingOrgs.some(
+        (org) =>
+          (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
+          org.name.toLowerCase().replace(/[^a-z0-9]/g, "") ===
+            slug.toLowerCase(),
       );
 
       if (slugExists) {
         console.log("Slug already exists:", slug);
-        return res.status(400).json({ message: "A community with this name already exists. Please choose a different name." });
+        return res.status(400).json({
+          message:
+            "A community with this name already exists. Please choose a different name.",
+        });
       }
 
       // Ensure we have a valid community name (never use email-based fallbacks)
-      const validName = name && name.trim() && !name.includes('@') ? name.trim() : `community-${Date.now()}`;
-      const validSlug = slug && slug.trim() ? slug.trim() : validName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-      
+      const validName =
+        name && name.trim() && !name.includes("@")
+          ? name.trim()
+          : `community-${Date.now()}`;
+      const validSlug =
+        slug && slug.trim()
+          ? slug.trim()
+          : validName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+
       // Create the organization first
       const organizationData = {
         name: validName,
         slug: validSlug,
-        description: description || `A community for ${validName} members to connect through meaningful 1:1 conversations.`,
+        description:
+          description ||
+          `A community for ${validName} members to connect through meaningful 1:1 conversations.`,
         domain: `${validSlug}.matches.community`,
         isActive: true,
         settings: {
           appName: validName,
           matchingDay: 15,
-          monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-          communityMeetingLink: "https://meet.google.com/new (or your Zoom/Teams link)",
+          monthlyGoals: [
+            "Learning technical skills",
+            "Building data projects",
+            "Job hunting",
+            "Networking",
+          ],
+          communityMeetingLink:
+            "https://meet.google.com/new (or your Zoom/Teams link)",
           preventMeetingOverlap: true,
-          weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
-        }
+          weights: {
+            industry: 35,
+            company: 20,
+            networkingGoals: 30,
+            jobTitle: 15,
+          },
+        },
       };
 
       console.log("Creating organization with data:", organizationData);
-      const newOrganization = await storage.createOrganization(organizationData);
+      const newOrganization =
+        await storage.createOrganization(organizationData);
       console.log("Successfully created organization:", newOrganization);
 
       // Check if user already exists with this email
       let adminUser = await storage.getUserByEmail(adminEmail);
-      
+
       if (adminUser) {
         // Update existing user to be admin of this organization
         console.log("Updating existing user to be admin:", adminUser.id);
-        adminUser = await storage.updateUser(adminUser.id, { 
-          isAdmin: true, 
-          organizationId: newOrganization.id 
+        adminUser = await storage.updateUser(adminUser.id, {
+          isAdmin: true,
+          organizationId: newOrganization.id,
         });
       } else {
         // Create new admin user
         const userId = `admin-${Date.now()}`;
         console.log("Creating new admin user with ID:", userId);
-        
+
         // For community creators from homepage: use [Community Name] Admin format
         adminUser = await storage.createUser({
           id: userId,
@@ -137,58 +179,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
           profileImageUrl: null,
           isActive: true,
           isAdmin: true,
-          organizationId: newOrganization.id
+          organizationId: newOrganization.id,
         });
       }
 
       // Update organization with admin ID
       console.log("Updating organization with admin ID:", adminUser.id);
-      await storage.updateOrganization(newOrganization.id, { adminId: adminUser.id });
+      await storage.updateOrganization(newOrganization.id, {
+        adminId: adminUser.id,
+      });
 
       // Create signup URL for the new community
       const signupUrl = `/community/${slug}`;
 
       console.log("Community creation completed successfully");
-      res.status(201).json({ 
-        community: newOrganization, 
+      res.status(201).json({
+        community: newOrganization,
         adminUser,
         signupUrl,
-        message: "Community created successfully! You are now the admin." 
+        message: "Community created successfully! You are now the admin.",
       });
     } catch (error) {
-      console.error("Error creating community from homepage - full error:", error);
+      console.error(
+        "Error creating community from homepage - full error:",
+        error,
+      );
       console.error("Error stack:", error.stack);
-      res.status(500).json({ 
-        message: "Failed to create community", 
+      res.status(500).json({
+        message: "Failed to create community",
         error: error.message,
-        details: error.stack
+        details: error.stack,
       });
     }
   });
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       let user = await storage.getUser(userId);
-      
+
       if (!user) {
-        console.log("User not found in database, creating:", userId, req.user.claims.email);
+        console.log(
+          "User not found in database, creating:",
+          userId,
+          req.user.claims.email,
+        );
         // Create user if not found (should have been created in callback, but fallback)
         const claims = req.user.claims;
         await storage.upsertUser({
           id: claims.sub,
           email: claims.email,
-          firstName: claims.first_name || claims.email?.split('@')[0] || "User",
+          firstName: claims.first_name || claims.email?.split("@")[0] || "User",
           lastName: claims.last_name || "",
           profileImageUrl: claims.profile_image_url,
         });
         user = await storage.getUser(userId);
       }
-      
+
       if (!user) {
         console.error("Still no user found after creation attempt:", userId);
-        return res.status(500).json({ message: "Failed to create or retrieve user" });
+        return res
+          .status(500)
+          .json({ message: "Failed to create or retrieve user" });
       }
 
       // Get organization name and slug for header display
@@ -201,12 +254,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           organizationSlug = organization.slug;
         }
       }
-      
-      console.log("Returning user data:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
+
+      console.log("Returning user data:", {
+        id: user.id,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      });
       res.json({
         ...user,
         organizationName,
-        organizationSlug
+        organizationSlug,
       });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -215,28 +272,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add /api/auth/me endpoint that frontend expects
-  app.get('/api/auth/me', isAuthenticated, async (req: any, res) => {
+  app.get("/api/auth/me", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       let user = await storage.getUser(userId);
-      
+
       if (!user) {
-        console.log("User not found in database, creating:", userId, req.user.claims.email);
+        console.log(
+          "User not found in database, creating:",
+          userId,
+          req.user.claims.email,
+        );
         // Create user if not found
         const claims = req.user.claims;
         await storage.upsertUser({
           id: claims.sub,
           email: claims.email,
-          firstName: claims.first_name || claims.email.split('@')[0],
+          firstName: claims.first_name || claims.email.split("@")[0],
           lastName: claims.last_name || "",
           profileImageUrl: claims.profile_image_url,
         });
         user = await storage.getUser(userId);
       }
-      
+
       if (!user) {
         console.error("Still no user found after creation attempt:", userId);
-        return res.status(500).json({ message: "Failed to create or retrieve user" });
+        return res
+          .status(500)
+          .json({ message: "Failed to create or retrieve user" });
       }
 
       // Get organization name and slug for header display
@@ -249,12 +312,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           organizationSlug = organization.slug;
         }
       }
-      
-      console.log("Returning user data via /me:", { id: user.id, email: user.email, isAdmin: user.isAdmin });
+
+      console.log("Returning user data via /me:", {
+        id: user.id,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      });
       res.json({
         ...user,
         organizationName,
-        organizationSlug
+        organizationSlug,
       });
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -263,7 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Availability endpoints
-  app.get('/api/availability', isAuthenticated, async (req: any, res) => {
+  app.get("/api/availability", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const availability = await storage.getAvailability(userId);
@@ -274,14 +341,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/availability', isAuthenticated, async (req: any, res) => {
+  app.post("/api/availability", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const validatedData = insertAvailabilitySchema.parse({
         ...req.body,
-        userId
+        userId,
       });
-      
+
       const availability = await storage.createAvailability(validatedData);
       res.json(availability);
     } catch (error) {
@@ -290,16 +357,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/availability', isAuthenticated, async (req: any, res) => {
+  app.delete("/api/availability", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const userAvailability = await storage.getAvailability(userId);
-      
+
       // Delete all availability records for the user
       for (const avail of userAvailability) {
         await storage.deleteAvailability(avail.id);
       }
-      
+
       res.json({ message: "All availability deleted successfully" });
     } catch (error) {
       console.error("Error deleting availability:", error);
@@ -307,8 +374,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User profile endpoints  
-  app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
+  // User profile endpoints
+  app.patch("/api/user/profile", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const updateData = {
@@ -318,9 +385,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         company: req.body.company,
         industry: req.body.industry,
         bio: req.body.bio,
-        linkedinUrl: req.body.linkedinUrl
+        linkedinUrl: req.body.linkedinUrl,
       };
-      
+
       console.log("Profile update request:", { userId, updateData });
       const user = await storage.updateUser(userId, updateData);
       console.log("Profile updated successfully:", user);
@@ -332,14 +399,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User settings endpoints (separate from profile for basic info like name)
-  app.patch('/api/user/settings', isAuthenticated, async (req: any, res) => {
+  app.patch("/api/user/settings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const updateData = {
         firstName: req.body.firstName,
-        lastName: req.body.lastName
+        lastName: req.body.lastName,
       };
-      
+
       console.log("User settings update request:", { userId, updateData });
       const user = await storage.updateUser(userId, updateData);
       console.log("User settings updated successfully:", user);
@@ -350,37 +417,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/user/profile-questions', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const validatedData = insertProfileQuestionsSchema.parse({
-        ...req.body,
-        userId
-      });
-      
-      // Check if profile questions already exist
-      const existing = await storage.getProfileQuestions(userId);
-      if (existing) {
-        const updated = await storage.updateProfileQuestions(userId, validatedData);
-        res.json(updated);
-      } else {
-        const created = await storage.createProfileQuestions(validatedData);
-        res.json(created);
+  app.post(
+    "/api/user/profile-questions",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const userId = req.user.claims.sub;
+        const validatedData = insertProfileQuestionsSchema.parse({
+          ...req.body,
+          userId,
+        });
+
+        // Check if profile questions already exist
+        const existing = await storage.getProfileQuestions(userId);
+        if (existing) {
+          const updated = await storage.updateProfileQuestions(
+            userId,
+            validatedData,
+          );
+          res.json(updated);
+        } else {
+          const created = await storage.createProfileQuestions(validatedData);
+          res.json(created);
+        }
+      } catch (error) {
+        console.error("Error saving profile questions:", error);
+        res.status(500).json({ message: "Failed to save profile questions" });
       }
-    } catch (error) {
-      console.error("Error saving profile questions:", error);
-      res.status(500).json({ message: "Failed to save profile questions" });
-    }
-  });
+    },
+  );
 
   // Dashboard stats
-  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+  app.get("/api/dashboard/stats", isAuthenticated, async (req: any, res) => {
     try {
       res.json({
         totalMatches: 0,
         scheduledMeetings: 0,
         completedMeetings: 0,
-        profileCompletion: 75
+        profileCompletion: 75,
       });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -389,16 +463,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User opt-in/opt-out endpoint
-  app.patch('/api/user/opt-status', isAuthenticated, async (req: any, res) => {
+  app.patch("/api/user/opt-status", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { isActive } = req.body;
-      
+
       const user = await storage.updateUser(userId, { isActive });
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       res.json({ success: true, isActive: user.isActive });
     } catch (error) {
       console.error("Error updating opt-in status:", error);
@@ -407,7 +481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Matches endpoints
-  app.get('/api/matches', isAuthenticated, async (req: any, res) => {
+  app.get("/api/matches", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const matches = await storage.getMatchesByUser(userId);
@@ -419,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Meetings endpoints
-  app.get('/api/meetings', isAuthenticated, async (req: any, res) => {
+  app.get("/api/meetings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const meetings = await storage.getMeetingsByUser(userId);
@@ -430,44 +504,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/meetings', isAuthenticated, async (req: any, res) => {
+  app.post("/api/meetings", isAuthenticated, async (req: any, res) => {
     try {
       const validatedData = insertMeetingSchema.parse(req.body);
       const meeting = await storage.createMeeting(validatedData);
-      
+
       // Send admin notification about new meeting
       try {
         const userId = req.user.claims.sub;
         const user = await storage.getUser(userId);
-        
+
         if (user?.organizationId) {
-          const organization = await storage.getOrganization(user.organizationId);
+          const organization = await storage.getOrganization(
+            user.organizationId,
+          );
           if (organization) {
             // Get admin user for this organization
             const allUsers = await storage.getAllUsers();
-            const adminUser = allUsers.find(u => 
-              u.organizationId === user.organizationId && u.isAdmin
+            const adminUser = allUsers.find(
+              (u) => u.organizationId === user.organizationId && u.isAdmin,
             );
-            
+
             if (adminUser) {
               // Get meeting with match details
               const meetingWithMatch = await storage.getMeeting(meeting.id);
               if (meetingWithMatch) {
-                console.log(`📧 Sending admin notification about new meeting to ${adminUser.email}`);
+                console.log(
+                  `📧 Sending admin notification about new meeting to ${adminUser.email}`,
+                );
                 await emailService.sendAdminMatchSummary(
-                  adminUser, 
-                  organization.name, 
+                  adminUser,
+                  organization.name,
                   [], // No new matches, just meeting
-                  [meetingWithMatch]
+                  [meetingWithMatch],
                 );
               }
             }
           }
         }
       } catch (emailError) {
-        console.error('Failed to send admin notification for new meeting:', emailError);
+        console.error(
+          "Failed to send admin notification for new meeting:",
+          emailError,
+        );
       }
-      
+
       res.json(meeting);
     } catch (error) {
       console.error("Error creating meeting:", error);
@@ -475,57 +556,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/meetings/:id', isAuthenticated, async (req: any, res) => {
+  app.patch("/api/meetings/:id", isAuthenticated, async (req: any, res) => {
     try {
       const meetingId = parseInt(req.params.id);
       const updateData = req.body;
-      
+
       console.log("Meeting update request:", { meetingId, updateData });
-      
+
       // Convert scheduledAt to proper date format if provided
       if (updateData.scheduledAt) {
         updateData.scheduledAt = new Date(updateData.scheduledAt);
       }
-      
+
       const updatedMeeting = await storage.updateMeeting(meetingId, updateData);
-      
+
       if (!updatedMeeting) {
         return res.status(404).json({ message: "Meeting not found" });
       }
-      
+
       // Send admin notification about meeting update
       try {
         const userId = req.user.claims.sub;
         const user = await storage.getUser(userId);
-        
+
         if (user?.organizationId) {
-          const organization = await storage.getOrganization(user.organizationId);
+          const organization = await storage.getOrganization(
+            user.organizationId,
+          );
           if (organization) {
             // Get admin user for this organization
             const allUsers = await storage.getAllUsers();
-            const adminUser = allUsers.find(u => 
-              u.organizationId === user.organizationId && u.isAdmin
+            const adminUser = allUsers.find(
+              (u) => u.organizationId === user.organizationId && u.isAdmin,
             );
-            
+
             if (adminUser) {
               // Get meeting with match details
               const meetingWithMatch = await storage.getMeeting(meetingId);
               if (meetingWithMatch) {
-                console.log(`📧 Sending admin notification about meeting update to ${adminUser.email}`);
+                console.log(
+                  `📧 Sending admin notification about meeting update to ${adminUser.email}`,
+                );
                 await emailService.sendAdminMatchSummary(
-                  adminUser, 
-                  organization.name, 
+                  adminUser,
+                  organization.name,
                   [], // No new matches, just meeting update
-                  [meetingWithMatch]
+                  [meetingWithMatch],
                 );
               }
             }
           }
         }
       } catch (emailError) {
-        console.error('Failed to send admin notification for meeting update:', emailError);
+        console.error(
+          "Failed to send admin notification for meeting update:",
+          emailError,
+        );
       }
-      
+
       console.log("Meeting updated successfully:", updatedMeeting);
       res.json(updatedMeeting);
     } catch (error) {
@@ -534,81 +622,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-// In-memory settings storage for demo (in production, this would be in database)
-let adminSettings = {
-  appName: "Community Platform",
-  nextMatchingDate: "2025-07-01",
-  matchingDay: 1,
-  monthlyFocusGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-  communityMeetingLink: "https://meet.google.com/new (or your Zoom/Teams link)",
-  preventMeetingOverlap: true,
-  showMonthlyGoals: false, // Feature toggle for monthly goals
-  weights: {
-    industry: 35,
-    company: 20,
-    goals: 30,
-    jobTitle: 15
-  },
-  defaultFirstName: "New",
-  defaultLastName: "Member"
-};
+  // In-memory settings storage for demo (in production, this would be in database)
+  let adminSettings = {
+    appName: "Community Platform",
+    nextMatchingDate: "2025-07-01",
+    matchingDay: 1,
+    monthlyFocusGoals: [
+      "Learning technical skills",
+      "Building data projects",
+      "Job hunting",
+      "Networking",
+    ],
+    communityMeetingLink:
+      "https://meet.google.com/new (or your Zoom/Teams link)",
+    preventMeetingOverlap: true,
+    showMonthlyGoals: false, // Feature toggle for monthly goals
+    weights: {
+      industry: 35,
+      company: 20,
+      goals: 30,
+      jobTitle: 15,
+    },
+    defaultFirstName: "New",
+    defaultLastName: "Member",
+  };
 
-// Settings endpoints
-app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
-  try {
-    // Get user's organization settings from database
-    const userId = req.user.claims.sub;
-    const user = await storage.getUser(userId);
-    
-    if (!user?.organizationId) {
-      // Fallback to default settings if no organization
-      return res.json({
-        appName: adminSettings.appName,
-        nextMatchingDate: adminSettings.nextMatchingDate,
-        matchingDay: adminSettings.matchingDay,
-        showMonthlyGoals: adminSettings.showMonthlyGoals
+  // Settings endpoints
+  app.get("/api/settings/public", isAuthenticated, async (req: any, res) => {
+    try {
+      // Get user's organization settings from database
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user?.organizationId) {
+        // Fallback to default settings if no organization
+        return res.json({
+          appName: adminSettings.appName,
+          nextMatchingDate: adminSettings.nextMatchingDate,
+          matchingDay: adminSettings.matchingDay,
+          showMonthlyGoals: adminSettings.showMonthlyGoals,
+        });
+      }
+
+      const organization = await storage.getOrganization(user.organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      // Return organization settings from database
+      const settings = organization.settings || {};
+      console.log("Public settings from database:", settings);
+
+      res.json({
+        appName: settings.appName || organization.name,
+        nextMatchingDate: "2025-07-01",
+        matchingDay: settings.matchingDay || 15,
+        showMonthlyGoals: adminSettings.showMonthlyGoals || false,
       });
+    } catch (error) {
+      console.error("Error fetching public settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
     }
-
-    const organization = await storage.getOrganization(user.organizationId);
-    if (!organization) {
-      return res.status(404).json({ message: 'Organization not found' });
-    }
-
-    // Return organization settings from database
-    const settings = organization.settings || {};
-    console.log("Public settings from database:", settings);
-    
-    res.json({
-      appName: settings.appName || organization.name,
-      nextMatchingDate: "2025-07-01",
-      matchingDay: settings.matchingDay || 15,
-      showMonthlyGoals: adminSettings.showMonthlyGoals || false
-    });
-  } catch (error) {
-    console.error("Error fetching public settings:", error);
-    res.status(500).json({ message: "Failed to fetch settings" });
-  }
-});
+  });
 
   // Get organization details by slug for signup page
-  app.get('/api/organizations/:slug', async (req: any, res) => {
+  app.get("/api/organizations/:slug", async (req: any, res) => {
     try {
       const { slug } = req.params;
       console.log("Looking for organization with slug:", slug);
-      
+
       const organizations = await storage.getAllOrganizations();
-      console.log("Available organizations:", organizations.map(o => ({ id: o.id, name: o.name, slug: o.slug })));
-      
-      const organization = organizations.find(org => 
-        (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
-        org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase()
+      console.log(
+        "Available organizations:",
+        organizations.map((o) => ({ id: o.id, name: o.name, slug: o.slug })),
       );
-      
+
+      const organization = organizations.find(
+        (org) =>
+          (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
+          org.name.toLowerCase().replace(/[^a-z0-9]/g, "") ===
+            slug.toLowerCase(),
+      );
+
       if (!organization) {
-        return res.status(404).json({ message: "Organization not found", availableOrgs: organizations.map(o => o.slug || o.name.toLowerCase().replace(/[^a-z0-9]/g, '')) });
+        return res.status(404).json({
+          message: "Organization not found",
+          availableOrgs: organizations.map(
+            (o) => o.slug || o.name.toLowerCase().replace(/[^a-z0-9]/g, ""),
+          ),
+        });
       }
-      
+
       // Return public organization info (no sensitive data)
       res.json({
         id: organization.id,
@@ -616,8 +720,8 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
         domain: organization.domain,
         isActive: organization.isActive,
         settings: {
-          appName: organization.settings?.appName || organization.name
-        }
+          appName: organization.settings?.appName || organization.name,
+        },
       });
     } catch (error) {
       console.error("Error fetching organization:", error);
@@ -625,11 +729,11 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
     }
   });
 
-  app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/settings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || !user.organizationId) {
         return res.json(adminSettings); // Fallback to default settings
       }
@@ -644,11 +748,24 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
         appName: organization.settings?.appName || organization.name,
         nextMatchingDate: "2025-07-01",
         matchingDay: organization.settings?.matchingDay || 15,
-        monthlyGoals: organization.settings?.monthlyGoals || ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-        communityMeetingLink: organization.settings?.communityMeetingLink || "https://meet.google.com/new",
-        preventMeetingOverlap: organization.settings?.preventMeetingOverlap || true,
+        monthlyGoals: organization.settings?.monthlyGoals || [
+          "Learning technical skills",
+          "Building data projects",
+          "Job hunting",
+          "Networking",
+        ],
+        communityMeetingLink:
+          organization.settings?.communityMeetingLink ||
+          "https://meet.google.com/new",
+        preventMeetingOverlap:
+          organization.settings?.preventMeetingOverlap || true,
         showMonthlyGoals: adminSettings.showMonthlyGoals || false, // Use global feature toggle
-        weights: organization.settings?.weights || { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
+        weights: organization.settings?.weights || {
+          industry: 35,
+          company: 20,
+          networkingGoals: 30,
+          jobTitle: 15,
+        },
       };
       res.json(settings);
     } catch (error) {
@@ -658,23 +775,25 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
   });
 
   // Admin API endpoints - only show users from admin's organization
-  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const admin = await storage.getUser(userId);
-      
+
       if (!admin || (!admin.isAdmin && !admin.isSuperAdmin)) {
         return res.status(403).json({ message: "Admin access required" });
       }
-      
+
       if (!admin.organizationId) {
         return res.json([]);
       }
-      
+
       // Get all users from the admin's organization
       const allUsers = await storage.getAllUsers();
-      const organizationUsers = allUsers.filter(user => user.organizationId === admin.organizationId);
-      
+      const organizationUsers = allUsers.filter(
+        (user) => user.organizationId === admin.organizationId,
+      );
+
       res.json(organizationUsers);
     } catch (error) {
       console.error("Error fetching admin users:", error);
@@ -682,26 +801,27 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
     }
   });
 
-  app.get('/api/admin/matches', isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/matches", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const admin = await storage.getUser(userId);
-      
+
       if (!admin || (!admin.isAdmin && !admin.isSuperAdmin)) {
         return res.status(403).json({ message: "Admin access required" });
       }
-      
+
       if (!admin.organizationId) {
         return res.json([]);
       }
-      
+
       // Get matches only for users in the admin's organization
       const allMatches = await storage.getAllMatches();
-      const organizationMatches = allMatches.filter(match => 
-        match.user1.organizationId === admin.organizationId && 
-        match.user2.organizationId === admin.organizationId
+      const organizationMatches = allMatches.filter(
+        (match) =>
+          match.user1.organizationId === admin.organizationId &&
+          match.user2.organizationId === admin.organizationId,
       );
-      
+
       res.json(organizationMatches);
     } catch (error) {
       console.error("Error fetching admin matches:", error);
@@ -709,26 +829,27 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
     }
   });
 
-  app.get('/api/admin/meetings', isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/meetings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const admin = await storage.getUser(userId);
-      
+
       if (!admin || (!admin.isAdmin && !admin.isSuperAdmin)) {
         return res.status(403).json({ message: "Admin access required" });
       }
-      
+
       if (!admin.organizationId) {
         return res.json([]);
       }
-      
+
       // Get meetings only for users in the admin's organization
       const allMeetings = await storage.getAllMeetings();
-      const organizationMeetings = allMeetings.filter(meeting => 
-        meeting.match?.user1?.organizationId === admin.organizationId && 
-        meeting.match?.user2?.organizationId === admin.organizationId
+      const organizationMeetings = allMeetings.filter(
+        (meeting) =>
+          meeting.match?.user1?.organizationId === admin.organizationId &&
+          meeting.match?.user2?.organizationId === admin.organizationId,
       );
-      
+
       res.json(organizationMeetings);
     } catch (error) {
       console.error("Error fetching admin meetings:", error);
@@ -737,41 +858,43 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
   });
 
   // Admin settings update endpoint
-  app.patch('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/settings", isAuthenticated, async (req: any, res) => {
     try {
       const updates = req.body;
       console.log("Admin settings update request:", updates);
-      
+
       // Get user's organization
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       if (!user?.organizationId) {
-        return res.status(400).json({ message: 'User not associated with an organization' });
+        return res
+          .status(400)
+          .json({ message: "User not associated with an organization" });
       }
 
       const organization = await storage.getOrganization(user.organizationId);
       if (!organization) {
-        return res.status(404).json({ message: 'Organization not found' });
+        return res.status(404).json({ message: "Organization not found" });
       }
 
       // Update organization settings in database
       const currentSettings = organization.settings || {};
       const newSettings = { ...currentSettings, ...updates };
-      
+
       // If appName is being updated, also update the organization name but not slug (slug should remain static)
       const updateData: any = { settings: newSettings };
       if (updates.appName) {
         updateData.name = updates.appName;
         console.log("Updating organization name to:", updateData.name);
       }
-      
+
       await storage.updateOrganization(organization.id, updateData);
-      
+
       console.log("Updated organization settings in database:", newSettings);
-      
-      res.json({ 
+
+      res.json({
         message: "Settings updated successfully",
-        settings: newSettings
+        settings: newSettings,
       });
     } catch (error) {
       console.error("Error updating admin settings:", error);
@@ -780,185 +903,233 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
   });
 
   // Test endpoint to send admin summary email
-  app.post('/api/test/admin-email', isAuthenticated, async (req: any, res) => {
+  app.post("/api/test/admin-email", isAuthenticated, async (req: any, res) => {
     try {
-      console.log('Testing admin email notification...');
-      
+      console.log("Testing admin email notification...");
+
       // Create test admin user
       const testAdmin = {
-        id: 'test-admin',
-        email: 'averyjs@gmail.com',
-        firstName: 'Avery',
-        lastName: 'Admin',
+        id: "test-admin",
+        email: "averyjs@gmail.com",
+        firstName: "Avery",
+        lastName: "Admin",
         isAdmin: true,
-        organizationId: 2
+        organizationId: 2,
       };
-      
+
       // Create test match data
       const testMatches = [
         {
           id: 1,
-          user1Id: 'user1',
-          user2Id: 'user2',
+          user1Id: "user1",
+          user2Id: "user2",
           matchScore: 85,
-          monthYear: '2025-01',
-          status: 'pending',
+          monthYear: "2025-01",
+          status: "pending",
           createdAt: new Date(),
           user1: {
-            id: 'user1',
-            email: 'user1@test.com',
-            firstName: 'John',
-            lastName: 'Doe',
-            jobTitle: 'Software Engineer',
-            company: 'Tech Corp'
+            id: "user1",
+            email: "user1@test.com",
+            firstName: "John",
+            lastName: "Doe",
+            jobTitle: "Software Engineer",
+            company: "Tech Corp",
           },
           user2: {
-            id: 'user2',
-            email: 'user2@test.com',
-            firstName: 'Jane',
-            lastName: 'Smith',
-            jobTitle: 'Product Manager',
-            company: 'Innovation Inc'
-          }
-        }
+            id: "user2",
+            email: "user2@test.com",
+            firstName: "Jane",
+            lastName: "Smith",
+            jobTitle: "Product Manager",
+            company: "Innovation Inc",
+          },
+        },
       ];
-      
+
       // Create test meeting data
       const testMeetings = [
         {
           id: 1,
           matchId: 1,
-          scheduledAt: new Date('2025-01-15T14:00:00Z'),
-          meetingType: 'video',
+          scheduledAt: new Date("2025-01-15T14:00:00Z"),
+          meetingType: "video",
           duration: 30,
-          meetingLink: 'https://meet.google.com/test-meeting',
-          status: 'scheduled',
-          match: testMatches[0]
-        }
+          meetingLink: "https://meet.google.com/test-meeting",
+          status: "scheduled",
+          match: testMatches[0],
+        },
       ];
-      
-      console.log('📧 Sending test admin summary email to averyjs@gmail.com...');
-      console.log('📧 Test admin user:', JSON.stringify(testAdmin, null, 2));
-      console.log('📧 Test matches data:', JSON.stringify(testMatches, null, 2));
-      console.log('📧 Test meetings data:', JSON.stringify(testMeetings, null, 2));
-      
+
+      console.log(
+        "📧 Sending test admin summary email to averyjs@gmail.com...",
+      );
+      console.log("📧 Test admin user:", JSON.stringify(testAdmin, null, 2));
+      console.log(
+        "📧 Test matches data:",
+        JSON.stringify(testMatches, null, 2),
+      );
+      console.log(
+        "📧 Test meetings data:",
+        JSON.stringify(testMeetings, null, 2),
+      );
+
       const result = await emailService.sendAdminMatchSummary(
         testAdmin,
-        'Test Community',
+        "Test Community",
         testMatches,
-        testMeetings
+        testMeetings,
       );
-      
-      console.log('📧 Email service result:', result);
-      console.log('✅ Test admin email sent successfully!');
-      res.json({ 
-        message: 'Test admin email sent successfully to averyjs@gmail.com',
+
+      console.log("📧 Email service result:", result);
+      console.log("✅ Test admin email sent successfully!");
+      res.json({
+        message: "Test admin email sent successfully to averyjs@gmail.com",
         details: {
           recipient: testAdmin.email,
-          communityName: 'Test Community',
+          communityName: "Test Community",
           matchCount: testMatches.length,
-          meetingCount: testMeetings.length
-        }
+          meetingCount: testMeetings.length,
+        },
       });
     } catch (error) {
-      console.error('❌ Error sending test admin email:', error);
-      res.status(500).json({ message: 'Failed to send test admin email', error: error.message });
+      console.error("❌ Error sending test admin email:", error);
+      res.status(500).json({
+        message: "Failed to send test admin email",
+        error: error.message,
+      });
     }
   });
 
   // Super Admin API endpoints
-  app.get('/api/super-admin/organizations', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user || !user.isSuperAdmin) {
-        return res.status(403).json({ message: "Super admin access required" });
-      }
-      
-      const organizations = await storage.getAllOrganizations();
-      res.json(organizations);
-    } catch (error) {
-      console.error("Error fetching organizations:", error);
-      res.status(500).json({ message: "Failed to fetch organizations" });
-    }
-  });
+  app.get(
+    "/api/super-admin/organizations",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
 
-  app.post('/api/super-admin/organizations', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user || !user.isSuperAdmin) {
-        return res.status(403).json({ message: "Super admin access required" });
-      }
-      
-      const { name, slug, description } = req.body;
-      console.log("Creating community with data:", { name, slug, description });
-      
-      if (!name || !slug) {
-        return res.status(400).json({ message: "Name and slug are required" });
-      }
-
-      // Check if slug already exists
-      const existingOrgs = await storage.getAllOrganizations();
-      console.log("Existing organizations:", existingOrgs.map(org => ({ name: org.name, slug: org.slug })));
-      
-      const slugExists = existingOrgs.some(org => 
-        (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
-        org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug.toLowerCase()
-      );
-
-      if (slugExists) {
-        console.log("Slug already exists:", slug);
-        return res.status(400).json({ message: "Community slug already exists" });
-      }
-
-      const organizationData = {
-        name,
-        slug,
-        description: description || "",
-        domain: `${slug}.matches.community`,
-        isActive: true,
-        settings: {
-          appName: name,
-          matchingDay: 15,
-          monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
-          communityMeetingLink: "https://meet.google.com/new (or your Zoom/Teams link)",
-          preventMeetingOverlap: true,
-          weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
+        if (!user || !user.isSuperAdmin) {
+          return res
+            .status(403)
+            .json({ message: "Super admin access required" });
         }
-      };
 
-      console.log("Creating organization with data:", organizationData);
-      const newOrganization = await storage.createOrganization(organizationData);
-      console.log("Successfully created organization:", newOrganization);
-      
-      // NOTE: Super admin creates organizations without admin users
-      // Admin users will be assigned when they first log in via Replit Auth
-      // This is different from homepage creation which creates admin users immediately
-      
-      res.status(201).json(newOrganization);
-    } catch (error) {
-      console.error("Error creating community - full error:", error);
-      console.error("Error stack:", error.stack);
-      res.status(500).json({ 
-        message: "Failed to create community", 
-        error: error.message,
-        details: error.stack
-      });
-    }
-  });
+        const organizations = await storage.getAllOrganizations();
+        res.json(organizations);
+      } catch (error) {
+        console.error("Error fetching organizations:", error);
+        res.status(500).json({ message: "Failed to fetch organizations" });
+      }
+    },
+  );
 
-  app.get('/api/super-admin/users', isAuthenticated, async (req: any, res) => {
+  app.post(
+    "/api/super-admin/organizations",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+
+        if (!user || !user.isSuperAdmin) {
+          return res
+            .status(403)
+            .json({ message: "Super admin access required" });
+        }
+
+        const { name, slug, description } = req.body;
+        console.log("Creating community with data:", {
+          name,
+          slug,
+          description,
+        });
+
+        if (!name || !slug) {
+          return res
+            .status(400)
+            .json({ message: "Name and slug are required" });
+        }
+
+        // Check if slug already exists
+        const existingOrgs = await storage.getAllOrganizations();
+        console.log(
+          "Existing organizations:",
+          existingOrgs.map((org) => ({ name: org.name, slug: org.slug })),
+        );
+
+        const slugExists = existingOrgs.some(
+          (org) =>
+            (org.slug && org.slug.toLowerCase() === slug.toLowerCase()) ||
+            org.name.toLowerCase().replace(/[^a-z0-9]/g, "") ===
+              slug.toLowerCase(),
+        );
+
+        if (slugExists) {
+          console.log("Slug already exists:", slug);
+          return res
+            .status(400)
+            .json({ message: "Community slug already exists" });
+        }
+
+        const organizationData = {
+          name,
+          slug,
+          description: description || "",
+          domain: `${slug}.matches.community`,
+          isActive: true,
+          settings: {
+            appName: name,
+            matchingDay: 15,
+            monthlyGoals: [
+              "Learning technical skills",
+              "Building data projects",
+              "Job hunting",
+              "Networking",
+            ],
+            communityMeetingLink:
+              "https://meet.google.com/new (or your Zoom/Teams link)",
+            preventMeetingOverlap: true,
+            weights: {
+              industry: 35,
+              company: 20,
+              networkingGoals: 30,
+              jobTitle: 15,
+            },
+          },
+        };
+
+        console.log("Creating organization with data:", organizationData);
+        const newOrganization =
+          await storage.createOrganization(organizationData);
+        console.log("Successfully created organization:", newOrganization);
+
+        // NOTE: Super admin creates organizations without admin users
+        // Admin users will be assigned when they first log in via Replit Auth
+        // This is different from homepage creation which creates admin users immediately
+
+        res.status(201).json(newOrganization);
+      } catch (error) {
+        console.error("Error creating community - full error:", error);
+        console.error("Error stack:", error.stack);
+        res.status(500).json({
+          message: "Failed to create community",
+          error: error.message,
+          details: error.stack,
+        });
+      }
+    },
+  );
+
+  app.get("/api/super-admin/users", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || !user.isSuperAdmin) {
         return res.status(403).json({ message: "Super admin access required" });
       }
-      
+
       const users = await storage.getAllUsers();
       res.json(users);
     } catch (error) {
@@ -967,24 +1138,24 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
     }
   });
 
-  app.get('/api/super-admin/stats', isAuthenticated, async (req: any, res) => {
+  app.get("/api/super-admin/stats", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || !user.isSuperAdmin) {
         return res.status(403).json({ message: "Super admin access required" });
       }
-      
+
       const users = await storage.getAllUsers();
       const organizations = await storage.getAllOrganizations();
       const stats = {
         totalUsers: users.length,
-        activeUsers: users.filter(u => u.isActive).length,
-        adminUsers: users.filter(u => u.isAdmin).length,
-        superAdminUsers: users.filter(u => u.isSuperAdmin).length,
+        activeUsers: users.filter((u) => u.isActive).length,
+        adminUsers: users.filter((u) => u.isAdmin).length,
+        superAdminUsers: users.filter((u) => u.isSuperAdmin).length,
         totalCommunities: organizations.length,
-        activeCommunities: organizations.filter(o => o.isActive).length,
+        activeCommunities: organizations.filter((o) => o.isActive).length,
       };
       res.json(stats);
     } catch (error) {
@@ -993,58 +1164,252 @@ app.get('/api/settings/public', isAuthenticated, async (req: any, res) => {
     }
   });
 
-  app.patch('/api/super-admin/users/:userId/super-admin', isAuthenticated, async (req: any, res) => {
-    try {
-      const currentUserId = req.user.claims.sub;
-      const currentUser = await storage.getUser(currentUserId);
-      
-      if (!currentUser || !currentUser.isSuperAdmin) {
-        return res.status(403).json({ message: "Super admin access required" });
+  app.patch(
+    "/api/super-admin/users/:userId/super-admin",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const currentUserId = req.user.claims.sub;
+        const currentUser = await storage.getUser(currentUserId);
+
+        if (!currentUser || !currentUser.isSuperAdmin) {
+          return res
+            .status(403)
+            .json({ message: "Super admin access required" });
+        }
+
+        const { userId } = req.params;
+        const { isSuperAdmin } = req.body;
+
+        const updatedUser = await storage.updateUser(userId, { isSuperAdmin });
+        if (!updatedUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json(updatedUser);
+      } catch (error) {
+        console.error("Error updating super admin status:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to update super admin status" });
       }
-      
-      const { userId } = req.params;
-      const { isSuperAdmin } = req.body;
-      
-      const updatedUser = await storage.updateUser(userId, { isSuperAdmin });
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      res.json(updatedUser);
-    } catch (error) {
-      console.error("Error updating super admin status:", error);
-      res.status(500).json({ message: "Failed to update super admin status" });
-    }
-  });
+    },
+  );
 
   // Admin trigger matching endpoint
-  app.post('/api/admin/trigger-matching', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user || (!user.isAdmin && !user.isSuperAdmin)) {
-        return res.status(403).json({ message: "Admin access required" });
+  app.post(
+    "/api/admin/trigger-matching",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+
+        if (!user || (!user.isAdmin && !user.isSuperAdmin)) {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+
+        console.log("Manual matching triggered by admin:", user.email);
+
+        // Import the matching service
+        const { matchingService } = await import("./services/matching");
+
+        // Run the monthly matching for this admin's organization only
+        const result = await matchingService.runMonthlyMatching(
+          undefined,
+          user.organizationId,
+        );
+
+        res.json({
+          message: "Matching process completed successfully",
+          matchCount: result?.length || 0,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error("Error triggering matching:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to trigger matching: " + error.message });
       }
-      
-      console.log("Manual matching triggered by admin:", user.email);
-      
-      // Import the matching service
-      const { matchingService } = await import('./services/matching');
-      
-      // Run the monthly matching for this admin's organization only
-      const result = await matchingService.runMonthlyMatching(undefined, user.organizationId);
-      
-      res.json({ 
-        message: "Matching process completed successfully",
-        matchCount: result?.length || 0,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Error triggering matching:", error);
-      res.status(500).json({ message: "Failed to trigger matching: " + error.message });
-    }
+    },
+  );
+
+  // Configure multer for file uploads (memory storage for CSV processing)
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === "text/csv" || file.originalname.endsWith(".csv")) {
+        cb(null, true);
+      } else {
+        cb(new Error("Only CSV files are allowed"));
+      }
+    },
   });
+
+  app.post(
+    "/api/admin/upload-users",
+    isAuthenticated,
+    upload.single("csvFile"),
+    async (req: any, res) => {
+      try {
+        const userId = req.user.claims.sub;
+        const admin = await storage.getUser(userId);
+
+        if (!admin || (!admin.isAdmin && !admin.isSuperAdmin)) {
+          return res.status(403).json({ message: "Admin access required" });
+        }
+        if (!admin.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "Admin must be associated with an organization" });
+        }
+        if (!req.file) {
+          return res.status(400).json({ message: "No CSV file uploaded" });
+        }
+
+        console.log(
+          "📤 CSV upload started by admin:",
+          admin.email,
+          "for organization:",
+          admin.organizationId,
+        );
+
+        const csvText = req.file.buffer.toString("utf8");
+        console.log("=== RAW CSV PREVIEW (first 10 lines) ===");
+        csvText
+          .split(/\r?\n/)
+          .slice(0, 10)
+          .forEach((l, i) => {
+            console.log(`Line ${i + 1}: ${l}`);
+          });
+
+        const csvData: Array<{
+          firstName: string;
+          lastName: string;
+          email: string;
+          organizationId: string;
+          isActive: boolean;
+          isAdmin: boolean;
+          isSuperAdmin: boolean;
+        }> = [];
+
+        // 1) Parse CSV (lenient to extra columns, trims, handles BOM)
+
+        const records = parse(csvText, {
+          columns: true, // use header row
+          skip_empty_lines: true,
+          relax_column_count: true, // tolerate extra cols
+          trim: true,
+          bom: true,
+        }) as Record<string, string>[];
+
+        // 2) Require these headers (case-insensitive)
+        const required = ["first name", "last name", "email"];
+        const headerSet = new Set(
+          Object.keys(records[0] || {}).map((h) => h.trim().toLowerCase()),
+        );
+        const missingHeaders = required.filter((h) => !headerSet.has(h));
+        if (missingHeaders.length) {
+          return res.status(400).json({
+            message: "CSV header mismatch",
+            expected: ["First Name", "Last Name", "Email"],
+            received: Array.from(headerSet),
+          });
+        }
+
+        // helper: get value ignoring case
+        const getVal = (row: Record<string, string>, key: string) => {
+          const k = Object.keys(row).find(
+            (h) => h.trim().toLowerCase() === key,
+          );
+          return k ? (row[k] ?? "").trim() : "";
+        };
+
+        // 3) Debug: show first 10 parsed objects and extracted fields
+        console.log("--- Parsed preview (first 10) ---");
+        records.slice(0, 10).forEach((r, i) => {
+          const firstName = getVal(r, "first name");
+          const lastName = getVal(r, "last name");
+          const email = getVal(r, "email");
+          console.log(
+            `Row ${i + 2}:`, // +2 because headers=1, first data row=2
+            { raw: r, extracted: { firstName, lastName, email } },
+          );
+        });
+
+        // 4) Validate rows & build csvData
+        const errors: string[] = [];
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        records.forEach((r, idx) => {
+          const line = idx + 2; // account for header
+          const firstName = getVal(r, "first name");
+          const lastName = getVal(r, "last name");
+          const email = getVal(r, "email");
+
+          if (!firstName || !lastName || !email) {
+            errors.push(`Line ${line}: Missing required fields`);
+            return;
+          }
+          if (!emailRegex.test(email)) {
+            errors.push(`Line ${line}: Invalid email format: ${email}`);
+            return;
+          }
+
+          csvData.push({
+            firstName,
+            lastName,
+            email: email.toLowerCase(),
+            organizationId: admin.organizationId,
+            isActive: true,
+            isAdmin: false,
+            isSuperAdmin: false,
+          });
+        });
+
+        // 5) Short-circuit responses for this step
+        if (records.length === 0) {
+          return res
+            .status(400)
+            .json({ message: "No rows found in CSV after parsing" });
+        }
+        if (errors.length) {
+          return res.status(400).json({
+            message: "CSV validation failed",
+            errors: errors.slice(0, 10),
+            totalErrors: errors.length,
+          });
+        }
+
+        const upsert = await storage.bulkUpsertUsersFromCsv(csvData);
+
+        // For now, just echo counts. Next step: upsert users.
+        return res.json({
+          message: "CSV parsed successfully",
+          results: { total: records.length, valid: csvData.length, errors: 0 },
+          sample: csvData.slice(0, 3),
+        });
+      } catch (error: any) {
+        console.error("CSV upload error:", error);
+        if (error.code === "LIMIT_FILE_SIZE") {
+          return res
+            .status(400)
+            .json({ message: "File too large. Maximum size is 5MB." });
+        }
+        if (error.message === "Only CSV files are allowed") {
+          return res
+            .status(400)
+            .json({ message: "Only CSV files are allowed" });
+        }
+        res
+          .status(500)
+          .json({ message: "Failed to upload CSV file", error: error.message });
+      }
+    },
+  );
 
   const httpServer = createServer(app);
   return httpServer;

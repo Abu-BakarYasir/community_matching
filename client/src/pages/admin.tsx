@@ -196,6 +196,124 @@ export default function Admin() {
     }
   };
 
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith(".csv") && file.type !== "text/csv") {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a valid CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "File size must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append("csvFile", file);
+
+      // Show loading toast
+      toast({
+        title: "Uploading CSV",
+        description: "Processing your file...",
+      });
+
+      console.log("Attempting CSV upload to /api/admin/upload-users");
+
+      // Send to backend API using multer endpoint
+      const response = await fetch("/api/admin/upload-users", {
+        method: "POST",
+        body: formData,
+        credentials: "include", // Include cookies for authentication
+      });
+
+      console.log("Response status:", response.status);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries()),
+      );
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const textResponse = await response.text();
+        console.error(
+          "Non-JSON response received:",
+          textResponse.substring(0, 500) + "...",
+        );
+
+        if (response.status === 404) {
+          throw new Error(
+            "Upload endpoint not found. Make sure the server is running and the /api/admin/upload-users endpoint is registered.",
+          );
+        } else if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            "Authentication failed. Please make sure you are logged in as an admin.",
+          );
+        } else if (response.status >= 500) {
+          throw new Error(
+            "Server error occurred. Check server logs for details.",
+          );
+        } else {
+          throw new Error(
+            `Unexpected response: ${response.status} ${response.statusText}`,
+          );
+        }
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `Upload failed with status ${response.status}`,
+        );
+      }
+
+      // Success - show detailed results
+      const results = data.results;
+      if (results.created > 0 || results.updated > 0) {
+        toast({
+          title: "Upload successful!",
+          description: `${results.created} users created, ${results.updated} updated, ${results.skipped} skipped`,
+        });
+      } else if (results.skipped > 0) {
+        toast({
+          title: "Upload completed",
+          description: `All ${results.skipped} users were already in the system`,
+          variant: "default",
+        });
+      }
+
+      // Refresh users list
+      queryClient.invalidateQueries({
+        queryKey: ["/api/admin/users"],
+      });
+    } catch (error: any) {
+      console.error("CSV upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error.message || "Failed to upload CSV file",
+        variant: "destructive",
+      });
+    } finally {
+      // Reset file input
+      e.target.value = "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -214,50 +332,7 @@ export default function Admin() {
               type="file"
               accept=".csv"
               id="upload-users-csv"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-
-                // Dynamically import PapaParse so no global dependency issues
-                import("papaparse").then((Papa) => {
-                  Papa.parse(file, {
-                    header: true, // Treat first row as column headers
-                    skipEmptyLines: true,
-                    complete: async (results: any) => {
-                      console.log("Parsed CSV:", results.data);
-
-                      // Map CSV to required format
-                      const users = results.data.map((row: any) => ({
-                        first_name: row.first_name?.trim(),
-                        last_name: row.last_name?.trim(),
-                        email: row.email?.trim(),
-                      }));
-
-                      console.log("Mapped Users Array:", users);
-
-                      try {
-                        // Send to backend API
-                        const res = await fetch("/api/admin/upload-users", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({ users }),
-                        });
-
-                        if (!res.ok) {
-                          throw new Error(`Upload failed: ${res.statusText}`);
-                        }
-
-                        alert("Users uploaded successfully!");
-                      } catch (err: any) {
-                        console.error("Upload error:", err);
-                        alert("Error uploading users. Check console.");
-                      }
-                    },
-                  });
-                });
-              }}
+              onChange={handleCsvUpload}
               className="hidden"
             />
 

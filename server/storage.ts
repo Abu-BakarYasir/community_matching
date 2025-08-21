@@ -1,3 +1,709 @@
+// import {
+//   users,
+//   profileQuestions,
+//   matches,
+//   meetings,
+//   availability,
+//   notifications,
+//   organizations,
+//   type User,
+//   type UpsertUser,
+//   type InsertUser,
+//   type ProfileQuestions,
+//   type InsertProfileQuestions,
+//   type Match,
+//   type InsertMatch,
+//   type MatchWithUsers,
+//   type Meeting,
+//   type InsertMeeting,
+//   type MeetingWithMatch,
+//   type Availability,
+//   type InsertAvailability,
+//   type Notification,
+//   type InsertNotification,
+//   type Organization,
+//   type InsertOrganization,
+// } from "@shared/schema";
+// import { db } from "./db";
+// import { eq, and, or, desc, asc, sql } from "drizzle-orm";
+
+// export interface IStorage {
+//   // User operations (mandatory for Replit Auth)
+//   getUser(id: string): Promise<User | undefined>;
+//   upsertUser(user: UpsertUser): Promise<User>;
+//   getUserByEmail(email: string): Promise<User | undefined>;
+//   createUser(user: InsertUser): Promise<User>;
+//   updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
+//   deleteUser(id: string): Promise<boolean>;
+//   getAllUsers(): Promise<User[]>;
+
+//   // Profile questions operations
+//   getProfileQuestions(userId: string): Promise<ProfileQuestions | undefined>;
+//   createProfileQuestions(questions: InsertProfileQuestions): Promise<ProfileQuestions>;
+//   updateProfileQuestions(userId: string, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined>;
+
+//   // Match operations
+//   getMatch(id: number): Promise<Match | undefined>;
+//   getMatchesByUser(userId: string): Promise<MatchWithUsers[]>;
+//   getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]>;
+//   getAllMatches(): Promise<MatchWithUsers[]>;
+//   createMatch(match: InsertMatch): Promise<Match>;
+//   updateMatch(id: number, updates: Partial<InsertMatch>): Promise<Match | undefined>;
+//   deleteMatch(id: number): Promise<boolean>;
+
+//   // Meeting operations
+//   getMeeting(id: number): Promise<Meeting | undefined>;
+//   getMeetingsByUser(userId: string): Promise<MeetingWithMatch[]>;
+//   getAllMeetings(): Promise<MeetingWithMatch[]>;
+//   createMeeting(meeting: InsertMeeting): Promise<Meeting>;
+//   updateMeeting(id: number, updates: Partial<InsertMeeting>): Promise<Meeting | undefined>;
+
+//   // Availability operations
+//   getAvailability(userId: string): Promise<Availability[]>;
+//   createAvailability(availability: InsertAvailability): Promise<Availability>;
+//   updateAvailability(id: number, updates: Partial<InsertAvailability>): Promise<Availability | undefined>;
+//   deleteAvailability(id: number): Promise<boolean>;
+
+//   // Notification operations
+//   getNotifications(userId: string): Promise<Notification[]>;
+//   createNotification(notification: InsertNotification): Promise<Notification>;
+//   markNotificationAsRead(id: number): Promise<boolean>;
+//   deleteNotification?(id: number): Promise<boolean>;
+
+//   // Profile operations
+//   deleteProfileQuestions?(userId: string): Promise<boolean>;
+
+//   // Meeting operations
+//   deleteMeeting?(id: number): Promise<boolean>;
+
+//   // Organization operations
+//   getOrganization(id: number): Promise<Organization | undefined>;
+//   getOrganizationByAdminId(adminId: string): Promise<Organization | undefined>;
+//   createOrganization(organization: InsertOrganization): Promise<Organization>;
+//   updateOrganization(id: number, updates: Partial<InsertOrganization>): Promise<Organization | undefined>;
+//   getAllOrganizations(): Promise<Organization[]>;
+// }
+
+// export class DatabaseStorage implements IStorage {
+//   // User operations (mandatory for Replit Auth)
+//   async getUser(id: string): Promise<User | undefined> {
+//     const [user] = await db.select().from(users).where(eq(users.id, id));
+//     return user;
+//   }
+
+//   async upsertUser(userData: UpsertUser): Promise<User> {
+//     try {
+//       // Always try email-based lookup first for reliability
+//       const existingUserByEmail = userData.email ? await this.getUserByEmail(userData.email) : null;
+
+//       if (existingUserByEmail) {
+//         // Update existing user found by email, updating the ID to match Replit Auth
+//         const [user] = await db
+//           .update(users)
+//           .set({
+//             ...userData,
+//             updatedAt: new Date(),
+//           })
+//           .where(eq(users.email, userData.email!))
+//           .returning();
+//         return user;
+//       }
+
+//       // If no email match, check by ID
+//       const existingUserById = await this.getUser(userData.id);
+
+//       if (existingUserById) {
+//         // Update existing user found by ID
+//         const [user] = await db
+//           .update(users)
+//           .set({
+//             ...userData,
+//             updatedAt: new Date(),
+//           })
+//           .where(eq(users.id, userData.id))
+//           .returning();
+//         return user;
+//       }
+
+//       // Create new user only if no existing user found
+//       const [user] = await db
+//         .insert(users)
+//         .values({
+//           ...userData,
+//           createdAt: new Date(),
+//           updatedAt: new Date(),
+//         })
+//         .returning();
+//       return user;
+
+//     } catch (error: any) {
+//       console.error('Error in upsertUser:', error);
+
+//       // Handle unique constraint violations
+//       if (error.code === '23505') {
+//         // Try to find existing user and return it
+//         const existingUser = userData.email ? await this.getUserByEmail(userData.email) : null;
+//         if (existingUser) {
+//           return existingUser;
+//         }
+//       }
+
+//       // Handle foreign key constraint violations
+//       if (error.code === '23503') {
+//         // Try to find existing user and return it
+//         const existingUser = userData.email ? await this.getUserByEmail(userData.email) : null;
+//         if (existingUser) {
+//           return existingUser;
+//         }
+//       }
+
+//       throw error;
+//     }
+//   }
+
+//   async getUserByEmail(email: string): Promise<User | undefined> {
+//     const [user] = await db.select().from(users).where(eq(users.email, email));
+//     return user || undefined;
+//   }
+
+//   async createUser(insertUser: InsertUser): Promise<User> {
+//     const [user] = await db
+//       .insert(users)
+//       .values(insertUser)
+//       .returning();
+//     return user;
+//   }
+
+//   async updateUser(id: string, updates: Partial<InsertUser & { isSuperAdmin?: boolean; organizationId?: number }>): Promise<User | undefined> {
+//     const [user] = await db
+//       .update(users)
+//       .set(updates)
+//       .where(eq(users.id, id))
+//       .returning();
+//     return user || undefined;
+//   }
+
+//   async deleteUser(id: string): Promise<boolean> {
+//     try {
+//       const result = await db.delete(users).where(eq(users.id, id));
+//       return (result.rowCount ?? 0) > 0;
+//     } catch (error) {
+//       console.error('Error deleting user:', error);
+//       return false;
+//     }
+//   }
+
+//   async getAllUsers(): Promise<User[]> {
+//     return await db.select().from(users);
+//   }
+
+//   async getProfileQuestions(userId: string): Promise<ProfileQuestions | undefined> {
+//     const [questions] = await db.select().from(profileQuestions).where(eq(profileQuestions.userId, userId));
+//     return questions || undefined;
+//   }
+
+//   async createProfileQuestions(questions: InsertProfileQuestions): Promise<ProfileQuestions> {
+//     const [result] = await db
+//       .insert(profileQuestions)
+//       .values(questions)
+//       .returning();
+//     return result;
+//   }
+
+//   async updateProfileQuestions(userId: string, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined> {
+//     const [result] = await db
+//       .update(profileQuestions)
+//       .set(updates)
+//       .where(eq(profileQuestions.userId, userId))
+//       .returning();
+//     return result || undefined;
+//   }
+
+//   async getMatch(id: number): Promise<Match | undefined> {
+//     const [match] = await db.select().from(matches).where(eq(matches.id, id));
+//     return match || undefined;
+//   }
+
+//   async getMatchesByUser(userId: string): Promise<MatchWithUsers[]> {
+//     try {
+//       // Get all matches for this user
+//       const userMatches = await db
+//         .select()
+//         .from(matches)
+//         .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)))
+//         .orderBy(desc(matches.createdAt));
+
+//       if (userMatches.length === 0) {
+//         return [];
+//       }
+
+//       // Get all user data needed using individual queries to avoid array syntax issues
+//       const userIds = new Set<string>();
+//       userMatches.forEach(match => {
+//         userIds.add(match.user1Id);
+//         userIds.add(match.user2Id);
+//       });
+
+//       // Fetch users individually to avoid SQL array issues
+//       const userPromises = Array.from(userIds).map(id =>
+//         db.select().from(users).where(eq(users.id, id)).limit(1)
+//       );
+
+//       const userResults = await Promise.all(userPromises);
+//       const allUsers = userResults.flat();
+//       const userMap = new Map(allUsers.map(user => [user.id, user]));
+
+//       // Get all meetings for these matches
+//       const meetingPromises = userMatches.map(match =>
+//         db.select().from(meetings).where(eq(meetings.matchId, match.id)).limit(1)
+//       );
+
+//       const meetingResults = await Promise.all(meetingPromises);
+//       const allMeetings = meetingResults.flat();
+//       const meetingMap = new Map(allMeetings.map(meeting => [meeting.matchId, meeting]));
+
+//       // Combine matches with user data and meeting data
+//       const matchesWithUsers = userMatches.map(match => ({
+//         ...match,
+//         user1: userMap.get(match.user1Id)!,
+//         user2: userMap.get(match.user2Id)!,
+//         meeting: meetingMap.get(match.id),
+//       }));
+
+//       return matchesWithUsers;
+//     } catch (error) {
+//       console.error('Error fetching matches by user:', error);
+//       return [];
+//     }
+//   }
+
+//   async getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]> {
+//     try {
+//       const matchesWithUsers = await db
+//         .select({
+//           id: matches.id,
+//           user1Id: matches.user1Id,
+//           user2Id: matches.user2Id,
+//           matchScore: matches.matchScore,
+//           status: matches.status,
+//           monthYear: matches.monthYear,
+//           createdAt: matches.createdAt,
+//           user1: {
+//             id: sql`u1.id`,
+//             email: sql`u1.email`,
+//             firstName: sql`u1.first_name`,
+//             lastName: sql`u1.last_name`,
+//             jobTitle: sql`u1.job_title`,
+//             company: sql`u1.company`,
+//             industry: sql`u1.industry`,
+//             bio: sql`u1.bio`,
+//             linkedinUrl: sql`u1.linkedin_url`,
+//             profileImageUrl: sql`u1.profile_image_url`,
+//             organizationId: sql`u1.organization_id`,
+//             isActive: sql`u1.is_active`,
+//             isAdmin: sql`u1.is_admin`,
+//             isSuperAdmin: sql`u1.is_super_admin`,
+//             createdAt: sql`u1.created_at`,
+//             updatedAt: sql`u1.updated_at`,
+//           },
+//           user2: {
+//             id: sql`u2.id`,
+//             email: sql`u2.email`,
+//             firstName: sql`u2.first_name`,
+//             lastName: sql`u2.last_name`,
+//             jobTitle: sql`u2.job_title`,
+//             company: sql`u2.company`,
+//             industry: sql`u2.industry`,
+//             bio: sql`u2.bio`,
+//             linkedinUrl: sql`u2.linkedin_url`,
+//             profileImageUrl: sql`u2.profile_image_url`,
+//             organizationId: sql`u2.organization_id`,
+//             isActive: sql`u2.is_active`,
+//             isAdmin: sql`u2.is_admin`,
+//             isSuperAdmin: sql`u2.is_super_admin`,
+//             createdAt: sql`u2.created_at`,
+//             updatedAt: sql`u2.updated_at`,
+//           }
+//         })
+//         .from(matches)
+//         .innerJoin(sql`users u1`, sql`u1.id = ${matches.user1Id}`)
+//         .innerJoin(sql`users u2`, sql`u2.id = ${matches.user2Id}`)
+//         .where(eq(matches.monthYear, monthYear))
+//         .orderBy(desc(matches.createdAt));
+
+//       return matchesWithUsers;
+//     } catch (error) {
+//       console.error('Error fetching matches by month:', error);
+//       return [];
+//     }
+//   }
+
+//   async createMatch(insertMatch: InsertMatch): Promise<Match> {
+//     const [match] = await db
+//       .insert(matches)
+//       .values(insertMatch)
+//       .returning();
+//     return match;
+//   }
+
+//   async updateMatch(id: number, updates: Partial<InsertMatch>): Promise<Match | undefined> {
+//     const [match] = await db
+//       .update(matches)
+//       .set(updates)
+//       .where(eq(matches.id, id))
+//       .returning();
+//     return match || undefined;
+//   }
+
+//   async getAllMatches(): Promise<MatchWithUsers[]> {
+//     try {
+//       const matchesWithUsers = await db
+//         .select({
+//           id: matches.id,
+//           user1Id: matches.user1Id,
+//           user2Id: matches.user2Id,
+//           matchScore: matches.matchScore,
+//           status: matches.status,
+//           monthYear: matches.monthYear,
+//           createdAt: matches.createdAt,
+//           user1: {
+//             id: sql`u1.id`,
+//             email: sql`u1.email`,
+//             firstName: sql`u1.first_name`,
+//             lastName: sql`u1.last_name`,
+//             jobTitle: sql`u1.job_title`,
+//             company: sql`u1.company`,
+//             industry: sql`u1.industry`,
+//             organizationId: sql`u1.organization_id`,
+//             isActive: sql`u1.is_active`,
+//             isAdmin: sql`u1.is_admin`,
+//             isSuperAdmin: sql`u1.is_super_admin`,
+//             createdAt: sql`u1.created_at`,
+//             updatedAt: sql`u1.updated_at`,
+//           },
+//           user2: {
+//             id: sql`u2.id`,
+//             email: sql`u2.email`,
+//             firstName: sql`u2.first_name`,
+//             lastName: sql`u2.last_name`,
+//             jobTitle: sql`u2.job_title`,
+//             company: sql`u2.company`,
+//             industry: sql`u2.industry`,
+//             organizationId: sql`u2.organization_id`,
+//             isActive: sql`u2.is_active`,
+//             isAdmin: sql`u2.is_admin`,
+//             isSuperAdmin: sql`u2.is_super_admin`,
+//             createdAt: sql`u2.created_at`,
+//             updatedAt: sql`u2.updated_at`,
+//           }
+//         })
+//         .from(matches)
+//         .leftJoin(sql`users u1`, sql`u1.id = ${matches.user1Id}`)
+//         .leftJoin(sql`users u2`, sql`u2.id = ${matches.user2Id}`)
+//         .orderBy(desc(matches.createdAt));
+
+//       return matchesWithUsers as MatchWithUsers[];
+//     } catch (error) {
+//       console.error("Error fetching all matches:", error);
+//       return [];
+//     }
+//   }
+
+//   async deleteMatch(id: number): Promise<boolean> {
+//     try {
+//       const result = await db.delete(matches).where(eq(matches.id, id));
+//       return (result.rowCount ?? 0) > 0;
+//     } catch (error) {
+//       console.error('Error deleting match:', error);
+//       return false;
+//     }
+//   }
+
+//   async getMeeting(id: number): Promise<Meeting | undefined> {
+//     const [meeting] = await db.select().from(meetings).where(eq(meetings.id, id));
+//     return meeting || undefined;
+//   }
+
+//   async getMeetingsByUser(userId: string): Promise<MeetingWithMatch[]> {
+//     try {
+//       // Get all meetings for this user by finding their matches first
+//       const userMatches = await db
+//         .select()
+//         .from(matches)
+//         .where(or(eq(matches.user1Id, userId), eq(matches.user2Id, userId)));
+
+//       if (userMatches.length === 0) {
+//         return [];
+//       }
+
+//       const matchIds = userMatches.map(match => match.id);
+
+//       // Fetch meetings for these matches using individual queries to avoid array syntax
+//       const meetingPromises = matchIds.map(matchId =>
+//         db.select().from(meetings).where(eq(meetings.matchId, matchId))
+//       );
+
+//       const meetingResults = await Promise.all(meetingPromises);
+//       const userMeetings = meetingResults.flat();
+
+//       // Create a map of matches by id
+//       const matchMap = new Map(userMatches.map(match => [match.id, match]));
+
+//       // Get all user data needed
+//       const userIds = new Set<string>();
+//       userMatches.forEach(match => {
+//         userIds.add(match.user1Id);
+//         userIds.add(match.user2Id);
+//       });
+
+//       // Fetch users individually
+//       const userPromises = Array.from(userIds).map(id =>
+//         db.select().from(users).where(eq(users.id, id)).limit(1)
+//       );
+
+//       const userResults = await Promise.all(userPromises);
+//       const allUsers = userResults.flat();
+//       const userMap = new Map(allUsers.map(user => [user.id, user]));
+
+//       // Combine meetings with match and user data
+//       const meetingsWithMatch = userMeetings.map(meeting => {
+//         const match = matchMap.get(meeting.matchId)!;
+//         return {
+//           ...meeting,
+//           match: {
+//             ...match,
+//             user1: userMap.get(match.user1Id)!,
+//             user2: userMap.get(match.user2Id)!,
+//           }
+//         };
+//       });
+
+//       return meetingsWithMatch;
+//     } catch (error) {
+//       console.error('Error fetching meetings by user:', error);
+//       return [];
+//     }
+//   }
+
+//   async createMeeting(insertMeeting: InsertMeeting): Promise<Meeting> {
+//     const [meeting] = await db
+//       .insert(meetings)
+//       .values(insertMeeting)
+//       .returning();
+//     return meeting;
+//   }
+
+//   async updateMeeting(id: number, updates: Partial<InsertMeeting>): Promise<Meeting | undefined> {
+//     const [meeting] = await db
+//       .update(meetings)
+//       .set(updates)
+//       .where(eq(meetings.id, id))
+//       .returning();
+//     return meeting || undefined;
+//   }
+
+//   async getAvailability(userId: string): Promise<Availability[]> {
+//     return await db.select().from(availability).where(eq(availability.userId, userId));
+//   }
+
+//   async createAvailability(insertAvailability: InsertAvailability): Promise<Availability> {
+//     const [availabilityRecord] = await db
+//       .insert(availability)
+//       .values(insertAvailability)
+//       .returning();
+//     return availabilityRecord;
+//   }
+
+//   async updateAvailability(id: number, updates: Partial<InsertAvailability>): Promise<Availability | undefined> {
+//     const [availabilityRecord] = await db
+//       .update(availability)
+//       .set(updates)
+//       .where(eq(availability.id, id))
+//       .returning();
+//     return availabilityRecord || undefined;
+//   }
+
+//   async deleteAvailability(id: number): Promise<boolean> {
+//     try {
+//       const result = await db.delete(availability).where(eq(availability.id, id));
+//       return (result.rowCount ?? 0) > 0;
+//     } catch (error) {
+//       console.error('Error deleting availability:', error);
+//       return false;
+//     }
+//   }
+
+//   async getNotifications(userId: string): Promise<Notification[]> {
+//     return await db.select().from(notifications).where(eq(notifications.userId, userId));
+//   }
+
+//   async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+//     const [notification] = await db
+//       .insert(notifications)
+//       .values(insertNotification)
+//       .returning();
+//     return notification;
+//   }
+
+//   async markNotificationAsRead(id: number): Promise<boolean> {
+//     try {
+//       const result = await db
+//         .update(notifications)
+//         .set({ isRead: true })
+//         .where(eq(notifications.id, id));
+//       return (result.rowCount ?? 0) > 0;
+//     } catch (error) {
+//       console.error('Error marking notification as read:', error);
+//       return false;
+//     }
+//   }
+
+//   async getAllMeetings(): Promise<MeetingWithMatch[]> {
+//     const allMeetings = await db
+//       .select({
+//         id: meetings.id,
+//         matchId: meetings.matchId,
+//         scheduledAt: meetings.scheduledAt,
+//         duration: meetings.duration,
+//         meetingLink: meetings.meetingLink,
+//         status: meetings.status,
+//         createdAt: meetings.createdAt,
+//         match: {
+//           id: matches.id,
+//           user1Id: matches.user1Id,
+//           user2Id: matches.user2Id,
+//           matchScore: matches.matchScore,
+//           status: matches.status,
+//           monthYear: matches.monthYear,
+//           createdAt: matches.createdAt,
+//           user1: {
+//             id: sql<string>`u1.id`,
+//             email: sql<string>`u1.email`,
+//             firstName: sql<string>`u1.first_name`,
+//             lastName: sql<string>`u1.last_name`,
+//             jobTitle: sql<string>`u1.job_title`,
+//             company: sql<string>`u1.company`,
+//             industry: sql<string>`u1.industry`,
+//             bio: sql<string>`u1.bio`,
+//             linkedinUrl: sql<string>`u1.linkedin_url`,
+//             organizationId: sql<number>`u1.organization_id`,
+//             isActive: sql<boolean>`u1.is_active`,
+//             isAdmin: sql<boolean>`u1.is_admin`,
+//             isSuperAdmin: sql<boolean>`u1.is_super_admin`,
+//             createdAt: sql<Date>`u1.created_at`,
+//             updatedAt: sql<Date>`u1.updated_at`
+//           },
+//           user2: {
+//             id: sql<string>`u2.id`,
+//             email: sql<string>`u2.email`,
+//             firstName: sql<string>`u2.first_name`,
+//             lastName: sql<string>`u2.last_name`,
+//             jobTitle: sql<string>`u2.job_title`,
+//             company: sql<string>`u2.company`,
+//             industry: sql<string>`u2.industry`,
+//             bio: sql<string>`u2.bio`,
+//             linkedinUrl: sql<string>`u2.linkedin_url`,
+//             organizationId: sql<number>`u2.organization_id`,
+//             isActive: sql<boolean>`u2.is_active`,
+//             isAdmin: sql<boolean>`u2.is_admin`,
+//             isSuperAdmin: sql<boolean>`u2.is_super_admin`,
+//             createdAt: sql<Date>`u2.created_at`,
+//             updatedAt: sql<Date>`u2.updated_at`
+//           }
+//         }
+//       })
+//       .from(meetings)
+//       .innerJoin(matches, eq(meetings.matchId, matches.id))
+//       .innerJoin(sql`users u1`, eq(matches.user1Id, sql`u1.id`))
+//       .innerJoin(sql`users u2`, eq(matches.user2Id, sql`u2.id`));
+
+//     return allMeetings as MeetingWithMatch[];
+//   }
+
+//   async deleteMeeting(id: number): Promise<boolean> {
+//     try {
+//       const result = await db.delete(meetings).where(eq(meetings.id, id));
+//       return (result.rowCount ?? 0) > 0;
+//     } catch (error) {
+//       console.error('Error deleting meeting:', error);
+//       return false;
+//     }
+//   }
+
+//   async deleteNotification(id: number): Promise<boolean> {
+//     try {
+//       const result = await db.delete(notifications).where(eq(notifications.id, id));
+//       return (result.rowCount ?? 0) > 0;
+//     } catch (error) {
+//       console.error('Error deleting notification:', error);
+//       return false;
+//     }
+//   }
+
+//   async deleteProfileQuestions(userId: string): Promise<boolean> {
+//     try {
+//       const result = await db.delete(profileQuestions).where(eq(profileQuestions.userId, userId));
+//       return (result.rowCount ?? 0) > 0;
+//     } catch (error) {
+//       console.error('Error deleting profile questions:', error);
+//       return false;
+//     }
+//   }
+
+//   // Organization operations
+//   async getOrganization(id: number): Promise<Organization | undefined> {
+//     try {
+//       const [organization] = await db.select().from(organizations).where(eq(organizations.id, id));
+//       return organization;
+//     } catch (error) {
+//       console.error("Error fetching organization:", error);
+//       return undefined;
+//     }
+//   }
+
+//   async getOrganizationByAdminId(adminId: string): Promise<Organization | undefined> {
+//     try {
+//       const [organization] = await db.select().from(organizations).where(eq(organizations.adminId, adminId));
+//       return organization;
+//     } catch (error) {
+//       console.error("Error fetching organization by admin ID:", error);
+//       return undefined;
+//     }
+//   }
+
+//   async createOrganization(insertOrganization: InsertOrganization): Promise<Organization> {
+//     try {
+//       const [organization] = await db.insert(organizations).values(insertOrganization).returning();
+//       return organization;
+//     } catch (error) {
+//       console.error("Error creating organization:", error);
+//       throw error;
+//     }
+//   }
+
+//   async updateOrganization(id: number, updates: Partial<InsertOrganization>): Promise<Organization | undefined> {
+//     try {
+//       const [organization] = await db.update(organizations).set({ ...updates, updatedAt: new Date() }).where(eq(organizations.id, id)).returning();
+//       return organization;
+//     } catch (error) {
+//       console.error("Error updating organization:", error);
+//       return undefined;
+//     }
+//   }
+
+//   async getAllOrganizations(): Promise<Organization[]> {
+//     try {
+//       return await db.select().from(organizations).orderBy(organizations.createdAt);
+//     } catch (error) {
+//       console.error("Error fetching all organizations:", error);
+//       return [];
+//     }
+//   }
+// }
+
+// export const storage = new DatabaseStorage();
+
+//TEST CODE
 import {
   users,
   profileQuestions,
@@ -33,14 +739,22 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
+  updateUser(
+    id: string,
+    updates: Partial<InsertUser>,
+  ): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
   getAllUsers(): Promise<User[]>;
 
   // Profile questions operations
   getProfileQuestions(userId: string): Promise<ProfileQuestions | undefined>;
-  createProfileQuestions(questions: InsertProfileQuestions): Promise<ProfileQuestions>;
-  updateProfileQuestions(userId: string, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined>;
+  createProfileQuestions(
+    questions: InsertProfileQuestions,
+  ): Promise<ProfileQuestions>;
+  updateProfileQuestions(
+    userId: string,
+    updates: Partial<InsertProfileQuestions>,
+  ): Promise<ProfileQuestions | undefined>;
 
   // Match operations
   getMatch(id: number): Promise<Match | undefined>;
@@ -48,7 +762,10 @@ export interface IStorage {
   getMatchesByMonth(monthYear: string): Promise<MatchWithUsers[]>;
   getAllMatches(): Promise<MatchWithUsers[]>;
   createMatch(match: InsertMatch): Promise<Match>;
-  updateMatch(id: number, updates: Partial<InsertMatch>): Promise<Match | undefined>;
+  updateMatch(
+    id: number,
+    updates: Partial<InsertMatch>,
+  ): Promise<Match | undefined>;
   deleteMatch(id: number): Promise<boolean>;
 
   // Meeting operations
@@ -56,12 +773,18 @@ export interface IStorage {
   getMeetingsByUser(userId: string): Promise<MeetingWithMatch[]>;
   getAllMeetings(): Promise<MeetingWithMatch[]>;
   createMeeting(meeting: InsertMeeting): Promise<Meeting>;
-  updateMeeting(id: number, updates: Partial<InsertMeeting>): Promise<Meeting | undefined>;
+  updateMeeting(
+    id: number,
+    updates: Partial<InsertMeeting>,
+  ): Promise<Meeting | undefined>;
 
   // Availability operations
   getAvailability(userId: string): Promise<Availability[]>;
   createAvailability(availability: InsertAvailability): Promise<Availability>;
-  updateAvailability(id: number, updates: Partial<InsertAvailability>): Promise<Availability | undefined>;
+  updateAvailability(
+    id: number,
+    updates: Partial<InsertAvailability>,
+  ): Promise<Availability | undefined>;
   deleteAvailability(id: number): Promise<boolean>;
 
   // Notification operations
@@ -69,10 +792,10 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: number): Promise<boolean>;
   deleteNotification?(id: number): Promise<boolean>;
-  
+
   // Profile operations
   deleteProfileQuestions?(userId: string): Promise<boolean>;
-  
+
   // Meeting operations
   deleteMeeting?(id: number): Promise<boolean>;
 
@@ -80,7 +803,10 @@ export interface IStorage {
   getOrganization(id: number): Promise<Organization | undefined>;
   getOrganizationByAdminId(adminId: string): Promise<Organization | undefined>;
   createOrganization(organization: InsertOrganization): Promise<Organization>;
-  updateOrganization(id: number, updates: Partial<InsertOrganization>): Promise<Organization | undefined>;
+  updateOrganization(
+    id: number,
+    updates: Partial<InsertOrganization>,
+  ): Promise<Organization | undefined>;
   getAllOrganizations(): Promise<Organization[]>;
 }
 
@@ -94,8 +820,10 @@ export class DatabaseStorage implements IStorage {
   async upsertUser(userData: UpsertUser): Promise<User> {
     try {
       // Always try email-based lookup first for reliability
-      const existingUserByEmail = userData.email ? await this.getUserByEmail(userData.email) : null;
-      
+      const existingUserByEmail = userData.email
+        ? await this.getUserByEmail(userData.email)
+        : null;
+
       if (existingUserByEmail) {
         // Update existing user found by email, updating the ID to match Replit Auth
         const [user] = await db
@@ -108,10 +836,10 @@ export class DatabaseStorage implements IStorage {
           .returning();
         return user;
       }
-      
+
       // If no email match, check by ID
       const existingUserById = await this.getUser(userData.id);
-      
+
       if (existingUserById) {
         // Update existing user found by ID
         const [user] = await db
@@ -124,7 +852,7 @@ export class DatabaseStorage implements IStorage {
           .returning();
         return user;
       }
-      
+
       // Create new user only if no existing user found
       const [user] = await db
         .insert(users)
@@ -135,28 +863,31 @@ export class DatabaseStorage implements IStorage {
         })
         .returning();
       return user;
-      
     } catch (error: any) {
-      console.error('Error in upsertUser:', error);
-      
+      console.error("Error in upsertUser:", error);
+
       // Handle unique constraint violations
-      if (error.code === '23505') {
+      if (error.code === "23505") {
         // Try to find existing user and return it
-        const existingUser = userData.email ? await this.getUserByEmail(userData.email) : null;
+        const existingUser = userData.email
+          ? await this.getUserByEmail(userData.email)
+          : null;
         if (existingUser) {
           return existingUser;
         }
       }
-      
+
       // Handle foreign key constraint violations
-      if (error.code === '23503') {
+      if (error.code === "23503") {
         // Try to find existing user and return it
-        const existingUser = userData.email ? await this.getUserByEmail(userData.email) : null;
+        const existingUser = userData.email
+          ? await this.getUserByEmail(userData.email)
+          : null;
         if (existingUser) {
           return existingUser;
         }
       }
-      
+
       throw error;
     }
   }
@@ -167,14 +898,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
-  async updateUser(id: string, updates: Partial<InsertUser & { isSuperAdmin?: boolean; organizationId?: number }>): Promise<User | undefined> {
+  async updateUser(
+    id: string,
+    updates: Partial<
+      InsertUser & { isSuperAdmin?: boolean; organizationId?: number }
+    >,
+  ): Promise<User | undefined> {
     const [user] = await db
       .update(users)
       .set(updates)
@@ -188,7 +921,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db.delete(users).where(eq(users.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error("Error deleting user:", error);
       return false;
     }
   }
@@ -197,12 +930,19 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users);
   }
 
-  async getProfileQuestions(userId: string): Promise<ProfileQuestions | undefined> {
-    const [questions] = await db.select().from(profileQuestions).where(eq(profileQuestions.userId, userId));
+  async getProfileQuestions(
+    userId: string,
+  ): Promise<ProfileQuestions | undefined> {
+    const [questions] = await db
+      .select()
+      .from(profileQuestions)
+      .where(eq(profileQuestions.userId, userId));
     return questions || undefined;
   }
 
-  async createProfileQuestions(questions: InsertProfileQuestions): Promise<ProfileQuestions> {
+  async createProfileQuestions(
+    questions: InsertProfileQuestions,
+  ): Promise<ProfileQuestions> {
     const [result] = await db
       .insert(profileQuestions)
       .values(questions)
@@ -210,7 +950,10 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateProfileQuestions(userId: string, updates: Partial<InsertProfileQuestions>): Promise<ProfileQuestions | undefined> {
+  async updateProfileQuestions(
+    userId: string,
+    updates: Partial<InsertProfileQuestions>,
+  ): Promise<ProfileQuestions | undefined> {
     const [result] = await db
       .update(profileQuestions)
       .set(updates)
@@ -239,31 +982,37 @@ export class DatabaseStorage implements IStorage {
 
       // Get all user data needed using individual queries to avoid array syntax issues
       const userIds = new Set<string>();
-      userMatches.forEach(match => {
+      userMatches.forEach((match) => {
         userIds.add(match.user1Id);
         userIds.add(match.user2Id);
       });
 
       // Fetch users individually to avoid SQL array issues
-      const userPromises = Array.from(userIds).map(id => 
-        db.select().from(users).where(eq(users.id, id)).limit(1)
+      const userPromises = Array.from(userIds).map((id) =>
+        db.select().from(users).where(eq(users.id, id)).limit(1),
       );
-      
+
       const userResults = await Promise.all(userPromises);
       const allUsers = userResults.flat();
-      const userMap = new Map(allUsers.map(user => [user.id, user]));
+      const userMap = new Map(allUsers.map((user) => [user.id, user]));
 
       // Get all meetings for these matches
-      const meetingPromises = userMatches.map(match => 
-        db.select().from(meetings).where(eq(meetings.matchId, match.id)).limit(1)
+      const meetingPromises = userMatches.map((match) =>
+        db
+          .select()
+          .from(meetings)
+          .where(eq(meetings.matchId, match.id))
+          .limit(1),
       );
-      
+
       const meetingResults = await Promise.all(meetingPromises);
       const allMeetings = meetingResults.flat();
-      const meetingMap = new Map(allMeetings.map(meeting => [meeting.matchId, meeting]));
+      const meetingMap = new Map(
+        allMeetings.map((meeting) => [meeting.matchId, meeting]),
+      );
 
       // Combine matches with user data and meeting data
-      const matchesWithUsers = userMatches.map(match => ({
+      const matchesWithUsers = userMatches.map((match) => ({
         ...match,
         user1: userMap.get(match.user1Id)!,
         user2: userMap.get(match.user2Id)!,
@@ -272,7 +1021,7 @@ export class DatabaseStorage implements IStorage {
 
       return matchesWithUsers;
     } catch (error) {
-      console.error('Error fetching matches by user:', error);
+      console.error("Error fetching matches by user:", error);
       return [];
     }
   }
@@ -323,7 +1072,7 @@ export class DatabaseStorage implements IStorage {
             isSuperAdmin: sql`u2.is_super_admin`,
             createdAt: sql`u2.created_at`,
             updatedAt: sql`u2.updated_at`,
-          }
+          },
         })
         .from(matches)
         .innerJoin(sql`users u1`, sql`u1.id = ${matches.user1Id}`)
@@ -333,20 +1082,20 @@ export class DatabaseStorage implements IStorage {
 
       return matchesWithUsers;
     } catch (error) {
-      console.error('Error fetching matches by month:', error);
+      console.error("Error fetching matches by month:", error);
       return [];
     }
   }
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
-    const [match] = await db
-      .insert(matches)
-      .values(insertMatch)
-      .returning();
+    const [match] = await db.insert(matches).values(insertMatch).returning();
     return match;
   }
 
-  async updateMatch(id: number, updates: Partial<InsertMatch>): Promise<Match | undefined> {
+  async updateMatch(
+    id: number,
+    updates: Partial<InsertMatch>,
+  ): Promise<Match | undefined> {
     const [match] = await db
       .update(matches)
       .set(updates)
@@ -395,7 +1144,7 @@ export class DatabaseStorage implements IStorage {
             isSuperAdmin: sql`u2.is_super_admin`,
             createdAt: sql`u2.created_at`,
             updatedAt: sql`u2.updated_at`,
-          }
+          },
         })
         .from(matches)
         .leftJoin(sql`users u1`, sql`u1.id = ${matches.user1Id}`)
@@ -414,13 +1163,16 @@ export class DatabaseStorage implements IStorage {
       const result = await db.delete(matches).where(eq(matches.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
-      console.error('Error deleting match:', error);
+      console.error("Error deleting match:", error);
       return false;
     }
   }
 
   async getMeeting(id: number): Promise<Meeting | undefined> {
-    const [meeting] = await db.select().from(meetings).where(eq(meetings.id, id));
+    const [meeting] = await db
+      .select()
+      .from(meetings)
+      .where(eq(meetings.id, id));
     return meeting || undefined;
   }
 
@@ -436,37 +1188,37 @@ export class DatabaseStorage implements IStorage {
         return [];
       }
 
-      const matchIds = userMatches.map(match => match.id);
-      
+      const matchIds = userMatches.map((match) => match.id);
+
       // Fetch meetings for these matches using individual queries to avoid array syntax
-      const meetingPromises = matchIds.map(matchId => 
-        db.select().from(meetings).where(eq(meetings.matchId, matchId))
+      const meetingPromises = matchIds.map((matchId) =>
+        db.select().from(meetings).where(eq(meetings.matchId, matchId)),
       );
-      
+
       const meetingResults = await Promise.all(meetingPromises);
       const userMeetings = meetingResults.flat();
 
       // Create a map of matches by id
-      const matchMap = new Map(userMatches.map(match => [match.id, match]));
+      const matchMap = new Map(userMatches.map((match) => [match.id, match]));
 
       // Get all user data needed
       const userIds = new Set<string>();
-      userMatches.forEach(match => {
+      userMatches.forEach((match) => {
         userIds.add(match.user1Id);
         userIds.add(match.user2Id);
       });
 
       // Fetch users individually
-      const userPromises = Array.from(userIds).map(id => 
-        db.select().from(users).where(eq(users.id, id)).limit(1)
+      const userPromises = Array.from(userIds).map((id) =>
+        db.select().from(users).where(eq(users.id, id)).limit(1),
       );
-      
+
       const userResults = await Promise.all(userPromises);
       const allUsers = userResults.flat();
-      const userMap = new Map(allUsers.map(user => [user.id, user]));
+      const userMap = new Map(allUsers.map((user) => [user.id, user]));
 
       // Combine meetings with match and user data
-      const meetingsWithMatch = userMeetings.map(meeting => {
+      const meetingsWithMatch = userMeetings.map((meeting) => {
         const match = matchMap.get(meeting.matchId)!;
         return {
           ...meeting,
@@ -474,13 +1226,13 @@ export class DatabaseStorage implements IStorage {
             ...match,
             user1: userMap.get(match.user1Id)!,
             user2: userMap.get(match.user2Id)!,
-          }
+          },
         };
       });
 
       return meetingsWithMatch;
     } catch (error) {
-      console.error('Error fetching meetings by user:', error);
+      console.error("Error fetching meetings by user:", error);
       return [];
     }
   }
@@ -493,7 +1245,10 @@ export class DatabaseStorage implements IStorage {
     return meeting;
   }
 
-  async updateMeeting(id: number, updates: Partial<InsertMeeting>): Promise<Meeting | undefined> {
+  async updateMeeting(
+    id: number,
+    updates: Partial<InsertMeeting>,
+  ): Promise<Meeting | undefined> {
     const [meeting] = await db
       .update(meetings)
       .set(updates)
@@ -503,10 +1258,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAvailability(userId: string): Promise<Availability[]> {
-    return await db.select().from(availability).where(eq(availability.userId, userId));
+    return await db
+      .select()
+      .from(availability)
+      .where(eq(availability.userId, userId));
   }
 
-  async createAvailability(insertAvailability: InsertAvailability): Promise<Availability> {
+  async createAvailability(
+    insertAvailability: InsertAvailability,
+  ): Promise<Availability> {
     const [availabilityRecord] = await db
       .insert(availability)
       .values(insertAvailability)
@@ -514,7 +1274,10 @@ export class DatabaseStorage implements IStorage {
     return availabilityRecord;
   }
 
-  async updateAvailability(id: number, updates: Partial<InsertAvailability>): Promise<Availability | undefined> {
+  async updateAvailability(
+    id: number,
+    updates: Partial<InsertAvailability>,
+  ): Promise<Availability | undefined> {
     const [availabilityRecord] = await db
       .update(availability)
       .set(updates)
@@ -525,19 +1288,26 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAvailability(id: number): Promise<boolean> {
     try {
-      const result = await db.delete(availability).where(eq(availability.id, id));
+      const result = await db
+        .delete(availability)
+        .where(eq(availability.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
-      console.error('Error deleting availability:', error);
+      console.error("Error deleting availability:", error);
       return false;
     }
   }
 
   async getNotifications(userId: string): Promise<Notification[]> {
-    return await db.select().from(notifications).where(eq(notifications.userId, userId));
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId));
   }
 
-  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+  async createNotification(
+    insertNotification: InsertNotification,
+  ): Promise<Notification> {
     const [notification] = await db
       .insert(notifications)
       .values(insertNotification)
@@ -553,7 +1323,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(notifications.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
       return false;
     }
   }
@@ -591,7 +1361,7 @@ export class DatabaseStorage implements IStorage {
             isAdmin: sql<boolean>`u1.is_admin`,
             isSuperAdmin: sql<boolean>`u1.is_super_admin`,
             createdAt: sql<Date>`u1.created_at`,
-            updatedAt: sql<Date>`u1.updated_at`
+            updatedAt: sql<Date>`u1.updated_at`,
           },
           user2: {
             id: sql<string>`u2.id`,
@@ -608,15 +1378,15 @@ export class DatabaseStorage implements IStorage {
             isAdmin: sql<boolean>`u2.is_admin`,
             isSuperAdmin: sql<boolean>`u2.is_super_admin`,
             createdAt: sql<Date>`u2.created_at`,
-            updatedAt: sql<Date>`u2.updated_at`
-          }
-        }
+            updatedAt: sql<Date>`u2.updated_at`,
+          },
+        },
       })
       .from(meetings)
       .innerJoin(matches, eq(meetings.matchId, matches.id))
       .innerJoin(sql`users u1`, eq(matches.user1Id, sql`u1.id`))
       .innerJoin(sql`users u2`, eq(matches.user2Id, sql`u2.id`));
-    
+
     return allMeetings as MeetingWithMatch[];
   }
 
@@ -625,27 +1395,31 @@ export class DatabaseStorage implements IStorage {
       const result = await db.delete(meetings).where(eq(meetings.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
-      console.error('Error deleting meeting:', error);
+      console.error("Error deleting meeting:", error);
       return false;
     }
   }
 
   async deleteNotification(id: number): Promise<boolean> {
     try {
-      const result = await db.delete(notifications).where(eq(notifications.id, id));
+      const result = await db
+        .delete(notifications)
+        .where(eq(notifications.id, id));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      console.error("Error deleting notification:", error);
       return false;
     }
   }
 
   async deleteProfileQuestions(userId: string): Promise<boolean> {
     try {
-      const result = await db.delete(profileQuestions).where(eq(profileQuestions.userId, userId));
+      const result = await db
+        .delete(profileQuestions)
+        .where(eq(profileQuestions.userId, userId));
       return (result.rowCount ?? 0) > 0;
     } catch (error) {
-      console.error('Error deleting profile questions:', error);
+      console.error("Error deleting profile questions:", error);
       return false;
     }
   }
@@ -653,7 +1427,10 @@ export class DatabaseStorage implements IStorage {
   // Organization operations
   async getOrganization(id: number): Promise<Organization | undefined> {
     try {
-      const [organization] = await db.select().from(organizations).where(eq(organizations.id, id));
+      const [organization] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, id));
       return organization;
     } catch (error) {
       console.error("Error fetching organization:", error);
@@ -661,9 +1438,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getOrganizationByAdminId(adminId: string): Promise<Organization | undefined> {
+  async getOrganizationByAdminId(
+    adminId: string,
+  ): Promise<Organization | undefined> {
     try {
-      const [organization] = await db.select().from(organizations).where(eq(organizations.adminId, adminId));
+      const [organization] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.adminId, adminId));
       return organization;
     } catch (error) {
       console.error("Error fetching organization by admin ID:", error);
@@ -671,9 +1453,14 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createOrganization(insertOrganization: InsertOrganization): Promise<Organization> {
+  async createOrganization(
+    insertOrganization: InsertOrganization,
+  ): Promise<Organization> {
     try {
-      const [organization] = await db.insert(organizations).values(insertOrganization).returning();
+      const [organization] = await db
+        .insert(organizations)
+        .values(insertOrganization)
+        .returning();
       return organization;
     } catch (error) {
       console.error("Error creating organization:", error);
@@ -681,9 +1468,16 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateOrganization(id: number, updates: Partial<InsertOrganization>): Promise<Organization | undefined> {
+  async updateOrganization(
+    id: number,
+    updates: Partial<InsertOrganization>,
+  ): Promise<Organization | undefined> {
     try {
-      const [organization] = await db.update(organizations).set({ ...updates, updatedAt: new Date() }).where(eq(organizations.id, id)).returning();
+      const [organization] = await db
+        .update(organizations)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(organizations.id, id))
+        .returning();
       return organization;
     } catch (error) {
       console.error("Error updating organization:", error);
@@ -693,11 +1487,120 @@ export class DatabaseStorage implements IStorage {
 
   async getAllOrganizations(): Promise<Organization[]> {
     try {
-      return await db.select().from(organizations).orderBy(organizations.createdAt);
+      return await db
+        .select()
+        .from(organizations)
+        .orderBy(organizations.createdAt);
     } catch (error) {
       console.error("Error fetching all organizations:", error);
       return [];
     }
+  }
+
+  // imports assumed at top:
+  // import { db } from './db'; import { eq } from 'drizzle-orm';
+  // import { users } from './schema'; // adjust paths
+  // type InsertUser = typeof users.$inferInsert; type User = typeof users.$inferSelect;
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [u] = await db.select().from(users).where(eq(users.email, email));
+    return u;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [u] = await db.insert(users).values(insertUser).returning();
+    return u;
+  }
+
+  async updateUser(
+    id: string,
+    updates: Partial<InsertUser>,
+  ): Promise<User | undefined> {
+    const [u] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return u ?? undefined;
+  }
+
+  /** Bulk upsert for CSV */
+  async bulkUpsertUsersFromCsv(
+    rows: Array<{
+      firstName: string;
+      lastName: string;
+      email: string;
+      organizationId: number;
+      isActive: boolean;
+      isAdmin: boolean;
+      isSuperAdmin: boolean;
+    }>,
+  ): Promise<{
+    created: number;
+    updated: number;
+    skipped: number;
+    errors: string[];
+  }> {
+    const results = {
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: [] as string[],
+    };
+
+    await db.transaction(async (tx) => {
+      for (const r of rows) {
+        try {
+          const [existing] = await tx
+            .select()
+            .from(users)
+            .where(eq(users.email, r.email));
+          if (existing) {
+            // Update only when anything meaningful changes
+            const hasChange =
+              existing.firstName !== r.firstName ||
+              existing.lastName !== r.lastName ||
+              existing.organizationId !== r.organizationId;
+
+            if (hasChange) {
+              await tx
+                .update(users)
+                .set({
+                  firstName: r.firstName,
+                  lastName: r.lastName,
+                  organizationId: r.organizationId,
+                  isActive: r.isActive,
+                  updatedAt: new Date(),
+                })
+                .where(eq(users.id, existing.id));
+              results.updated++;
+            } else {
+              results.skipped++;
+            }
+          } else {
+            await tx.insert(users).values({
+              id:
+                (global as any).crypto?.randomUUID?.() ??
+                `user-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              email: r.email,
+              firstName: r.firstName,
+              lastName: r.lastName,
+              organizationId: r.organizationId,
+              isActive: r.isActive,
+              isAdmin: r.isAdmin,
+              isSuperAdmin: r.isSuperAdmin,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            results.created++;
+          }
+        } catch (e: any) {
+          results.errors.push(`${r.email}: ${e.message}`);
+        }
+      }
+    });
+
+    return results;
   }
 }
 
