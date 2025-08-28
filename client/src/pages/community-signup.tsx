@@ -1,20 +1,44 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function CommunitySignup() {
   const { slug } = useParams<{ slug: string }>();
   const [, setLocation] = useLocation();
 
-  const { data: organization, isLoading, error } = useQuery({
+  const {
+    data: organization,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: [`/api/organizations/${slug}`],
     enabled: !!slug,
-    retry: 1
+    retry: 1,
   });
 
-  console.log("Community signup - slug:", slug, "organization:", organization, "isLoading:", isLoading, "error:", error);
+  useEffect(() => {
+    console.log("organization -> ", organization);
+  }, [organization]);
+
+  console.log(
+    "Community signup - slug:",
+    slug,
+    "organization:",
+    organization,
+    "isLoading:",
+    isLoading,
+    "error:",
+    error,
+  );
 
   const handleSignIn = () => {
     // Redirect to Replit Auth with the organization slug as state
@@ -40,10 +64,7 @@ export default function CommunitySignup() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              onClick={() => setLocation("/")} 
-              className="w-full"
-            >
+            <Button onClick={() => setLocation("/")} className="w-full">
               Go Home
             </Button>
           </CardContent>
@@ -65,7 +86,7 @@ export default function CommunitySignup() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
-            <Button 
+            <Button
               onClick={handleSignIn}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium"
             >

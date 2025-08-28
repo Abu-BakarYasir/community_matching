@@ -218,21 +218,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       let user = await storage.getUser(userId);
-
       if (!user) {
-        console.log(
-          "User not found in database, creating:",
-          userId,
-          req.user.claims.email,
-        );
         // Create user if not found (should have been created in callback, but fallback)
         const claims = req.user.claims;
+
+        // 👇 Get organization slug from session
+        const orgSlug = (req.session as any).organizationSlug;
+
+        let orgId: number | null = null;
+        if (orgSlug) {
+          const organization = await storage.getOrganizationBySlug(orgSlug);
+          if (organization) {
+            orgId = organization.id;
+          } else {
+            console.warn("❌ No organization found for slug:", orgSlug);
+          }
+        } else {
+          console.warn("❌ No orgSlug found in session!");
+        }
         await storage.upsertUser({
           id: claims.sub,
           email: claims.email,
           firstName: claims.first_name || claims.email?.split("@")[0] || "User",
           lastName: claims.last_name || "",
+          isAdmin: false, // 👈 added field
           profileImageUrl: claims.profile_image_url,
+          organizationId: orgId, // 👈 now stored
         });
         user = await storage.getUser(userId);
       }
@@ -255,11 +266,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      console.log("Returning user data:", {
-        id: user.id,
-        email: user.email,
-        isAdmin: user.isAdmin,
-      });
       res.json({
         ...user,
         organizationName,
@@ -278,11 +284,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUser(userId);
 
       if (!user) {
-        console.log(
-          "User not found in database, creating:",
-          userId,
-          req.user.claims.email,
-        );
         // Create user if not found
         const claims = req.user.claims;
         await storage.upsertUser({

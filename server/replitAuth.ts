@@ -18,10 +18,10 @@ const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      replId
+      replId,
     );
   },
-  { maxAge: 3600 * 1000 }
+  { maxAge: 3600 * 1000 },
 );
 
 export function getSession() {
@@ -34,7 +34,7 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET || 'dev-session-secret-key-replit-auth',
+    secret: process.env.SESSION_SECRET || "dev-session-secret-key-replit-auth",
     store: sessionStore,
     resave: false,
     saveUninitialized: true, // Save uninitialized sessions for Replit Auth
@@ -42,14 +42,14 @@ export function getSession() {
       httpOnly: true,
       secure: false, // Set to false for development
       maxAge: sessionTtl,
-      sameSite: 'lax', // Important for cross-site auth
+      sameSite: "lax", // Important for cross-site auth
     },
   });
 }
 
 function updateUserSession(
   user: any,
-  tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
+  tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
 ) {
   user.claims = tokens.claims();
   user.access_token = tokens.access_token;
@@ -57,46 +57,48 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-async function upsertUser(
-  claims: any,
-  organizationSlug?: string
-) {
-  console.log("Upserting user:", claims["email"], claims, "organizationSlug:", organizationSlug);
-  
+async function upsertUser(claims: any, organizationSlug?: string) {
   try {
     const email = claims["email"] || "";
     const existingUser = await storage.getUserByEmail(email);
-    
+
     if (existingUser) {
       console.log("User exists, updating:", existingUser.id);
       await storage.updateUser(existingUser.id, {
         email: claims["email"],
         firstName: claims["first_name"] || existingUser.firstName,
         lastName: claims["last_name"] || existingUser.lastName,
-        profileImageUrl: claims["profile_image_url"] || existingUser.profileImageUrl,
+        profileImageUrl:
+          claims["profile_image_url"] || existingUser.profileImageUrl,
       });
     } else {
       console.log("Creating new user for:", email);
-      
+
       let targetOrganizationId: number | null = null;
-      
+
       // If signing up through community page, assign to that organization
       if (organizationSlug) {
         console.log("Looking for organization with slug:", organizationSlug);
         const organizations = await storage.getAllOrganizations();
-        const targetOrg = organizations.find(org => org.slug === organizationSlug);
+        const targetOrg = organizations.find(
+          (org) => org.slug === organizationSlug,
+        );
         if (targetOrg) {
-          console.log("Found target organization:", targetOrg.id, targetOrg.name);
+          console.log(
+            "Found target organization:",
+            targetOrg.id,
+            targetOrg.name,
+          );
           targetOrganizationId = targetOrg.id;
         }
       }
-      
+
       if (targetOrganizationId) {
         // Create user as member of existing organization
         // For regular users: use auth name or email prefix, never "Member"
-        const firstName = claims["first_name"] || email.split('@')[0];
+        const firstName = claims["first_name"] || email.split("@")[0];
         const lastName = claims["last_name"] || "";
-        
+
         const newUser = await storage.createUser({
           id: claims["sub"],
           email: claims["email"],
@@ -107,13 +109,16 @@ async function upsertUser(
           isActive: true,
           isAdmin: false, // Regular member, not admin
         });
-        console.log("Created user as member of existing organization:", newUser.id);
+        console.log(
+          "Created user as member of existing organization:",
+          newUser.id,
+        );
       } else {
         // Create user with their own organization (admin flow)
         // For community creators: use auth name or fallback to "[Community Name] Admin"
-        const firstName = claims["first_name"] || email.split('@')[0];
+        const firstName = claims["first_name"] || email.split("@")[0];
         const lastName = claims["last_name"] || "";
-        
+
         const newUser = await storage.createUser({
           id: claims["sub"],
           email: claims["email"],
@@ -126,30 +131,47 @@ async function upsertUser(
 
         // Then create an organization for this user
         const organizationName = `${newUser.firstName}'s Community`;
-        const organizationSlug = organizationName.toLowerCase()
-          .replace(/[^a-z0-9\s]/g, '') // Remove special characters but keep spaces
-          .replace(/\s+/g, '-') // Replace spaces with hyphens
-          .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+        const organizationSlug = organizationName
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, "") // Remove special characters but keep spaces
+          .replace(/\s+/g, "-") // Replace spaces with hyphens
+          .replace(/^-+|-+$/g, "") // Remove leading/trailing hyphens
           .substring(0, 50); // Limit length
-        
+
         const organization = await storage.createOrganization({
           name: organizationName,
           slug: organizationSlug,
           adminId: newUser.id,
-          domain: email.split('@')[1], // Use email domain
+          domain: email.split("@")[1], // Use email domain
           settings: {
             appName: organizationName,
             matchingDay: 1,
-            monthlyGoals: ["Learning technical skills", "Building data projects", "Job hunting", "Networking"],
+            monthlyGoals: [
+              "Learning technical skills",
+              "Building data projects",
+              "Job hunting",
+              "Networking",
+            ],
             communityMeetingLink: "https://meet.google.com/new",
             preventMeetingOverlap: true,
-            weights: { industry: 35, company: 20, networkingGoals: 30, jobTitle: 15 }
-          }
+            weights: {
+              industry: 35,
+              company: 20,
+              networkingGoals: 30,
+              jobTitle: 15,
+            },
+          },
         });
 
         // Update user with organization ID
-        await storage.updateUser(newUser.id, { organizationId: organization.id });
-        console.log("Created user with new organization:", newUser.id, organization.id);
+        await storage.updateUser(newUser.id, {
+          organizationId: organization.id,
+        });
+        console.log(
+          "Created user with new organization:",
+          newUser.id,
+          organization.id,
+        );
       }
     }
   } catch (error) {
@@ -169,20 +191,20 @@ export async function setupAuth(app: Express) {
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback,
-    req?: any
+    req?: any,
   ) => {
     const user = {};
     updateUserSession(user, tokens);
-    
+
     // Get organization slug from session if available
     const organizationSlug = req?.session?.organizationSlug;
     await upsertUser(tokens.claims(), organizationSlug);
-    
+
     // Clean up session
     if (req?.session?.organizationSlug) {
       delete req.session.organizationSlug;
     }
-    
+
     verified(null, user);
   };
 
@@ -202,14 +224,47 @@ export async function setupAuth(app: Express) {
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
+  // app.get("/api/login", (req, res, next) => {
+  //   // Store organization context in session if provided
+  //   const organizationSlug = req.query.organization as string;
+  //   if (organizationSlug) {
+  //     (req.session as any).organizationSlug = organizationSlug;
+  //     console.log("Storing organization slug in session:", organizationSlug);
+  //   }
+
+  //   passport.authenticate(`replitauth:${req.hostname}`, {
+  //     prompt: "login consent",
+  //     scope: ["openid", "email", "profile", "offline_access"],
+  //   })(req, res, next);
+  // });
+
   app.get("/api/login", (req, res, next) => {
-    // Store organization context in session if provided
+    console.log("✅✅✅✅✅✅✅✅✅ Req queries are here : ", req.query);
     const organizationSlug = req.query.organization as string;
+
     if (organizationSlug) {
+  
       (req.session as any).organizationSlug = organizationSlug;
-      console.log("Storing organization slug in session:", organizationSlug);
+      (req.body as any).organizationSlug = organizationSlug;
+      console.log("✅ Stored organization slug in session:", organizationSlug);
+      console.log("🗂️ Session right after setting slug:", req.session);
+
+      // Force session save before redirect
+      req.session.save((err) => {
+        if (err) {
+          console.error("❌ Error saving session:", err);
+        } else {
+          console.log("✅ Session saved with orgSlug");
+        }
+
+        passport.authenticate(`replitauth:${req.hostname}`, {
+          prompt: "login consent",
+          scope: ["openid", "email", "profile", "offline_access"],
+        })(req, res, next);
+      });
+      return;
     }
-    
+
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -217,56 +272,74 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    console.log(
+      "req session organization ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ",
+      req.session.organizationSlug,
+      "   .....  ",
+      req.body.organizationSlug,
+    );
+    const organizationSlug = req.session.organizationSlug;
     passport.authenticate(`replitauth:${req.hostname}`, async (err, user) => {
       if (err || !user) {
         console.error("Authentication callback error:", err);
         return res.redirect("/api/login");
       }
-      
+
       req.logIn(user, async (loginErr) => {
         if (loginErr) {
           console.error("Login error:", loginErr);
           return res.redirect("/api/login");
         }
-        
+
         try {
           const userId = user.claims.sub;
           const email = user.claims.email;
-          const orgSlug = (req.session as any).organizationSlug;
-          console.log("Processing callback for user:", userId, email, "orgSlug:", orgSlug);
+          // const orgSlug = (req.session as any).organizationSlug;
+          const orgSlug = organizationSlug;
+
+          console.log(
+            "Processing callback for user:",
+            userId,
+            email,
+            "orgSlug:",
+            orgSlug,
+          );
 
           // If signing up through organization link, handle as regular user
           if (orgSlug) {
             // Find organization by slug
             const organizations = await storage.getAllOrganizations();
-            const organization = organizations.find(org => 
-              (org.slug && org.slug.toLowerCase() === orgSlug.toLowerCase()) ||
-              org.name.toLowerCase().replace(/[^a-z0-9]/g, '') === orgSlug.toLowerCase()
+            const organization = organizations.find(
+              (org) =>
+                (org.slug &&
+                  org.slug.toLowerCase() === orgSlug.toLowerCase()) ||
+                org.name.toLowerCase().replace(/[^a-z0-9]/g, "") ===
+                  orgSlug.toLowerCase(),
             );
-            
+
             if (organization) {
               // Create/update user as regular community member (not admin)
               const existingUser = await storage.getUserByEmail(email);
-              
+
               if (!existingUser) {
                 await storage.createUser({
                   id: userId,
                   email: email,
-                  firstName: user.claims.first_name || email.split('@')[0],
+                  firstName: user.claims.first_name || email.split("@")[0],
                   lastName: user.claims.last_name || "",
                   profileImageUrl: user.claims.profile_image_url,
                   isActive: true,
                   isAdmin: false, // Regular community members are not admins
-                  organizationId: organization.id
+                  organizationId: organization.id,
                 });
               } else {
                 // Update existing user to belong to this organization as regular member
-                await storage.updateUser(existingUser.id, { 
+                await storage.updateUser(existingUser.id, {
                   organizationId: organization.id,
-                  isAdmin: false // Ensure community signup users are not admins
+                  isAdmin: false, // Ensure community signup users are not admins
                 });
               }
-              
+
               // Clear organization context
               delete (req.session as any).organizationSlug;
               return res.redirect("/dashboard");
@@ -276,7 +349,7 @@ export async function setupAuth(app: Express) {
           // Regular admin/super admin login flow
           await upsertUser(user.claims);
           const dbUser = await storage.getUser(userId);
-          
+
           if (dbUser?.isSuperAdmin) {
             console.log("Redirecting super admin user to super admin panel");
             return res.redirect("/super-admin");
@@ -301,7 +374,7 @@ export async function setupAuth(app: Express) {
         client.buildEndSessionUrl(config, {
           client_id: replId,
           post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
+        }).href,
       );
     });
   });
@@ -336,7 +409,10 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
       try {
         const config = await getOidcConfig();
-        const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+        const tokenResponse = await client.refreshTokenGrant(
+          config,
+          refreshToken,
+        );
         updateUserSession(user, tokenResponse);
         console.log("Token refreshed successfully");
         return next();
@@ -347,7 +423,10 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     }
 
     // User is authenticated and token is valid
-    console.log("User authenticated:", { sub: user.claims.sub, email: user.claims.email });
+    console.log("User authenticated:", {
+      sub: user.claims.sub,
+      email: user.claims.email,
+    });
     return next();
   } catch (error) {
     console.error("Authentication error:", error);

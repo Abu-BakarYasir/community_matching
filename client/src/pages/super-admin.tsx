@@ -7,11 +7,32 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Building, Users, Settings, Shield, Plus, Edit, Trash2, Crown } from "lucide-react";
+import {
+  Building,
+  Users,
+  Settings,
+  Shield,
+  Plus,
+  Edit,
+  Trash2,
+  Crown,
+} from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -40,39 +61,63 @@ export default function SuperAdmin() {
 
   // Create community mutation
   const createOrgMutation = useMutation({
-    mutationFn: async (orgData: { name: string; slug: string; description?: string }) => {
+    mutationFn: async (orgData: {
+      name: string;
+      slug: string;
+      description?: string;
+    }) => {
       return apiRequest("POST", "/api/super-admin/organizations", orgData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/organizations"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/super-admin/organizations"],
+      });
       setNewOrgName("");
       setNewOrgSlug("");
       setNewOrgDescription("");
       toast({ title: "Community created successfully" });
     },
     onError: (error: any) => {
-      toast({ title: "Error creating community", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error creating community",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   // Toggle super admin mutation
   const toggleSuperAdminMutation = useMutation({
-    mutationFn: async ({ userId, isSuperAdmin }: { userId: string; isSuperAdmin: boolean }) => {
-      return apiRequest("PATCH", `/api/super-admin/users/${userId}/super-admin`, { isSuperAdmin });
+    mutationFn: async ({
+      userId,
+      isSuperAdmin,
+    }: {
+      userId: string;
+      isSuperAdmin: boolean;
+    }) => {
+      return apiRequest(
+        "PATCH",
+        `/api/super-admin/users/${userId}/super-admin`,
+        { isSuperAdmin },
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/super-admin/users"] });
       toast({ title: "Super admin status updated" });
     },
     onError: (error: any) => {
-      toast({ title: "Error updating super admin status", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error updating super admin status",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const handleCreateOrganization = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newOrgName || !newOrgSlug) return;
-    
+
     createOrgMutation.mutate({
       name: newOrgName,
       slug: newOrgSlug,
@@ -81,7 +126,34 @@ export default function SuperAdmin() {
   };
 
   const formatDate = (dateString: string) => {
-    return formatDateET(dateString, 'MMM d, yyyy');
+    return formatDateET(dateString, "MMM d, yyyy");
+  };
+
+  const getMatchingDate = (matchingDay: number): string => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const date = today.getDate();
+
+    if (matchingDay === date) {
+      return "Today";
+    }
+
+    if (matchingDay < date) {
+      const nextMonth = new Date(year, month + 1, matchingDay);
+      return nextMonth.toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } else {
+      const currentMonth = new Date(year, month, matchingDay);
+      return currentMonth.toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
   };
 
   return (
@@ -92,12 +164,12 @@ export default function SuperAdmin() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Crown className="h-8 w-8" style={{ color: '#f97316' }} />
+            <Crown className="h-8 w-8" style={{ color: "#f97316" }} />
             <div>
-              <h2 className="text-3xl font-bold" style={{ color: '#1e293b' }}>
+              <h2 className="text-3xl font-bold" style={{ color: "#1e293b" }}>
                 Super Admin Dashboard
               </h2>
-              <p style={{ color: '#6b7280' }}>
+              <p style={{ color: "#6b7280" }}>
                 Manage the entire Matches.Community SaaS platform
               </p>
             </div>
@@ -106,57 +178,69 @@ export default function SuperAdmin() {
 
         {/* Platform Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card style={{ backgroundColor: '#fefefe' }}>
+          <Card style={{ backgroundColor: "#fefefe" }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium" style={{ color: '#6b7280' }}>
+              <CardTitle
+                className="text-sm font-medium"
+                style={{ color: "#6b7280" }}
+              >
                 Total Communities
               </CardTitle>
-              <Building className="h-4 w-4" style={{ color: '#2563eb' }} />
+              <Building className="h-4 w-4" style={{ color: "#2563eb" }} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold" style={{ color: '#1e293b' }}>
+              <div className="text-2xl font-bold" style={{ color: "#1e293b" }}>
                 {organizations.length}
               </div>
             </CardContent>
           </Card>
 
-          <Card style={{ backgroundColor: '#fefefe' }}>
+          <Card style={{ backgroundColor: "#fefefe" }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium" style={{ color: '#6b7280' }}>
+              <CardTitle
+                className="text-sm font-medium"
+                style={{ color: "#6b7280" }}
+              >
                 Total Users
               </CardTitle>
-              <Users className="h-4 w-4" style={{ color: '#f97316' }} />
+              <Users className="h-4 w-4" style={{ color: "#f97316" }} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold" style={{ color: '#1e293b' }}>
+              <div className="text-2xl font-bold" style={{ color: "#1e293b" }}>
                 {allUsers.length}
               </div>
             </CardContent>
           </Card>
 
-          <Card style={{ backgroundColor: '#fefefe' }}>
+          <Card style={{ backgroundColor: "#fefefe" }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium" style={{ color: '#6b7280' }}>
+              <CardTitle
+                className="text-sm font-medium"
+                style={{ color: "#6b7280" }}
+              >
                 Active Communities
               </CardTitle>
-              <Settings className="h-4 w-4" style={{ color: '#0891b2' }} />
+              <Settings className="h-4 w-4" style={{ color: "#0891b2" }} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold" style={{ color: '#1e293b' }}>
+              <div className="text-2xl font-bold" style={{ color: "#1e293b" }}>
                 {organizations.filter((org: any) => org.isActive).length}
               </div>
             </CardContent>
           </Card>
 
-          <Card style={{ backgroundColor: '#fefefe' }}>
+          <Card style={{ backgroundColor: "#fefefe" }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium" style={{ color: '#6b7280' }}>
+              <CardTitle
+                className="text-sm font-medium"
+                style={{ color: "#6b7280" }}
+              >
                 Super Admins
               </CardTitle>
-              <Shield className="h-4 w-4" style={{ color: '#f97316' }} />
+              <Shield className="h-4 w-4" style={{ color: "#f97316" }} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold" style={{ color: '#1e293b' }}>
+              <div className="text-2xl font-bold" style={{ color: "#1e293b" }}>
                 {allUsers.filter((user: any) => user.isSuperAdmin).length}
               </div>
             </CardContent>
@@ -174,12 +258,20 @@ export default function SuperAdmin() {
           {/* Communities Tab */}
           <TabsContent value="organizations" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold" style={{ color: '#1e293b' }}>
+              <h3
+                className="text-xl font-semibold"
+                style={{ color: "#1e293b" }}
+              >
                 Communities
               </h3>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }} className="text-white">
+                  <Button
+                    style={{
+                      background: "linear-gradient(to right, #f97316, #fb923c)",
+                    }}
+                    className="text-white"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Community
                   </Button>
@@ -188,7 +280,10 @@ export default function SuperAdmin() {
                   <DialogHeader>
                     <DialogTitle>Create New Community</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleCreateOrganization} className="space-y-4">
+                  <form
+                    onSubmit={handleCreateOrganization}
+                    className="space-y-4"
+                  >
                     <div>
                       <Label htmlFor="orgName">Community Name</Label>
                       <Input
@@ -219,20 +314,25 @@ export default function SuperAdmin() {
                         rows={3}
                       />
                     </div>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full text-white"
-                      style={{ background: 'linear-gradient(to right, #f97316, #fb923c)' }}
+                      style={{
+                        background:
+                          "linear-gradient(to right, #f97316, #fb923c)",
+                      }}
                       disabled={createOrgMutation.isPending}
                     >
-                      {createOrgMutation.isPending ? "Creating..." : "Create Community"}
+                      {createOrgMutation.isPending
+                        ? "Creating..."
+                        : "Create Community"}
                     </Button>
                   </form>
                 </DialogContent>
               </Dialog>
             </div>
 
-            <Card style={{ backgroundColor: '#fefefe' }}>
+            <Card style={{ backgroundColor: "#fefefe" }}>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
@@ -242,23 +342,38 @@ export default function SuperAdmin() {
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>Users</TableHead>
+                      <TableHead>Next Match Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {organizations.map((org: any) => (
                       <TableRow key={org.id}>
-                        <TableCell className="font-medium">{org.name}</TableCell>
-                        <TableCell className="font-mono text-sm">{org.slug}</TableCell>
+                        <TableCell className="font-medium">
+                          {org.name}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {org.slug}
+                        </TableCell>
                         <TableCell>
-                          <Badge variant={org.isActive ? "default" : "secondary"}>
+                          <Badge
+                            variant={org.isActive ? "default" : "secondary"}
+                          >
                             {org.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
                         <TableCell>{formatDate(org.createdAt)}</TableCell>
                         <TableCell>
-                          {allUsers.filter((user: any) => user.organizationId === org.id).length}
+                          {
+                            allUsers.filter(
+                              (user: any) => user.organizationId === org.id,
+                            ).length
+                          }
                         </TableCell>
+                        <TableCell>
+                          {getMatchingDate(org.settings?.matchingDay)}
+                        </TableCell>
+
                         <TableCell>
                           <div className="flex space-x-2">
                             <Button variant="outline" size="sm">
@@ -279,11 +394,11 @@ export default function SuperAdmin() {
 
           {/* Platform Users Tab */}
           <TabsContent value="users" className="space-y-6">
-            <h3 className="text-xl font-semibold" style={{ color: '#1e293b' }}>
+            <h3 className="text-xl font-semibold" style={{ color: "#1e293b" }}>
               Platform Users
             </h3>
 
-            <Card style={{ backgroundColor: '#fefefe' }}>
+            <Card style={{ backgroundColor: "#fefefe" }}>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
@@ -298,13 +413,22 @@ export default function SuperAdmin() {
                   </TableHeader>
                   <TableBody>
                     {allUsers.map((user: any) => {
-                      const userOrg = organizations.find((org: any) => org.id === user.organizationId);
+                      const userOrg = organizations.find(
+                        (org: any) => org.id === user.organizationId,
+                      );
                       return (
                         <TableRow key={user.id}>
                           <TableCell>
                             <div>
-                              <div className="font-medium">{user.firstName} {user.lastName}</div>
-                              <div className="text-sm" style={{ color: '#6b7280' }}>{user.email}</div>
+                              <div className="font-medium">
+                                {user.firstName} {user.lastName}
+                              </div>
+                              <div
+                                className="text-sm"
+                                style={{ color: "#6b7280" }}
+                              >
+                                {user.email}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -313,12 +437,22 @@ export default function SuperAdmin() {
                           <TableCell>
                             <div className="flex space-x-1">
                               {user.isSuperAdmin && (
-                                <Badge style={{ backgroundColor: '#f97316', color: 'white' }}>
+                                <Badge
+                                  style={{
+                                    backgroundColor: "#f97316",
+                                    color: "white",
+                                  }}
+                                >
                                   Super Admin
                                 </Badge>
                               )}
                               {user.isAdmin && (
-                                <Badge style={{ backgroundColor: '#2563eb', color: 'white' }}>
+                                <Badge
+                                  style={{
+                                    backgroundColor: "#2563eb",
+                                    color: "white",
+                                  }}
+                                >
                                   Community Admin
                                 </Badge>
                               )}
@@ -328,7 +462,9 @@ export default function SuperAdmin() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={user.isActive ? "default" : "secondary"}>
+                            <Badge
+                              variant={user.isActive ? "default" : "secondary"}
+                            >
                               {user.isActive ? "Active" : "Inactive"}
                             </Badge>
                           </TableCell>
@@ -337,13 +473,17 @@ export default function SuperAdmin() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => toggleSuperAdminMutation.mutate({
-                                userId: user.id,
-                                isSuperAdmin: !user.isSuperAdmin
-                              })}
+                              onClick={() =>
+                                toggleSuperAdminMutation.mutate({
+                                  userId: user.id,
+                                  isSuperAdmin: !user.isSuperAdmin,
+                                })
+                              }
                               disabled={toggleSuperAdminMutation.isPending}
                             >
-                              {user.isSuperAdmin ? "Remove Super Admin" : "Make Super Admin"}
+                              {user.isSuperAdmin
+                                ? "Remove Super Admin"
+                                : "Make Super Admin"}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -357,11 +497,11 @@ export default function SuperAdmin() {
 
           {/* Platform Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <h3 className="text-xl font-semibold" style={{ color: '#1e293b' }}>
+            <h3 className="text-xl font-semibold" style={{ color: "#1e293b" }}>
               Platform Settings
             </h3>
 
-            <Card style={{ backgroundColor: '#fefefe' }}>
+            <Card style={{ backgroundColor: "#fefefe" }}>
               <CardHeader>
                 <CardTitle>Global Platform Configuration</CardTitle>
               </CardHeader>
@@ -384,7 +524,9 @@ export default function SuperAdmin() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="maxOrgsPerPlan">Max Organizations per Plan</Label>
+                  <Label htmlFor="maxOrgsPerPlan">
+                    Max Organizations per Plan
+                  </Label>
                   <Input
                     id="maxOrgsPerPlan"
                     type="number"
@@ -392,9 +534,11 @@ export default function SuperAdmin() {
                     className="mt-1"
                   />
                 </div>
-                <Button 
+                <Button
                   className="text-white"
-                  style={{ background: 'linear-gradient(to right, #2563eb, #3b82f6)' }}
+                  style={{
+                    background: "linear-gradient(to right, #2563eb, #3b82f6)",
+                  }}
                 >
                   Save Platform Settings
                 </Button>
@@ -404,10 +548,12 @@ export default function SuperAdmin() {
 
           <TabsContent value="settings">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card style={{ backgroundColor: '#fefefe' }}>
+              <Card style={{ backgroundColor: "#fefefe" }}>
                 <CardHeader>
-                  <CardTitle style={{ color: '#1e293b' }}>Feature Toggles</CardTitle>
-                  <p className="text-sm" style={{ color: '#6b7280' }}>
+                  <CardTitle style={{ color: "#1e293b" }}>
+                    Feature Toggles
+                  </CardTitle>
+                  <p className="text-sm" style={{ color: "#6b7280" }}>
                     Control which features are available across all communities
                   </p>
                 </CardHeader>
@@ -419,32 +565,37 @@ export default function SuperAdmin() {
                         Allow communities to set and track monthly focus goals
                       </p>
                     </div>
-                    <Switch
-                      id="monthlyGoals"
-                      checked={false}
-                      disabled
-                    />
+                    <Switch id="monthlyGoals" checked={false} disabled />
                   </div>
                   <p className="text-xs text-slate-400">
-                    Currently disabled to simplify the platform. Will be configurable per community in future updates.
+                    Currently disabled to simplify the platform. Will be
+                    configurable per community in future updates.
                   </p>
                 </CardContent>
               </Card>
 
-              <Card style={{ backgroundColor: '#fefefe' }}>
+              <Card style={{ backgroundColor: "#fefefe" }}>
                 <CardHeader>
-                  <CardTitle style={{ color: '#1e293b' }}>Platform Statistics</CardTitle>
+                  <CardTitle style={{ color: "#1e293b" }}>
+                    Platform Statistics
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
-                      <div className="text-2xl font-bold" style={{ color: '#f97316' }}>
+                      <div
+                        className="text-2xl font-bold"
+                        style={{ color: "#f97316" }}
+                      >
                         {allUsers.length}
                       </div>
                       <p className="text-sm text-slate-600">Total Users</p>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold" style={{ color: '#2563eb' }}>
+                      <div
+                        className="text-2xl font-bold"
+                        style={{ color: "#2563eb" }}
+                      >
                         {organizations.length}
                       </div>
                       <p className="text-sm text-slate-600">Communities</p>
