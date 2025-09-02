@@ -60,60 +60,95 @@ export const users = pgTable("users", {
 
 export const profileQuestions = pgTable("profile_questions", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   networkingGoals: text("networking_goals").array(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const matches = pgTable("matches", {
   id: serial("id").primaryKey(),
-  user1Id: varchar("user1_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  user2Id: varchar("user2_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  user1Id: varchar("user1_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  user2Id: varchar("user2_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   matchScore: decimal("match_score", { precision: 5, scale: 2 }).notNull(),
   status: varchar("status", { length: 50 }).default("active"),
   monthYear: varchar("month_year", { length: 7 }).notNull(), // Format: YYYY-MM
-  createdAt: timestamp("created_at").defaultNow()
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const meetings = pgTable("meetings", {
   id: serial("id").primaryKey(),
-  matchId: integer("match_id").references(() => matches.id, { onDelete: "cascade" }).notNull(),
+  matchId: integer("match_id")
+    .references(() => matches.id, { onDelete: "cascade" })
+    .notNull(),
   scheduledAt: timestamp("scheduled_at"),
   duration: integer("duration").default(30), // minutes
   meetingLink: varchar("meeting_link", { length: 500 }),
   status: varchar("status", { length: 50 }).default("scheduled"),
-  createdAt: timestamp("created_at").defaultNow()
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const availability = pgTable("availability", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday, 1 = Monday, etc.
   startTime: varchar("start_time", { length: 5 }).notNull(), // HH:MM format
   endTime: varchar("end_time", { length: 5 }).notNull(), // HH:MM format
   isAvailable: boolean("is_available").default(true),
-  createdAt: timestamp("created_at").defaultNow()
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
   type: varchar("type", { length: 50 }).notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   message: text("message").notNull(),
   isRead: boolean("is_read").default(false),
-  createdAt: timestamp("created_at").defaultNow()
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userOrganizations = pgTable("user_organizations", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id")
+    .references(() => users.id)
+    .notNull(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  isAdmin: boolean("is_admin").notNull().default(false),
 });
 
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  createdAt: true,
-}).extend({
-  linkedinUrl: z.string().url().optional().or(z.literal(""))
-});
+export const insertUserSchema = createInsertSchema(users)
+  .omit({
+    createdAt: true,
+  })
+  .extend({
+    linkedinUrl: z.string().url().optional().or(z.literal("")),
+  });
 
-export const insertProfileQuestionsSchema = createInsertSchema(profileQuestions).omit({
+export const insertUserOrganizationSchema = createInsertSchema(
+  userOrganizations,
+)
+  .omit({ id: true, isAdmin: true })
+  .extend({
+    isAdmin: z.boolean().optional(),
+  });
+
+export const insertProfileQuestionsSchema = createInsertSchema(
+  profileQuestions,
+).omit({
   id: true,
 });
 
@@ -149,7 +184,9 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type ProfileQuestions = typeof profileQuestions.$inferSelect;
-export type InsertProfileQuestions = z.infer<typeof insertProfileQuestionsSchema>;
+export type InsertProfileQuestions = z.infer<
+  typeof insertProfileQuestionsSchema
+>;
 export type Match = typeof matches.$inferSelect;
 export type InsertMatch = z.infer<typeof insertMatchSchema>;
 export type Meeting = typeof meetings.$inferSelect;

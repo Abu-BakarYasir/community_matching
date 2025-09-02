@@ -3,20 +3,15 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { parse } from "csv-parse/sync";
-import { Readable } from "stream";
 
 // Removed JWT auth imports - using Replit Auth only
 import {
-  insertUserSchema,
   insertProfileQuestionsSchema,
   insertMeetingSchema,
   insertAvailabilitySchema,
 } from "@shared/schema";
 
-import { schedulerService } from "./services/scheduler";
-import { timeSlotService } from "./services/timeSlots";
 import { emailService } from "./services/email";
-import { z } from "zod";
 import multer from "multer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1411,6 +1406,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
+
+  app.get("/api/my-organizations", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const orgs = await storage.getUserOrganizations(userId);
+      return res.json({ organizations: orgs });
+    } catch (error: any) {
+      console.error("Error fetching user organizations:", error);
+      return res.status(500).json({ message: "Unable to fetch organizations" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

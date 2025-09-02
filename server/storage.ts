@@ -1,5 +1,6 @@
 //TEST CODE
 import {
+  insertUserOrganizationSchema,
   users,
   profileQuestions,
   matches,
@@ -7,6 +8,7 @@ import {
   availability,
   notifications,
   organizations,
+  userOrganizations,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -209,6 +211,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return user || undefined;
+  }
+
+  async assignUserToOrganization(params: {
+    userId: string;
+    organizationId: number;
+    isAdmin?: boolean;
+  }) {
+    // Validate input
+    const validated = insertUserOrganizationSchema.parse(params);
+
+    const [entry] = await db
+      .insert(userOrganizations)
+      .values(validated)
+      .returning();
+
+    return entry;
   }
 
   async deleteUser(id: string): Promise<boolean> {
@@ -909,6 +927,49 @@ export class DatabaseStorage implements IStorage {
     });
 
     return results;
+  }
+
+  // In DatabaseStorage class
+
+  async getUserOrganizations(
+    userId: string,
+  ): Promise<{ id: number; name: string; slug: string }[]> {
+    // 1️⃣ Default organization from users table
+    const userOrg = await db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        slug: organizations.slug,
+      })
+      .from(users)
+      .leftJoin(organizations, eq(users.organizationId, organizations.id))
+      .where(eq(users.id, userId));
+
+    // 2️⃣ Additional joined organizations from user_organizations
+    const extraOrgs = await db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        slug: organizations.slug,
+      })
+      .from(userOrganizations)
+      .leftJoin(
+        organizations,
+        eq(userOrganizations.organizationId, organizations.id),
+      )
+      .where(eq(userOrganizations.userId, userId));
+
+    // 3️⃣ Combine and dedupe
+    const combined = [...userOrg, ...extraOrgs];
+    const uniqueMap = new Map<
+      number,
+      { id: number; name: string; slug: string }
+    >();
+    combined.forEach((o) => {
+      if (o.id && !uniqueMap.has(o.id)) uniqueMap.set(o.id, o);
+    });
+
+    return Array.from(uniqueMap.values());
   }
 }
 

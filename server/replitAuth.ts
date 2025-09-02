@@ -243,7 +243,6 @@ export async function setupAuth(app: Express) {
     const organizationSlug = req.query.organization as string;
 
     if (organizationSlug) {
-  
       (req.session as any).organizationSlug = organizationSlug;
       (req.body as any).organizationSlug = organizationSlug;
       console.log("✅ Stored organization slug in session:", organizationSlug);
@@ -272,12 +271,6 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    console.log(
-      "req session organization ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ",
-      req.session.organizationSlug,
-      "   .....  ",
-      req.body.organizationSlug,
-    );
     const organizationSlug = req.session.organizationSlug;
     passport.authenticate(`replitauth:${req.hostname}`, async (err, user) => {
       if (err || !user) {
@@ -305,9 +298,7 @@ export async function setupAuth(app: Express) {
             orgSlug,
           );
 
-          // If signing up through organization link, handle as regular user
           if (orgSlug) {
-            // Find organization by slug
             const organizations = await storage.getAllOrganizations();
             const organization = organizations.find(
               (org) =>
@@ -318,7 +309,6 @@ export async function setupAuth(app: Express) {
             );
 
             if (organization) {
-              // Create/update user as regular community member (not admin)
               const existingUser = await storage.getUserByEmail(email);
 
               if (!existingUser) {
@@ -329,14 +319,18 @@ export async function setupAuth(app: Express) {
                   lastName: user.claims.last_name || "",
                   profileImageUrl: user.claims.profile_image_url,
                   isActive: true,
-                  isAdmin: false, // Regular community members are not admins
+                  isAdmin: false,
                   organizationId: organization.id,
                 });
               } else {
-                // Update existing user to belong to this organization as regular member
-                await storage.updateUser(existingUser.id, {
+                // await storage.updateUser(existingUser.id, {
+                //   organizationId: organization.id,
+                //   isAdmin: false,
+                // });
+                await storage.assignUserToOrganization({
+                  userId: existingUser.id,
                   organizationId: organization.id,
-                  isAdmin: false, // Ensure community signup users are not admins
+                  isAdmin: false,
                 });
               }
 
