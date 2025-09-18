@@ -135,6 +135,10 @@ export default function Dashboard() {
     return Math.round((completed / total) * 100);
   };
 
+  useEffect(() => {
+    console.log("user -> ", user);
+  }, [user]);
+
   const profileCompletion = getProfileCompletion();
 
   // Calculate days remaining for next matching (assuming monthly on 1st)

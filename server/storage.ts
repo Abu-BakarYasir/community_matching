@@ -599,6 +599,76 @@ export class DatabaseStorage implements IStorage {
     return availabilityRecord || undefined;
   }
 
+  async updateUserOrgAndRole(
+    userId: string,
+    organization_id: number,
+  ): Promise<boolean> {
+    try {
+      const [current] = await db
+        .select({
+          prevOrgId: users.organizationId,
+          previousAdmin: users.isAdmin,
+        })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!current) return false;
+
+      const [userOrganization] = await db
+        .select({
+          newAdmin: userOrganizations.isAdmin,
+        })
+        .from(userOrganizations)
+        .where(
+          and(
+            eq(userOrganizations.userId, userId),
+            eq(userOrganizations.organizationId, organization_id),
+          ),
+        )
+        .limit(1);
+
+      const newAdmin = userOrganization.newAdmin ?? false;
+
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          organizationId: organization_id,
+          isAdmin: newAdmin,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!updatedUser) return false;
+      const prevOrgId = current.prevOrgId ?? null;
+      const previousAdmin = current.previousAdmin ?? false;
+
+      if (prevOrgId !== null) {
+        const [existing] = await db
+          .select({ id: userOrganizations.id })
+          .from(userOrganizations)
+          .where(eq(userOrganizations.userId, userId))
+          .limit(1);
+
+        if (existing) {
+          await db
+            .update(userOrganizations)
+            .set({
+              organizationId: prevOrgId,
+              isAdmin: previousAdmin,
+            })
+            .where(eq(userOrganizations.id, existing.id));
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error updating user org/role:", error);
+      return false;
+    }
+  }
+
   async deleteAvailability(id: number): Promise<boolean> {
     try {
       const result = await db

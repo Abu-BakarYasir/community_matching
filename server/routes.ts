@@ -1418,6 +1418,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/change/organization", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { organization_id } = req.body || {};
+
+      const ok = await storage.updateUserOrgAndRole(userId, organization_id);
+
+      if (!ok)
+        return res
+          .status(404)
+          .json({ message: "User not found or update failed" });
+
+      const user = await storage.getUser(userId);
+      res.json({ message: "Organization changed successfully", user });
+    } catch (err: any) {
+      console.error("Error changing organization:", err);
+      res.status(500).json({ message: "Failed to change organization" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

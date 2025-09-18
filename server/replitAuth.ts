@@ -309,6 +309,7 @@ export async function setupAuth(app: Express) {
             );
 
             if (organization) {
+              console.log("Found organization:", organization.id);
               const existingUser = await storage.getUserByEmail(email);
 
               if (!existingUser) {
@@ -322,16 +323,23 @@ export async function setupAuth(app: Express) {
                   isAdmin: false,
                   organizationId: organization.id,
                 });
-              } else {
-                // await storage.updateUser(existingUser.id, {
+                // await storage.assignUserToOrganization({
+                //   userId: userId,
                 //   organizationId: organization.id,
                 //   isAdmin: false,
                 // });
+              } else {
+                console.log("User already exists:", existingUser);
                 await storage.assignUserToOrganization({
                   userId: existingUser.id,
                   organizationId: organization.id,
                   isAdmin: false,
                 });
+                await storage.updateUserOrgAndRole(
+                  existingUser.id,
+                  organization.id,
+                  false,
+                );
               }
 
               // Clear organization context
